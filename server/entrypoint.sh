@@ -6,7 +6,7 @@ set -m
 node ../proxy/index.js &
 PROXY_PID=$!
 
-./build/Release/ioq3ded "$@" &
+./ioq3ded "$@" &
 Q3_PID=$!
 
 cleanup() {

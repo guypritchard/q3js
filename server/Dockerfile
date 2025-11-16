@@ -29,12 +29,12 @@ ENV RCON_PASSWORD="changeme"
 
 COPY --from=proxybuilder /proxy /proxy
 
-COPY --from=serverbuilder /server/build /server/build
+COPY --from=serverbuilder /server/build/Release /server
 COPY --from=serverbuilder /server/entrypoint.sh /server/entrypoint.sh
 
 WORKDIR /server
 
-VOLUME ["/server/build/Release/baseq3"]
+VOLUME ["/server/baseq3"]
 
 EXPOSE 27961
 EXPOSE 27960/udp
