@@ -61,13 +61,7 @@ async function q3GetInfo(server: {
     port: number
 }): Promise<Server | null> {
     return new Promise((resolve, reject) => {
-        const params = {
-            host: server.host,
-            port: server.port,
-        }
-        const serializedParams = JSON.stringify(params)
-
-        const ws = new WebSocket(`${server.proxy}?params=${serializedParams}`)
+        const ws = new WebSocket(`${server.proxy}?host=${server.host}&port=${server.port}`)
         ws.binaryType = "arraybuffer"
 
         const timeout = setTimeout(() => {

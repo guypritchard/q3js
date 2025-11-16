@@ -9,8 +9,9 @@ console.log(`WS<->UDP proxy: ws://0.0.0.0:${WS_PORT}/`);
 wss.on('connection', (ws, req) => {
     const udp = dgram.createSocket('udp4');
     const url = new URL(req.url, `https://${req.headers.host}`);
-    const paramsString = url.searchParams.get('params');
-    const {host, port} = JSON.parse(paramsString);
+    const host = url.searchParams.get('host');
+    const portString = url.searchParams.get('port');
+    const port = parseInt(portString, 10);
 
     udp.on('message', (msg) => {
         if (ws.readyState === WebSocket.OPEN) ws.send(msg);

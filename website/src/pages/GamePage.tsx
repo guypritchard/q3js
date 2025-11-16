@@ -239,15 +239,10 @@ export default function GamePage() {
 
         const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
 
-        const params = {
-            host,
-            port
-        }
-        const serializedParams = JSON.stringify(params);
 
         ioquake3({
             websocket: {
-                url: `${wsProtocol}//${proxyUrl}?params=${serializedParams}`,
+                url: `${wsProtocol}//${proxyUrl}?host=${host}&port=${port}`,
                 subprotocol: "binary"
             },
             canvas: document.getElementById("canvas") as HTMLCanvasElement,
