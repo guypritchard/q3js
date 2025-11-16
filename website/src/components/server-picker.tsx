@@ -46,18 +46,15 @@ async function q3GetInfo(): Promise<Server | null> {
         ws.binaryType = "arraybuffer";
 
         const timeout = setTimeout(() => {
-            try {
-                ws.close();
-            } catch {
-            }
+            try { ws.close(); } catch {}
             reject(new Error("getinfo timeout"));
         }, 5000);
 
         const enc = new TextEncoder();
+        const dec = new TextDecoder(); // utf-8 is fine
         const concat = (a: Uint8Array, b: Uint8Array) => {
             const out = new Uint8Array(a.length + b.length);
-            out.set(a, 0);
-            out.set(b, a.length);
+            out.set(a, 0); out.set(b, a.length);
             return out;
         };
 
@@ -66,18 +63,14 @@ async function q3GetInfo(): Promise<Server | null> {
         ws.addEventListener("open", () => {
             const prefix = new Uint8Array([0xff, 0xff, 0xff, 0xff]);
             const cmd = enc.encode("getinfo xxx\n");
-            const msg = concat(prefix, cmd);
             start = performance.now();
-            ws.send(msg);
+            ws.send(concat(prefix, cmd));
         });
 
         ws.addEventListener("message", async (ev: MessageEvent) => {
             clearTimeout(timeout);
             const ping = Math.round(performance.now() - start);
-            try {
-                ws.close();
-            } catch {
-            }
+            try { ws.close(); } catch {}
 
             const ab =
                 ev.data instanceof ArrayBuffer
@@ -86,27 +79,53 @@ async function q3GetInfo(): Promise<Server | null> {
                         ? await ev.data.arrayBuffer()
                         : enc.encode(String(ev.data)).buffer;
 
-            const text = new TextDecoder().decode(ab);
-            const tag = "infoResponse\n";
-            const i = text.indexOf(tag);
-            if (i === -1) return resolve(null);
+            const text = dec.decode(ab);
 
-            const parts = text.slice(i + tag.length).trim().split("\\");
+            // Find the infoResponse payload
+            const TAG = "infoResponse\n";
+            const idx = text.indexOf(TAG);
+            if (idx === -1) return resolve(null);
+            const payload = text.slice(idx + TAG.length).trim();
+
+            // Split \k\v\k\v... into a kv map with lowercase keys
+            const parts = payload.split("\\");
             const kv: Record<string, string> = {};
-            for (let j = 1; j < parts.length; j += 2) kv[parts[j]] = parts[j + 1] ?? "";
+            // parts[0] is "" due to leading backslash
+            for (let i = 1; i + 1 < parts.length; i += 2) {
+                const key = parts[i].toLowerCase();
+                const val = parts[i + 1] ?? "";
+                kv[key] = val;
+            }
+
+            // Helpers
+            const toInt = (s?: string, d = 0) =>
+                Number.isFinite(parseInt(s ?? "", 10)) ? parseInt(s!, 10) : d;
+            const stripColors = (s: string) => s.replace(/\^\d/g, "");
+
+            // Map aliases from real payload
+            const sv_hostname = stripColors(kv["sv_hostname"] ?? kv["hostname"] ?? "Unnamed Server");
+            const mapname = kv["mapname"] ?? "unknown";
+            const g_gametype = toInt(kv["g_gametype"] ?? kv["gametype"] ?? "0");
+            const fraglimit = toInt(kv["fraglimit"]);
+            const timelimit = toInt(kv["timelimit"]);
+            const sv_maxclients = toInt(kv["sv_maxclients"]);
+            const g_needpass = toInt(kv["g_needpass"]);
+            const capturelimit = toInt(kv["capturelimit"]);
+            const version = kv["version"] ?? kv["gamename"] ?? "";
+            const players = toInt(kv["g_humanplayers"] ?? kv["clients"]);
 
             const sv: Server = {
                 id: "server.q3js.com",
-                sv_hostname: kv.sv_hostname || "Unnamed Server",
-                mapname: kv.mapname || "unknown",
-                g_gametype: Number(kv.g_gametype || 0),
-                fraglimit: Number(kv.fraglimit || 0),
-                timelimit: Number(kv.timelimit || 0),
-                sv_maxclients: Number(kv.sv_maxclients || 0),
-                g_needpass: Number(kv.g_needpass || 0),
-                capturelimit: Number(kv.capturelimit || 0),
-                version: kv.version || "",
-                players: Number(kv.clients || 0),
+                sv_hostname,
+                mapname,
+                g_gametype,
+                fraglimit,
+                timelimit,
+                sv_maxclients,
+                g_needpass,
+                capturelimit,
+                version,
+                players,
                 location: "server.q3js.com",
                 ping,
             };
@@ -116,14 +135,12 @@ async function q3GetInfo(): Promise<Server | null> {
 
         ws.addEventListener("error", (e) => {
             clearTimeout(timeout);
-            try {
-                ws.close();
-            } catch {
-            }
+            try { ws.close(); } catch {}
             reject(e);
         });
     });
 }
+
 
 
 export function ServerPicker() {
