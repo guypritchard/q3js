@@ -23,9 +23,9 @@ public class ServerService {
 
     private void addDefaultServers() {
         this.servers.add(Server.builder()
-                .proxyHost("server.q3js.com")
-                .proxyPort(27961)
-                .targetHost("server.q3js.com")
+                .proxyHost("ffa.q3js.com")
+                .proxyPort(443)
+                .targetHost("ffa.q3js.com")
                 .targetPort(27960)
                 .build());
     }

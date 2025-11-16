@@ -8,7 +8,7 @@ const HEARTBEAT_INTERVAL_MS = 30 * 1000;
 // env defaults
 const DEFAULT_TARGET_HOST = process.env.TARGET_HOST || '127.0.0.1';
 const DEFAULT_TARGET_PORT = parseInt(process.env.TARGET_PORT || '27960', 10);
-const PROXY_PORT = parseInt(process.env.WS_PORT || '27961', 10);
+const WS_PORT = parseInt(process.env.WS_PORT || '27961', 10);
 
 // toggle: true = use ?host=&port=, false = use env consts
 const USE_URL_PARAMS = process.env.USE_URL_PARAMS === 'true';
@@ -20,7 +20,7 @@ async function sendHeartbeat() {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                proxyPort: PROXY_PORT,
+                proxyPort: WS_PORT,
                 targetHost: DEFAULT_TARGET_HOST,
                 targetPort: DEFAULT_TARGET_PORT
             }),
@@ -39,7 +39,6 @@ if (!USE_URL_PARAMS) {
     sendHeartbeat();
 }
 
-const WS_PORT = parseInt(process.env.WS_PORT || '27961', 10);
 const wss = new WebSocket.Server({port: WS_PORT});
 
 console.log(`WS<->UDP proxy on ws://0.0.0.0:${WS_PORT}/`);
