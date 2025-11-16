@@ -1,5 +1,5 @@
 "use client"
-import {useEffect, useState} from "react"
+import {useEffect, useRef, useState} from "react"
 import {useLocalStorage} from "@uidotdev/usehooks"
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
 import {Button} from "@/components/ui/button"
@@ -42,77 +42,78 @@ const GAME_TYPES: Record<number, string> = {
 
 async function q3GetInfo(): Promise<Server | null> {
     return new Promise((resolve, reject) => {
-        const ws = new WebSocket("wss://server.q3js.com:443");
-        ws.binaryType = "arraybuffer";
+        const ws = new WebSocket("wss://server.q3js.com:443")
+        ws.binaryType = "arraybuffer"
 
         const timeout = setTimeout(() => {
-            try { ws.close(); } catch {}
-            reject(new Error("getinfo timeout"));
-        }, 5000);
+            try {
+                ws.close()
+            } catch {
+            }
+            reject(new Error("getinfo timeout"))
+        }, 5000)
 
-        const enc = new TextEncoder();
-        const dec = new TextDecoder(); // utf-8 is fine
+        const enc = new TextEncoder()
+        const dec = new TextDecoder()
         const concat = (a: Uint8Array, b: Uint8Array) => {
-            const out = new Uint8Array(a.length + b.length);
-            out.set(a, 0); out.set(b, a.length);
-            return out;
-        };
+            const out = new Uint8Array(a.length + b.length)
+            out.set(a, 0)
+            out.set(b, a.length)
+            return out
+        }
 
-        let start = 0;
+        let start = 0
 
         ws.addEventListener("open", () => {
-            const prefix = new Uint8Array([0xff, 0xff, 0xff, 0xff]);
-            const cmd = enc.encode("getinfo xxx\n");
-            start = performance.now();
-            ws.send(concat(prefix, cmd));
-        });
+            const prefix = new Uint8Array([0xff, 0xff, 0xff, 0xff])
+            const cmd = enc.encode("getinfo xxx\n")
+            start = performance.now()
+            ws.send(concat(prefix, cmd))
+        })
 
         ws.addEventListener("message", async (ev: MessageEvent) => {
-            clearTimeout(timeout);
-            const ping = Math.round(performance.now() - start);
-            try { ws.close(); } catch {}
+            clearTimeout(timeout)
+            const ping = Math.round(performance.now() - start)
+            try {
+                ws.close()
+            } catch {
+            }
 
             const ab =
                 ev.data instanceof ArrayBuffer
                     ? ev.data
                     : ev.data instanceof Blob
                         ? await ev.data.arrayBuffer()
-                        : enc.encode(String(ev.data)).buffer;
+                        : enc.encode(String(ev.data)).buffer
 
-            const text = dec.decode(ab);
+            const text = dec.decode(ab)
+            const TAG = "infoResponse\n"
+            const idx = text.indexOf(TAG)
+            if (idx === -1) return resolve(null)
+            const payload = text.slice(idx + TAG.length).trim()
 
-            // Find the infoResponse payload
-            const TAG = "infoResponse\n";
-            const idx = text.indexOf(TAG);
-            if (idx === -1) return resolve(null);
-            const payload = text.slice(idx + TAG.length).trim();
-
-            // Split \k\v\k\v... into a kv map with lowercase keys
-            const parts = payload.split("\\");
-            const kv: Record<string, string> = {};
-            // parts[0] is "" due to leading backslash
+            const parts = payload.split("\\")
+            const kv: Record<string, string> = {}
             for (let i = 1; i + 1 < parts.length; i += 2) {
-                const key = parts[i].toLowerCase();
-                const val = parts[i + 1] ?? "";
-                kv[key] = val;
+                const key = parts[i].toLowerCase()
+                const val = parts[i + 1] ?? ""
+                kv[key] = val
             }
 
-            // Helpers
             const toInt = (s?: string, d = 0) =>
-                Number.isFinite(parseInt(s ?? "", 10)) ? parseInt(s!, 10) : d;
-            const stripColors = (s: string) => s.replace(/\^\d/g, "");
+                Number.isFinite(parseInt(s ?? "", 10)) ? parseInt(s!, 10) : d
+            const stripColors = (s: string) => s.replace(/\^\d/g, "")
 
-            // Map aliases from real payload
-            const sv_hostname = stripColors(kv["sv_hostname"] ?? kv["hostname"] ?? "Unnamed Server");
-            const mapname = kv["mapname"] ?? "unknown";
-            const g_gametype = toInt(kv["g_gametype"] ?? kv["gametype"] ?? "0");
-            const fraglimit = toInt(kv["fraglimit"]);
-            const timelimit = toInt(kv["timelimit"]);
-            const sv_maxclients = toInt(kv["sv_maxclients"]);
-            const g_needpass = toInt(kv["g_needpass"]);
-            const capturelimit = toInt(kv["capturelimit"]);
-            const version = kv["version"] ?? kv["gamename"] ?? "";
-            const players = toInt(kv["g_humanplayers"] ?? kv["clients"]);
+            const sv_hostname = stripColors(kv["sv_hostname"] ?? kv["hostname"] ?? "Unnamed Server")
+            const mapname = kv["mapname"] ?? "unknown"
+            const g_gametype = toInt(kv["g_gametype"] ?? kv["gametype"] ?? "0")
+            const fraglimit = toInt(kv["fraglimit"])
+            const timelimit = toInt(kv["timelimit"])
+            const sv_maxclients = toInt(kv["sv_maxclients"])
+            const g_needpass = toInt(kv["g_needpass"])
+            const capturelimit = toInt(kv["capturelimit"])
+            const version = kv["version"] ?? kv["gamename"] ?? ""
+            const players = toInt(kv["g_humanplayers"] ?? kv["clients"])
 
             const sv: Server = {
                 id: "server.q3js.com",
@@ -128,30 +129,59 @@ async function q3GetInfo(): Promise<Server | null> {
                 players,
                 location: "server.q3js.com",
                 ping,
-            };
+            }
 
-            resolve(sv);
-        });
+            resolve(sv)
+        })
 
         ws.addEventListener("error", (e) => {
-            clearTimeout(timeout);
-            try { ws.close(); } catch {}
-            reject(e);
-        });
-    });
+            clearTimeout(timeout)
+            try {
+                ws.close()
+            } catch {
+            }
+            reject(e)
+        })
+    })
 }
 
-
+const POLL_MS = 5000
 
 export function ServerPicker() {
     const [servers, setServers] = useState<Server[]>([])
     const [searchQuery, setSearchQuery] = useState("")
     const [name, setName] = useLocalStorage("name", "Q3JS Player")
+    const inFlight = useRef(false)
+    const cancelled = useRef(false)
 
     useEffect(() => {
-        q3GetInfo()
-            .then((srv) => srv && setServers([srv]))
-            .catch((err) => console.error("getinfo failed", err))
+        cancelled.current = false
+
+        const tick = async () => {
+            if (cancelled.current || inFlight.current) return
+            inFlight.current = true
+            try {
+                const srv = await q3GetInfo()
+                if (!cancelled.current && srv) setServers([srv])
+            } catch {
+                // ignore
+            } finally {
+                inFlight.current = false
+            }
+        }
+
+        tick()
+        const id = setInterval(tick, POLL_MS)
+        const onVis = () => {
+            if (!document.hidden) tick()
+        }
+        document.addEventListener("visibilitychange", onVis, {passive: true})
+
+        return () => {
+            cancelled.current = true
+            clearInterval(id)
+            document.removeEventListener("visibilitychange", onVis)
+        }
     }, [])
 
     const filteredServers = servers.filter(
@@ -262,8 +292,11 @@ export function ServerPicker() {
                                             className="lg:w-auto w-full bg-primary text-primary-foreground font-bold"
                                             disabled={server.players >= server.sv_maxclients}
                                         >
-                                            {server.players >= server.sv_maxclients ? "Server Full" : <><Zap
-                                                className="h-4 w-4 mr-2"/>Connect</>}
+                                            {server.players >= server.sv_maxclients
+                                                ? "Server Full"
+                                                : <>
+                                                    <Zap className="h-4 w-4 mr-2"/>Connect
+                                                </>}
                                         </Button>
                                     </DialogTrigger>
                                     <DialogContent>
