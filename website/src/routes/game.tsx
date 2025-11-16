@@ -5,6 +5,7 @@ import z from "zod";
 const searchParams = z.object({
     host: z.string(),
     proxyPort: z.number(),
+    name: z.string()
 })
 
 export const Route = createFileRoute('/game')({
