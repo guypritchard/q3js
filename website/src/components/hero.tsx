@@ -31,7 +31,7 @@ export function Hero() {
             </p>
 
 
-            <div>
+            <div className="flex justify-center items-center">
                 <a href={"https://github.com/lklacar/q3js"} target={"_blank"} rel={"noreferrer"}>
                     <Button variant={"outline"} className={"mr-4"}>
                         <SiGithub className="w-6 h-6 fill-white"/>
