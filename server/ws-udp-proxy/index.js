@@ -1,28 +1,19 @@
-const fs = require('fs');
-const https = require('https');
 const dgram = require('dgram');
-const path = require('path');
 const WebSocket = require('ws');
 
 const Q3_HOST = process.env.Q3_HOST || '127.0.0.1';
 const Q3_PORT = parseInt(process.env.Q3_PORT || '27960', 10);
+
 const WS_PORT = parseInt(process.env.WS_PORT || '27961', 10);
 
-// load self-signed cert and key
-const server = https.createServer({
-    cert: fs.readFileSync(path.join(__dirname, 'cert.pem')),
-    key: fs.readFileSync(path.join(__dirname, 'key.pem'))
-});
-
-const wss = new WebSocket.Server({ server });
-
-console.log(`WSS<->UDP proxy: wss://0.0.0.0:${WS_PORT} -> ${Q3_HOST}:${Q3_PORT}`);
+const wss = new WebSocket.Server({port: WS_PORT});
+console.log(`WS<->UDP proxy: ws://0.0.0.0:${WS_PORT} -> ${Q3_HOST}:${Q3_PORT}`);
 
 wss.on('connection', (ws) => {
     const udp = dgram.createSocket('udp4');
 
     udp.on('message', (msg) => {
-        if (ws.readyState === WebSocket.OPEN) ws.send(msg);
+        if (ws.readyState === WebSocket.OPEN) ws.send(msg); // binary frame
     });
 
     ws.on('message', (data) => {
@@ -33,5 +24,3 @@ wss.on('connection', (ws) => {
     ws.on('close', () => udp.close());
     ws.on('error', () => udp.close());
 });
-
-server.listen(WS_PORT);
