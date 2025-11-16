@@ -53,7 +53,7 @@ export default function HomePage() {
                         No full retail game assets are hosted, included, or required; all gameplay content is limited
                         to files that id Software made publicly available for free.
                         <br/><br/>
-                        The engine is powered by <a href="https://github.com/ioquake/ioq3"
+                        The engine is based on <a href="https://github.com/ioquake/ioq3"
                                                     className="font-semibold text-primary">ioquake3</a>,
                         an open-source project licensed under GPLv2. In accordance with the license,
                         the source code for the modified ioquake3 WebAssembly build and supporting glue code
