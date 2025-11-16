@@ -127,7 +127,7 @@ async function q3GetInfo(server: {
                 g_needpass: toInt(kv["g_needpass"]),
                 capturelimit: toInt(kv["capturelimit"]),
                 version: kv["version"] ?? kv["gamename"] ?? "",
-                players: toInt(kv["g_humanplayers"] ?? kv["clients"]),
+                players: toInt(kv["clients"] ?? kv["g_humanplayers"] ?? "0"),
                 location: server.location,
                 ping,
                 host: server.host,
