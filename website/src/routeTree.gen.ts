@@ -10,42 +10,63 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as GameRouteImport } from './routes/game'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as withLayoutRouteRouteImport } from './routes/(withLayout)/route'
+import { Route as withLayoutIndexRouteImport } from './routes/(withLayout)/index'
+import { Route as withLayoutRunYourServerGuideRouteImport } from './routes/(withLayout)/run-your-server-guide'
 
 const GameRoute = GameRouteImport.update({
   id: '/game',
   path: '/game',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const withLayoutRouteRoute = withLayoutRouteRouteImport.update({
+  id: '/(withLayout)',
   getParentRoute: () => rootRouteImport,
 } as any)
+const withLayoutIndexRoute = withLayoutIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => withLayoutRouteRoute,
+} as any)
+const withLayoutRunYourServerGuideRoute =
+  withLayoutRunYourServerGuideRouteImport.update({
+    id: '/run-your-server-guide',
+    path: '/run-your-server-guide',
+    getParentRoute: () => withLayoutRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/game': typeof GameRoute
+  '/run-your-server-guide': typeof withLayoutRunYourServerGuideRoute
+  '/': typeof withLayoutIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/game': typeof GameRoute
+  '/run-your-server-guide': typeof withLayoutRunYourServerGuideRoute
+  '/': typeof withLayoutIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/(withLayout)': typeof withLayoutRouteRouteWithChildren
   '/game': typeof GameRoute
+  '/(withLayout)/run-your-server-guide': typeof withLayoutRunYourServerGuideRoute
+  '/(withLayout)/': typeof withLayoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/game'
+  fullPaths: '/game' | '/run-your-server-guide' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/game'
-  id: '__root__' | '/' | '/game'
+  to: '/game' | '/run-your-server-guide' | '/'
+  id:
+    | '__root__'
+    | '/(withLayout)'
+    | '/game'
+    | '/(withLayout)/run-your-server-guide'
+    | '/(withLayout)/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  withLayoutRouteRoute: typeof withLayoutRouteRouteWithChildren
   GameRoute: typeof GameRoute
 }
 
@@ -58,18 +79,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GameRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/(withLayout)': {
+      id: '/(withLayout)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof withLayoutRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(withLayout)/': {
+      id: '/(withLayout)/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof withLayoutIndexRouteImport
+      parentRoute: typeof withLayoutRouteRoute
+    }
+    '/(withLayout)/run-your-server-guide': {
+      id: '/(withLayout)/run-your-server-guide'
+      path: '/run-your-server-guide'
+      fullPath: '/run-your-server-guide'
+      preLoaderRoute: typeof withLayoutRunYourServerGuideRouteImport
+      parentRoute: typeof withLayoutRouteRoute
     }
   }
 }
 
+interface withLayoutRouteRouteChildren {
+  withLayoutRunYourServerGuideRoute: typeof withLayoutRunYourServerGuideRoute
+  withLayoutIndexRoute: typeof withLayoutIndexRoute
+}
+
+const withLayoutRouteRouteChildren: withLayoutRouteRouteChildren = {
+  withLayoutRunYourServerGuideRoute: withLayoutRunYourServerGuideRoute,
+  withLayoutIndexRoute: withLayoutIndexRoute,
+}
+
+const withLayoutRouteRouteWithChildren = withLayoutRouteRoute._addFileChildren(
+  withLayoutRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  withLayoutRouteRoute: withLayoutRouteRouteWithChildren,
   GameRoute: GameRoute,
 }
 export const routeTree = rootRouteImport
