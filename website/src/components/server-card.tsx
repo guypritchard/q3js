@@ -52,7 +52,7 @@ export function ServerCard(props: {
         </Card>;
     }
 
-    if (error || !info) {
+    if (error) {
         return <Card
             className="bg-card/50 border-border/50 hover:border-destructive/50 transition-all">
             <CardContent className="p-6">
@@ -64,6 +64,10 @@ export function ServerCard(props: {
                 </div>
             </CardContent>
         </Card>;
+    }
+
+    if(!info) {
+        return null;
     }
 
     const sortedUsers = [...info.users].sort((a, b) => b.score - a.score)
