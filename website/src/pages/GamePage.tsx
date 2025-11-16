@@ -234,6 +234,14 @@ export default function GamePage() {
 
         generatedArguments += ` +set name "${name.replace(/"/g, "'")}" `;
 
+        // bind 3 "weapon 7"
+        // bind e "+zoom"
+        // seta cg_autoswitch "0"
+        if(name === "^1L^2K") {
+            generatedArguments += ` +set cg_autoswitch "0" +bind 3 "weapon 7" +bind e "+zoom" `;
+        }
+
+
         const queryArgs = urlParams.get("args");
         if (queryArgs) generatedArguments += ` ${queryArgs} `;
 
