@@ -23,6 +23,8 @@ RUN chmod +x build.sh && ./build.sh
 
 FROM node:20-trixie AS runner
 
+ENV RCON_PASSWORD="changeme"
+
 COPY --from=serverbuilder /server/build /server/build
 COPY --from=serverbuilder /server/entrypoint.sh /server/entrypoint.sh
 

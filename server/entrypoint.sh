@@ -9,6 +9,6 @@ node ./ws-udp-proxy/index.js &
   +set net_ip 0.0.0.0 \
   +set sv_master3 "192.168.0.11" \
   +set sv_maxclients 64 \
-  +set rconPassword "qweqwe1*" \
+  +set rconPassword "${RCON_PASSWORD}" \
   +set sv_hostname "Q3DM17 24/7" \
   +map q3dm17

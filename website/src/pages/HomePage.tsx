@@ -7,18 +7,18 @@ export default function HomePage() {
         <div className="min-h-screen bg-background">
             {/* Header */}
             <header className="border-b border-border/50 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
-                <Link to={"/"} className="container mx-auto px-4 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+                    <Link to={"/"} className="flex items-center gap-3">
                         <div>
                             <h1 className="text-xl font-bold tracking-tight text-foreground">Q3JS</h1>
                             <p className="text-xs text-muted-foreground font-mono">v0.0.1</p>
                         </div>
-                    </div>
+                    </Link>
                     <Badge variant="outline" className="hidden sm:flex gap-1.5 border-primary/30 text-primary">
                         <span className="h-2 w-2 rounded-full bg-primary animate-pulse"/>
                         Online
                     </Badge>
-                </Link>
+                </div>
             </header>
 
             {/* Hero Section */}
@@ -46,15 +46,16 @@ export default function HomePage() {
                         <p className="font-mono">Built with ❤️ by <span className="text-red-500">L</span><span
                             className="text-green-500">K</span></p>
                         <div className="flex items-center gap-4">
-                            <a href="#" className="hover:text-foreground transition-colors">
+                            <a href="https://github.com/lklacar/q3js"
+                               className="hover:text-foreground transition-colors">
                                 GitHub
                             </a>
-                            <a href="#" className="hover:text-foreground transition-colors">
-                                Discord
-                            </a>
-                            <a href="#" className="hover:text-foreground transition-colors">
-                                Docs
-                            </a>
+                            {/*<a href="#" className="hover:text-foreground transition-colors">*/}
+                            {/*    Discord*/}
+                            {/*</a>*/}
+                            {/*<a href="#" className="hover:text-foreground transition-colors">*/}
+                            {/*    Docs*/}
+                            {/*</a>*/}
                         </div>
                     </div>
                 </div>
