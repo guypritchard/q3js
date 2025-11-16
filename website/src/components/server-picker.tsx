@@ -31,9 +31,11 @@ export function ServerPicker() {
         const staticServers = SERVER_LIST.map(s => q3GetInfo(s));
         const masterServersPromise = q3GetServers(`${wsProtocol}//${env.VITE_PROXY_URL}`);
 
-        const masterServers = await masterServersPromise;
+        const serversFromMaster = await masterServersPromise;
 
-        const masterServerInfoPromises = masterServers.map(s =>
+        console.log(serversFromMaster);
+
+        const masterServerInfoPromises = serversFromMaster.map(s =>
             q3GetInfo({
                 location: "EU",
                 proxy: `${wsProtocol}//${env.VITE_PROXY_URL}`,
