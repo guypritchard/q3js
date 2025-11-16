@@ -23,7 +23,7 @@ node ./ws-udp-proxy/index.js &
   +set dedicated 2 \
   +set sv_pure 1 \
   +set net_ip 0.0.0.0 \
-  +set sv_master3 "192.168.0.11" \
+  +set sv_master3 "master.q3js.com:27950" \
   +set sv_maxclients 64 \
   +set rconPassword "${RCON_PASSWORD}" \
   +set sv_hostname "FFA 24/7" \
