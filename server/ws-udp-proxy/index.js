@@ -6,7 +6,7 @@ const WebSocket = require('ws');
 const Q3_HOST = process.env.Q3_HOST || '127.0.0.1';
 const Q3_PORT = parseInt(process.env.Q3_PORT || '27960', 10);
 const WS_PORT = parseInt(process.env.WS_PORT || '27961', 10);
-const RCON_PASS = process.env.RCON_PASS || 'changeme';
+const RCON_PASSWORD = process.env.RCON_PASSWORD || 'changeme';
 const POLL_MS = parseInt(process.env.POLL_MS || '5000', 10);
 const RESP_TIMEOUT_MS = parseInt(process.env.RESP_TIMEOUT_MS || '1500', 10);
 const CONSEC_REQUIRED = parseInt(process.env.CONSEC_REQUIRED || '2', 10);
@@ -33,7 +33,7 @@ wss.on('connection', (ws) => {
 });
 
 // --- auto-kick ping=999 poller ---
-if (RCON_PASS) {
+if (RCON_PASSWORD) {
     const pollSock = dgram.createSocket('udp4');
     const HDR = Buffer.from([0xFF, 0xFF, 0xFF, 0xFF]);
 
@@ -77,7 +77,7 @@ if (RCON_PASS) {
     }
 
     async function rcon(cmd) {
-        const full = `rcon ${RCON_PASS} ${cmd}`;
+        const full = `rcon ${RCON_PASSWORD} ${cmd}`;
         try { await sendQuery(full); } catch {}
     }
 
