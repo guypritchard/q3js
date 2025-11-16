@@ -4,13 +4,21 @@ import ioquake3 from "@/lib/ioquake3.js"
 import wasm from "@/lib/ioquake3.wasm?url";
 
 const config = {
-    "demoq3": {
-        "_comment": "Copy baseq3/vm/*.qvm to demoq3/vm/ as the Quake 3 demo QVMs are not compatible. However the botfiles are not fully compatible with newer QVMs.",
+    "baseq3": {
+        "_comment": "Copy baseq3/vm/*.qvm to baseq3/vm/ as the Quake 3 demo QVMs are not compatible. However the botfiles are not fully compatible with newer QVMs.",
         "files": [
-            {"src": "demoq3/pak0.pk3", "dst": "/demoq3"},
-            {"src": "demoq3/vm/cgame.qvm", "dst": "/demoq3/vm"},
-            {"src": "demoq3/vm/qagame.qvm", "dst": "/demoq3/vm"},
-            {"src": "demoq3/vm/ui.qvm", "dst": "/demoq3/vm"}
+            {"src": "baseq3/pak0.pk3", "dst": "/baseq3"},
+            {"src": "baseq3/pak1.pk3", "dst": "/baseq3"},
+            {"src": "baseq3/pak2.pk3", "dst": "/baseq3"},
+            {"src": "baseq3/pak3.pk3", "dst": "/baseq3"},
+            {"src": "baseq3/pak4.pk3", "dst": "/baseq3"},
+            {"src": "baseq3/pak5.pk3", "dst": "/baseq3"},
+            {"src": "baseq3/pak6.pk3", "dst": "/baseq3"},
+            {"src": "baseq3/pak7.pk3", "dst": "/baseq3"},
+            {"src": "baseq3/pak8.pk3", "dst": "/baseq3"},
+            {"src": "baseq3/vm/cgame.qvm", "dst": "/baseq3/vm"},
+            {"src": "baseq3/vm/qagame.qvm", "dst": "/baseq3/vm"},
+            {"src": "baseq3/vm/ui.qvm", "dst": "/baseq3/vm"}
         ]
     },
 } as const;
@@ -20,12 +28,12 @@ export default function GamePage() {
     useEffect(() => {
 
         const urlParams = new URLSearchParams(window.location.search);
-        const com_basegame = "demoq3" as const;
-        const fs_basegame = "demoq3" as const;
-        const fs_game = "demoq3" as const;
+        const com_basegame = "baseq3" as const;
+        const fs_basegame = "baseq3" as const;
+        const fs_game = "baseq3" as const;
         let generatedArguments = `
                 +set sv_pure 0
-                +set net_enabled 0
+                +set net_enabled 1
                 +set r_mode -2
                 +set com_basegame "${com_basegame}"
                 +set fs_basegame "${fs_basegame}"
