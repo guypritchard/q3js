@@ -52,26 +52,11 @@ export function ServerCard(props: {
         </Card>;
     }
 
-    if (error) {
-        return <Card
-            className="bg-card/50 border-border/50 hover:border-destructive/50 transition-all">
-            <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                    <div className="flex-1 space-y-3">
-                        <div className="h-6 bg-secondary/50 rounded w-1/2 mb-4"/>
-                        <div className="text-destructive">Error: {error || "Unknown error"}</div>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>;
-    }
-
-    if(!info) {
+    if (error || !info) {
         return null;
     }
 
     const sortedUsers = [...info.users].sort((a, b) => b.score - a.score)
-
 
     return <Card
         className="bg-card/50 border-border/50 hover:border-primary/50 transition-all">
