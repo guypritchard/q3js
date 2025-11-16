@@ -21,8 +21,13 @@ public class ServerService {
 
     private final Set<Server> servers;
 
+    private static final Comparator<Server> SERVER_COMPARATOR =
+            Comparator.comparing(Server::getHost, Comparator.nullsFirst(String::compareTo))
+                    .thenComparingInt(Server::getProxyPort)
+                    .thenComparingInt(Server::getTargetPort);
+
     public ServerService() {
-        this.servers = new ConcurrentSkipListSet<>(Comparator.comparing(Server::getLastUpdated));
+        this.servers = new ConcurrentSkipListSet<>(SERVER_COMPARATOR);
         addDefaultServers();
     }
 
