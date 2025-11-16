@@ -1,5 +1,6 @@
 import {Link} from "@tanstack/react-router";
 import {Button} from "@/components/ui/button.tsx";
+import {SiGithub} from "react-icons/si";
 
 export function Hero() {
     return <section className="container mx-auto px-4 py-16 md:py-24">
@@ -31,13 +32,19 @@ export function Hero() {
 
 
             <div>
+                <a href={"https://github.com/lklacar/q3js"} target={"_blank"} rel={"noreferrer"}>
+                    <Button variant={"outline"} className={"mr-4"}>
+                        <SiGithub className="w-6 h-6 fill-white"/>
+                        View on GitHub
+                    </Button>
+                </a>
+
                 <Link to={"/guide"}>
                     <Button>
                         Run your own server
                     </Button>
                 </Link>
             </div>
-
 
 
         </div>
