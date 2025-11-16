@@ -26,7 +26,7 @@ node ./ws-udp-proxy/index.js &
   +set sv_master3 "192.168.0.11" \
   +set sv_maxclients 64 \
   +set rconPassword "${RCON_PASSWORD}" \
-  +set sv_hostname "Q3DM17 24/7" \
+  +set sv_hostname "FFA 24/7" \
   +set g_inactivity 360 \
   +set g_dropInactive 1 \
   +set bot_enable 1 \
