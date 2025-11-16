@@ -14,7 +14,6 @@ node ./ws-udp-proxy/index.js &
   +set g_inactivity 30 \
   +set g_dropInactive 1 \
   +set bot_enable 1 \
-#  +set bot_minplayers 3 \
   +set timelimit 0 \
   +set fraglimit 0 \
   +set sv_maxPing 500 \
