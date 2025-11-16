@@ -1,0 +1,11 @@
+services:
+  q3js-database:
+    image: postgres:16
+    container_name: q3js
+    environment:
+      POSTGRES_USER: q3js
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: q3js
+    ports:
+      - "5432:5432"
+    restart: "always"

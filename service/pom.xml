@@ -7,11 +7,114 @@
     <groupId>com.q3js</groupId>
     <artifactId>service</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <modules>
+        <module>shared</module>
+        <module>api</module>
+    </modules>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-flyway</artifactId>
+            <version>3.29.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+            <version>11.16.0</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jooq</groupId>
+            <artifactId>jooq-postgres-extensions</artifactId>
+            <version>3.20.8</version>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkiverse.jooq</groupId>
+            <artifactId>quarkus-jooq</artifactId>
+            <version>2.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jdbc-postgresql</artifactId>
+            <version>3.29.2</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>11.15.0</version>
+                <configuration>
+                    <url>jdbc:postgresql://localhost:5432/q3js</url>
+                    <user>q3js</user>
+                    <password>password</password>
+                    <schemas>
+                        <schema>public</schema>
+                    </schemas>
+                    <locations>
+                        <location>filesystem:./db/migration</location>
+                    </locations>
+                    <table>flyway_schema_history</table>
+                    <cleanDisabled>true</cleanDisabled>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jooq</groupId>
+                <artifactId>jooq-codegen-maven</artifactId>
+                <version>3.20.8</version>
+
+                <configuration>
+                    <jdbc>
+                        <driver>org.postgresql.Driver</driver>
+                        <url>jdbc:postgresql://localhost:5432/q3js</url>
+                        <user>q3js</user>
+                        <password>password</password>
+                    </jdbc>
+
+                    <generator>
+                        <name>org.jooq.codegen.DefaultGenerator</name>
+                        <strategy>
+                            <name>org.jooq.codegen.DefaultGeneratorStrategy</name>
+                        </strategy>
+
+                        <database>
+                            <name>org.jooq.meta.postgres.PostgresDatabase</name>
+                            <inputSchema>public</inputSchema>
+                            <includes>.*</includes>
+                            <excludes>flyway_schema_history</excludes>
+                            <recordTimestampFields>created_at,updated_at</recordTimestampFields>
+                            <outputSchemaToDefault>true</outputSchemaToDefault>
+                        </database>
+
+                        <generate>
+                            <pojos>true</pojos>
+                            <springAnnotations>false</springAnnotations>
+                            <records>true</records>
+                            <interfaces>false</interfaces>
+                            <javaTimeTypes>true</javaTimeTypes>
+                            <relations>true</relations>
+                            <validationAnnotations>true</validationAnnotations>
+                        </generate>
+
+                        <target>
+                            <packageName>com.q3js.jooq</packageName>
+                            <directory>shared/src/main/java</directory>
+                        </target>
+                    </generator>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
