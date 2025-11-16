@@ -1,5 +1,5 @@
 .idea
-build-web
+build
 
 baseq3/*
 !baseq3/.keep

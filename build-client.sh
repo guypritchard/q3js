@@ -4,8 +4,36 @@ set -Eeuo pipefail
 PROJECT_ROOT="$(pwd)"
 EMSDK_ROOT="${EMSDK_ROOT:-$PROJECT_ROOT/emsdk}"
 BASEQ3_SRC="${BASEQ3_SRC:-$PROJECT_ROOT/baseq3}"
-BUILD_DIR="${BUILD_DIR:-$PROJECT_ROOT/build-web}"
+BUILD_DIR="${BUILD_DIR:-$PROJECT_ROOT/build/game}"
 WEB_PORT="${WEB_PORT:-8000}"
+SHADER_DIR="./ioq3/code/renderergl2/glsl"
+
+
+# Patch shaders
+HEADER='#ifdef GL_ES
+  #ifdef GL_FRAGMENT_PRECISION_HIGH
+    precision highp float;
+  #else
+    precision mediump float;
+  #endif
+  precision mediump int;
+#endif
+'
+
+find "$SHADER_DIR" -type f -name '*.glsl' | while read -r file; do
+  # Check if header already present (any of its unique lines)
+  if grep -q '#ifdef GL_ES' "$file" && grep -q 'precision mediump int;' "$file"; then
+    echo "Skipping $file (header already present)"
+    continue
+  fi
+
+  echo "Updating $file"
+  tmp="$(mktemp)"
+  printf '%s\n\n' "$HEADER" > "$tmp"
+  cat "$file" >> "$tmp"
+  mv "$tmp" "$file"
+done
+
 
 if [[ ! -f "$EMSDK_ROOT/emsdk_env.sh" ]]; then
   echo "emsdk_env.sh not found at $EMSDK_ROOT" >&2; exit 1
@@ -27,7 +55,7 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 pushd "$BUILD_DIR" >/dev/null
 
-emcmake cmake ../ioq3 \
+emcmake cmake ../../ioq3 \
   -DBUILD_CLIENT=ON \
   -DBUILD_SERVER=OFF \
   -DBUILD_GAME_SO=OFF \
