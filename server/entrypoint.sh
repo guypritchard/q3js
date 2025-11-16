@@ -24,6 +24,7 @@ node ./ws-udp-proxy/index.js &
   +set fraglimit 30 \
   +set sv_maxPing 500 \
   +set sv_minPing 0 \
+  +set sv_dlRate 125000 \
   +map q3dm17 \
   +exec autoexec.cfg
 
