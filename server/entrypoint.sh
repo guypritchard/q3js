@@ -1,22 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-cat > ./build/Release/baseq3/autoexec.cfg <<EOL
-addbot sarge 1 blue 0
-addbot visor 1 red 0
-seta bot_nochat 1
-
-// Map rotation setup
-set d1 "map q3dm1; set nextmap vstr d2"
-set d2 "map q3dm7; set nextmap vstr d3"
-set d3 "map q3dm17; set nextmap vstr d4"
-set d4 "map q3tourney7; set nextmap vstr d1"
-
-// Start rotation
-vstr d1
-
-EOL
-
 node ./ws-udp-proxy/index.js &
 
 ./build/Release/ioq3ded \
@@ -37,4 +21,3 @@ node ./ws-udp-proxy/index.js &
   +set sv_dlRate 0 \
   +map q3dm17 \
   +exec autoexec.cfg
-

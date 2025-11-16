@@ -5,9 +5,10 @@ CURRENT_DIR="$(pwd)"
 BASEQ3_SRC="${BASEQ3_SRC:-$CURRENT_DIR/../baseq3}"
 BUILD_DIR="${BUILD_DIR:-$CURRENT_DIR/build}"
 
-cd "$CURRENT_DIR/.."
-unzip -o baseq3.zip
-cd "$CURRENT_DIR"
+# No more unzip here – data will be mounted at runtime
+# cd "$CURRENT_DIR/.."
+# unzip -o baseq3.zip
+# cd "$CURRENT_DIR"
 
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
@@ -24,9 +25,11 @@ make -j"$(nproc)"
 
 cd Release
 
-if [[ ! -d "$BASEQ3_SRC" ]]; then
-  echo "baseq3 source not found at $BASEQ3_SRC" >&2; exit 1
+# Optional: for local (non-Docker) builds, still copy baseq3 if present.
+if [[ -d "$BASEQ3_SRC" ]]; then
+  rm -rf baseq3
+  cp -r "$BASEQ3_SRC" ./baseq3
+else
+  echo "WARNING: baseq3 source not found at $BASEQ3_SRC; expecting it to be mounted at runtime" >&2
+  mkdir -p baseq3
 fi
-rm -rf baseq3
-cp -r "$BASEQ3_SRC" ./baseq3
-
