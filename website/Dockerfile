@@ -1,32 +1,21 @@
-# ---- Builder ----
 FROM node:20-trixie AS builder
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y unzip
-
 COPY . .
 
-RUN mv -f baseq3 website/public/baseq3
-
 WORKDIR /app/website
-
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
-
 RUN npm run build
 
-# ---- Runner ----
 FROM nginx:stable-alpine AS runner
 
-# Where your static files are (Vite: dist, CRA: build)
+RUN mkdir -p /usr/share/nginx/html/data
+
 ARG BUILD_DIR=website/dist
 
-# Clean default site
 RUN rm -rf /usr/share/nginx/html/*
-
-# Copy built assets (switch BUILD_DIR at build time if needed)
 COPY --from=builder /app/${BUILD_DIR} /usr/share/nginx/html
 
-# Write an SPA-friendly Nginx config (works with TanStack Router)
 RUN printf '%s\n' \
   'server {' \
   '  listen 80;' \
@@ -37,6 +26,13 @@ RUN printf '%s\n' \
   '    try_files $uri /index.html;' \
   '  }' \
   '  error_page 404 /index.html;' \
+  '' \
+  '  # Serve mounted game data' \
+  '  location /data/ {' \
+  '    alias /usr/share/nginx/html/data/;' \
+  '    autoindex on;' \
+  '  }' \
+  '' \
   '  location ~* \.(?:ico|css|js|gif|jpe?g|png|woff2?|eot|ttf|svg|webp)$ {' \
   '    expires 6M;' \
   '    add_header Cache-Control "public";' \
