@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as GameRouteImport } from './routes/game'
 import { Route as withLayoutRouteRouteImport } from './routes/(withLayout)/route'
 import { Route as withLayoutIndexRouteImport } from './routes/(withLayout)/index'
+import { Route as withLayoutGuideRouteImport } from './routes/(withLayout)/guide'
 
 const GameRoute = GameRouteImport.update({
   id: '/game',
@@ -27,27 +28,40 @@ const withLayoutIndexRoute = withLayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => withLayoutRouteRoute,
 } as any)
+const withLayoutGuideRoute = withLayoutGuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
+  getParentRoute: () => withLayoutRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/game': typeof GameRoute
+  '/guide': typeof withLayoutGuideRoute
   '/': typeof withLayoutIndexRoute
 }
 export interface FileRoutesByTo {
   '/game': typeof GameRoute
+  '/guide': typeof withLayoutGuideRoute
   '/': typeof withLayoutIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(withLayout)': typeof withLayoutRouteRouteWithChildren
   '/game': typeof GameRoute
+  '/(withLayout)/guide': typeof withLayoutGuideRoute
   '/(withLayout)/': typeof withLayoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/game' | '/'
+  fullPaths: '/game' | '/guide' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/game' | '/'
-  id: '__root__' | '/(withLayout)' | '/game' | '/(withLayout)/'
+  to: '/game' | '/guide' | '/'
+  id:
+    | '__root__'
+    | '/(withLayout)'
+    | '/game'
+    | '/(withLayout)/guide'
+    | '/(withLayout)/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -78,14 +92,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof withLayoutIndexRouteImport
       parentRoute: typeof withLayoutRouteRoute
     }
+    '/(withLayout)/guide': {
+      id: '/(withLayout)/guide'
+      path: '/guide'
+      fullPath: '/guide'
+      preLoaderRoute: typeof withLayoutGuideRouteImport
+      parentRoute: typeof withLayoutRouteRoute
+    }
   }
 }
 
 interface withLayoutRouteRouteChildren {
+  withLayoutGuideRoute: typeof withLayoutGuideRoute
   withLayoutIndexRoute: typeof withLayoutIndexRoute
 }
 
 const withLayoutRouteRouteChildren: withLayoutRouteRouteChildren = {
+  withLayoutGuideRoute: withLayoutGuideRoute,
   withLayoutIndexRoute: withLayoutIndexRoute,
 }
 
