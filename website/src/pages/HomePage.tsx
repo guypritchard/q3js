@@ -43,19 +43,21 @@ export default function HomePage() {
                         Experience the thrill of Quake III Arena without any downloads or installations.
                     </p>
 
-                    <p className="text-xs md:text-sm text-muted-foreground/80 max-w-xl mx-auto leading-relaxed font-mono">
-                        This project is a fan-made recreation and is not affiliated with or endorsed by
-                        id Software or ZeniMax Media. “Quake III Arena” and related trademarks are the
-                        property of their respective owners.
+                    <p className="text-xs md:text-sm text-muted-foreground/80 max-w-2xl mx-auto leading-relaxed font-mono">
+                        This project is a non-commercial fan implementation and is not affiliated with or endorsed by
+                        id Software or ZeniMax Media. “Quake III Arena” and related trademarks are the property of
+                        their respective owners.
                         <br/><br/>
-                        Only publicly available Quake III Arena demo data files are used; no full retail
-                        assets are included or distributed.
+                        Only the officially released Quake III Arena <span
+                        className="font-semibold">demo data files</span> are used.
+                        No full retail game assets are hosted, included, or required; all gameplay content is limited
+                        to files that id Software made publicly available for free.
                         <br/><br/>
-                        The engine is powered by <a href={"https://github.com/ioquake/ioq3"}
-                                                    className="font-semibold text-primary">ioquake3</a>, an
-                        open-source project licensed under GPLv2. In accordance with GPLv2, the source
-                        code for the modified ioquake3 WASM build and glue layers is available upon
-                        request.
+                        The engine is powered by <a href="https://github.com/ioquake/ioq3"
+                                                    className="font-semibold text-primary">ioquake3</a>,
+                        an open-source project licensed under GPLv2. In accordance with the license,
+                        the source code for the modified ioquake3 WebAssembly build and supporting glue code
+                        is available upon request.
                     </p>
 
 
