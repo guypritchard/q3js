@@ -40,7 +40,7 @@ export default function GamePage() {
                 +set fs_game "${fs_game}"
             `;
 
-        generatedArguments += ` +connect server.q3js.com:27961`;
+        generatedArguments += ` +connect 88.99.66.204:27961`;
 
         const queryArgs = urlParams.get('args');
         if (queryArgs) generatedArguments += ` ${queryArgs} `;
