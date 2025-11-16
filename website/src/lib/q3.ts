@@ -62,8 +62,8 @@ export async function getServers() {
     const {lines} = await q3FetchLines({
         server: {
             proxy: `${getWsProtocol()}//${env.VITE_PROXY_URL}`,
-            host: "master.q3js.com",
-            port: 27950
+            host: env.VITE_MASTER_SERVER_HOST,
+            port: parseInt(env.VITE_MASTER_SERVER_PORT)
         },
         command: "getservers xxx\n"
     })
