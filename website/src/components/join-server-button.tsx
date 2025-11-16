@@ -11,12 +11,14 @@ import {
 import {Button} from "@/components/ui/button.tsx";
 import {Zap} from "lucide-react";
 import {Input} from "@/components/ui/input.tsx";
-import {Link} from "@tanstack/react-router";
+import {env} from "@/env.ts";
 
 export function JoinServerButton(props: {
     server: Q3ResolvedServer,
 }) {
     const [name, setName] = useLocalStorage("name", "Q3JS Player")
+
+    const baseUrl = env.VITE_GAME_URL ? env.VITE_GAME_URL : "";
 
     return <Dialog>
         <DialogTrigger asChild>
@@ -47,15 +49,12 @@ export function JoinServerButton(props: {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                 />
-                <Link to={"/game"} search={{
-                    host: props.server.host,
-                    proxyPort: props.server.proxyPort,
-                }}>
+                <a href={`${baseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}`}>
                     <Button size="lg"
                             className="w-full bg-primary text-primary-foreground font-bold">
                         Join Server
                     </Button>
-                </Link>
+                </a>
             </div>
         </DialogContent>
     </Dialog>;
