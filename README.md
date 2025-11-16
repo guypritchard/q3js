@@ -25,7 +25,7 @@ how the pieces fit together and how to work on each one locally.
 | `baseq3/`, `baseq3.zip` | Retail Quake III assets (not distributed; you must supply your own).            |
 | `game/`                 | Emscripten build scripts that compile `ioquake3` into `ioquake3.{js,wasm}`.     |
 | `server/`               | Native dedicated server build, Dockerfile, entrypoint, and WebSocket↔UDP proxy. |
-| `service/`              | Quarkus app (REST + UDP master server + jOOQ codegen + Flyway migrations).      |
+| `master/`               | Quarkus app (REST + UDP master server + jOOQ codegen + Flyway migrations).      |
 | `website/`              | Vite + React + TanStack Router UI that embeds the WASM build and server picker. |
 | `compose.yml`           | Minimal Postgres 16 instance for local development.                             |
 | `reset-database.sh`     | Helper script that recreates the DB, runs Flyway, and regenerates jOOQ.         |
@@ -49,7 +49,7 @@ The Quarkus service also runs a UDP listener on port 27950 so real game servers 
 |-------------------------|-----------------------------------------------------------------------------------------------|
 | Node.js & npm           | Node 18+ (Node 20.x recommended) for the website and ws proxy.                                |
 | Java                    | JDK 21 for Quarkus.                                                                           |
-| Maven                   | Included via `service/mvnw`, but installing Maven 3.9+ helps.                                 |
+| Maven                   | Included via `master/mvnw`, but installing Maven 3.9+ helps.                                  |
 | Docker + Docker Compose | Required for the Postgres dev DB and optional server builds.                                  |
 | CMake + build-essential | Needed to compile the native server locally.                                                  |
 | Emscripten SDK          | 4.0.19 (included via `emsdk/`; run `git submodule update --init emsdk` or download manually). |
@@ -83,7 +83,7 @@ The Quarkus service also runs a UDP listener on port 27950 so real game servers 
 
 4. **Run the Quarkus service**
    ```bash
-   pushd service
+   pushd master
    ./mvnw quarkus:dev           # REST API on http://localhost:8080, UDP master on :27950
    popd
    ```
@@ -134,14 +134,14 @@ The Quarkus service also runs a UDP listener on port 27950 so real game servers 
 - `entrypoint.sh` launches both the proxy and `ioq3ded` with sensible defaults (dedicated server, `q3dm17`). Use the
   multi-stage `server/Dockerfile` if you prefer container builds: `docker build -t q3js/server ./server`.
 
-### Master/API service (`service/`)
+### Master/API service (`master/`)
 
 - Built with Quarkus 3.29 (Jakarta EE 10 APIs), exposes `GET /api/servers` returning `ServerResponse` DTOs.
 - `UdpMasterServer` (enabled via `UdpServerBootstrap`) listens on UDP 27950 for `heartbeat`, `getservers`, and
   `subscribe` packets, mirroring the classic master-server protocol and notifying subscribers.
 - Persistence: PostgreSQL via `quarkus-jdbc-postgresql`; schema migrations live in
-  `service/src/main/resources/db/migration`. `reset-database.sh` runs Flyway and regenerates jOOQ classes.
-- Configuration lives in `service/src/main/resources/application.yml`. Override via standard Quarkus env vars (e.g.,
+  `master/src/main/resources/db/migration`. `reset-database.sh` runs Flyway and regenerates jOOQ classes.
+- Configuration lives in `master/src/main/resources/application.yml`. Override via standard Quarkus env vars (e.g.,
   `QUARKUS_DATASOURCE_JDBC_URL`).
 - Tests: `./mvnw test`. Native builds: `./mvnw package -Dnative`.
 
