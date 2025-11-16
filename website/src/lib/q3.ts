@@ -1,5 +1,6 @@
 import {q3FetchLines} from "@/lib/q3-util.ts";
-import {stripQ3Colors, toInt} from "@/lib/utils.ts";
+import {getWsProtocol, stripQ3Colors, toInt} from "@/lib/utils.ts";
+import {env} from "@/env.ts";
 
 export type User = {
     score: number
@@ -56,6 +57,30 @@ export const GAME_TYPES: Record<number, string> = {
     4: "CTF",
 }
 
+
+export async function getServers() {
+    const {lines} = await q3FetchLines({
+        server: {
+            proxy: `${getWsProtocol()}//${env.VITE_PROXY_URL}`,
+            host: "master.q3js.com",
+            port: 27950
+        },
+        command: "getservers xxx\n"
+    })
+
+    return lines
+        .slice(1)
+        .filter(line => line.trim().length > 0)
+        .map(line => line.trim())
+        .map(line => {
+            const hostPart = line.split(":")
+            return {
+                host: hostPart[0],
+                port: parseInt(hostPart[1] ?? "27960", 10)
+            }
+        })
+
+}
 
 export async function q3GetInfo(server: Q3ServerTarget): Promise<Q3ResolvedServer | null> {
     const {lines, ping} = await q3FetchLines({
