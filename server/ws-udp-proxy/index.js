@@ -1,6 +1,7 @@
 const fs = require('fs');
 const https = require('https');
 const dgram = require('dgram');
+const path = require('path');
 const WebSocket = require('ws');
 
 const Q3_HOST = process.env.Q3_HOST || '127.0.0.1';
@@ -9,8 +10,8 @@ const WS_PORT = parseInt(process.env.WS_PORT || '27961', 10);
 
 // load self-signed cert and key
 const server = https.createServer({
-    cert: fs.readFileSync('./cert.pem'),
-    key: fs.readFileSync('./key.pem')
+    cert: fs.readFileSync(path.join(__dirname, 'cert.pem')),
+    key: fs.readFileSync(path.join(__dirname, 'key.pem'))
 });
 
 const wss = new WebSocket.Server({ server });
