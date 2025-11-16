@@ -44,6 +44,12 @@ const SERVER_LIST = [
         host: "88.99.66.204",
         port: 27960,
     },
+    {
+        location: "EU",
+        proxy: `${wsProtocol}//${env.VITE_PROXY_URL}`,
+        host: "ffa.q3retro.com",
+        port: 27960,
+    },
 ]
 
 const GAME_TYPES: Record<number, string> = {
