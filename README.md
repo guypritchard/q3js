@@ -4,8 +4,8 @@
 > repo.
 
 Q3JS compiles `ioquake3` to WebAssembly, streams the original `pak` assets through a modern React front end, tunnels UDP
-traffic through a WebSocket proxy, and keeps server metadata in a Quarkus backend. This document explains
-how the pieces fit together and how to work on each one locally.
+traffic through a WebSocket proxy, and keeps server metadata in a Quarkus backend. You can jump straight in at
+[q3js.com](https://q3js.com), or read on to see how the pieces fit together and how to work on each one locally.
 
 ## Highlights
 
@@ -131,6 +131,13 @@ Browser (React + ioquake3.wasm)
   Mount `baseq3/` if you do not bake assets into the image.
 - **Website:** `docker build -t q3js/website ./website` (Dockerfile provided), or deploy the static `dist/` folder
   produced by `npm run build`.
+
+## Run your own server
+
+- Want to customize game types, maps, or run a persistent instance? Follow the hosted guide at
+  [q3js.com/guide](https://q3js.com/guide) for detailed steps on provisioning assets, configuring the Quarkus master,
+  and exposing the WebSocket proxy.
+- The guide walks through the Docker-based deployments.
 
 ## Useful scripts
 
