@@ -3,7 +3,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Input} from "@/components/ui/input"
 import {Search} from "lucide-react"
 import {useInterval} from "usehooks-ts";
-import {getServers, q3GetInfo, type Q3ResolvedServer} from "@/lib/q3.ts";
+import {getServers, type Q3ServerTarget} from "@/lib/q3.ts";
 import SERVER_LIST from "@/servers.ts";
 import {ServerCard} from "@/components/server-card.tsx";
 import {getWsProtocol} from "@/lib/utils.ts";
@@ -12,7 +12,7 @@ import {getWsProtocol} from "@/lib/utils.ts";
 const POLL_MS = 5000
 
 export function ServerPicker() {
-    const [servers, setServers] = useState<Q3ResolvedServer[]>([])
+    const [servers, setServers] = useState<Q3ServerTarget[]>([])
     const [searchQuery, setSearchQuery] = useState("")
 
     async function refreshServers() {
@@ -26,13 +26,8 @@ export function ServerPicker() {
             ...SERVER_LIST,
             ...serversFromMaster
         ]
+        setServers(serversToFetch);
 
-        const results = await Promise.allSettled(serversToFetch.map(q3GetInfo))
-        const valid = results
-            .filter(r => r.status === "fulfilled" && r.value)
-            .map(r => (r as PromiseFulfilledResult<Q3ResolvedServer>).value!)
-
-        setServers(valid)
     }
 
     useInterval(refreshServers, POLL_MS);
@@ -42,12 +37,7 @@ export function ServerPicker() {
     }, []);
 
 
-    const filteredServers = servers.filter(
-        (s) =>
-            s.sv_hostname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            s.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            s.mapname.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    const filteredServers = servers;
 
 
     return (
@@ -74,11 +64,11 @@ export function ServerPicker() {
                 </Card>
 
                 <div className="grid gap-4">
-                    {filteredServers.map((server) => {
+                    {filteredServers.map((server, i) => {
 
                         return (
                             <ServerCard
-                                key={server.id}
+                                key={i}
                                 server={server}
                             />
                         )
