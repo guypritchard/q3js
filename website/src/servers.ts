@@ -6,8 +6,8 @@ const SERVER_LIST = [
     {
         location: "EU",
         proxy: `${getWsProtocol()}//${env.VITE_PROXY_URL}`,
-        host: "ffa.q3js.com",
-        port: 80,
+        host: "88.99.66.204",
+        port: 27960,
     },
 ]
 
