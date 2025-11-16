@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import lombok.RequiredArgsConstructor;
 import io.vertx.core.http.HttpServerRequest;
+import org.jboss.logging.Logger;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class ServerController {
+    private static final Logger LOG = Logger.getLogger(ServerController.class);
 
     private final ServerService serverService;
 
@@ -46,12 +48,14 @@ public class ServerController {
     private String getClientIp() {
         // 1) Prefer X-Real-IP
         String xRealIp = headers.getHeaderString("X-Real-IP");
+        LOG.debugf("X-Real-IP: %s", xRealIp);
         if (xRealIp != null && !xRealIp.isBlank()) {
             return xRealIp.trim();
         }
 
         // 2) Then X-Forwarded-For (first value)
         String xForwardedFor = headers.getHeaderString("X-Forwarded-For");
+        LOG.debugf("X-Forwarded-For: %s", xForwardedFor);
         if (xForwardedFor != null && !xForwardedFor.isBlank()) {
             String first = xForwardedFor.split(",")[0].trim();
             if (!first.isEmpty()) {
@@ -60,6 +64,8 @@ public class ServerController {
         }
 
         // 3) Fallback to Vert.x remote address
-        return request.remoteAddress().host();
+        String host = request.remoteAddress().host();
+        LOG.debugf("Remote Address: %s", host);
+        return host;
     }
 }
