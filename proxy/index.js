@@ -21,7 +21,6 @@ async function sendHeartbeat() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 proxyPort: WS_PORT,
-                targetHost: DEFAULT_TARGET_HOST,
                 targetPort: DEFAULT_TARGET_PORT
             }),
         });
