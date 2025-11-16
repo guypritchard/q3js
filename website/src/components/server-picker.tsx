@@ -1,10 +1,9 @@
 import {useEffect, useState} from "react"
 import {Card, CardContent} from "@/components/ui/card"
 import {useInterval} from "usehooks-ts";
-import {getServers, type Q3ServerTarget} from "@/lib/q3.ts";
+import {type Q3ServerTarget} from "@/lib/q3.ts";
 import SERVER_LIST from "@/servers.ts";
 import {ServerCard} from "@/components/server-card.tsx";
-import {getWsProtocol} from "@/lib/utils.ts";
 import ServerSkeleton from "@/components/server-skeleton.tsx";
 
 
@@ -17,15 +16,15 @@ export function ServerPicker() {
     async function refreshServers() {
         try {
             setLoading(true);
-            const serversFromMaster = (await getServers()).map(s => ({
-                proxy: `${getWsProtocol()}//${import.meta.env.VITE_PROXY_URL}`,
-                host: s.host,
-                port: s.port
-            }));
-            console.log(serversFromMaster);
+            // const serversFromMaster = (await getServers()).map(s => ({
+            //     proxy: `${getWsProtocol()}//${import.meta.env.VITE_PROXY_URL}`,
+            //     host: s.host,
+            //     port: s.port
+            // }));
+
             const serversToFetch = [
                 ...SERVER_LIST,
-                ...serversFromMaster
+                // ...serversFromMaster
             ]
             setServers(serversToFetch);
         } catch (e) {
