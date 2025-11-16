@@ -1,6 +1,8 @@
 package com.q3js.udp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +18,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@ApplicationScoped
 public class UdpMasterServer {
     private static final Logger log = LoggerFactory.getLogger(UdpMasterServer.class);
 
@@ -23,7 +26,6 @@ public class UdpMasterServer {
     private static final long PRUNE_INTERVAL_MS = 350_000;
     private static final int MAX_PACKET = 1400; // safe MTU for UDP
 
-    private final int port;
     private final DatagramSocket socket;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final ExecutorService workers = Executors.newSingleThreadExecutor();
@@ -34,18 +36,19 @@ public class UdpMasterServer {
 
     private static final int CHALLENGE_MIN_LENGTH = 9;
     private static final int CHALLENGE_MAX_LENGTH = 12;
+    private final DSLContext dsl;
 
-    public UdpMasterServer(int port) throws Exception {
-        this.port = port;
-        this.socket = new DatagramSocket(new InetSocketAddress("0.0.0.0", port));
+    public UdpMasterServer(DSLContext dsl) throws Exception {
+        this.socket = new DatagramSocket(new InetSocketAddress("0.0.0.0", DEFAULT_PORT));
         this.socket.setReceiveBufferSize(1 << 20);
         this.socket.setSendBufferSize(1 << 20);
+        this.dsl = dsl;
     }
 
     // ===== lifecycle =====
     public void start() {
         if (!running.compareAndSet(false, true)) return;
-        log.info("master server started at {} UTC, UDP {}", Instant.now(), port);
+        log.info("master server started at {} UTC, UDP {}", Instant.now(), DEFAULT_PORT);
 
         scheduler.scheduleAtFixedRate(this::pruneServers, PRUNE_INTERVAL_MS, PRUNE_INTERVAL_MS, TimeUnit.MILLISECONDS);
 
@@ -273,21 +276,5 @@ public class UdpMasterServer {
             }
             return new Config(port);
         }
-    }
-
-    // ===== main =====
-    public static void main(String[] args) throws Exception {
-        String cfgPath = null;
-        for (var i = 0; i + 1 < args.length; i++)
-            if ("--config".equals(args[i])) {
-                cfgPath = args[i + 1];
-                break;
-            }
-        var cfg = Config.load(cfgPath == null ? "./config.json" : cfgPath);
-
-        var s = new UdpMasterServer(cfg.port());
-        Runtime.getRuntime().addShutdownHook(new Thread(s::stop));
-        s.start();
-        System.out.println("master server is listening on UDP " + cfg.port());
     }
 }
