@@ -35,6 +35,90 @@ Object.setPrototypeOf(WebSocket, OriginalWebSocket);
 
 type Prog = { received: number; total: number; pct: number; current?: string };
 
+// Persistent data versioning
+const DATA_VERSION = "v1";
+const VERSION_KEY = "ioq3-data-version";
+
+// Sync helper
+function syncfs(module: any, populate: boolean) {
+    return new Promise<void>((resolve, reject) => {
+        try {
+            module.FS.syncfs(populate, (err: any) => (err ? reject(err) : resolve()));
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+// Resolve IDBFS across different Emscripten variants
+function resolveIDBFS(module: any) {
+    // Newer: module.FS.filesystems.IDBFS
+    if (module?.FS?.filesystems?.IDBFS) return module.FS.filesystems.IDBFS;
+    // Some bundles expose module.IDBFS
+    if (module?.IDBFS) return module.IDBFS;
+    // Legacy global
+    // @ts-ignore
+    if ((globalThis as any).IDBFS) return (globalThis as any).IDBFS;
+    return null;
+}
+
+async function ensureMounts(module: any): Promise<{persist: boolean}> {
+    const { FS } = module;
+    FS.mkdirTree("/baseq3");
+    FS.mkdirTree("/baseq3/vm");
+
+    const IDBFS = resolveIDBFS(module);
+    if (!IDBFS) {
+        console.warn("[ioq3] IDBFS not linked. Running without persistence.");
+        return { persist: false };
+    }
+
+    // Mount once at /baseq3; /baseq3/vm lives under same tree so no need for a second mount.
+    try {
+        FS.mount(IDBFS, {}, "/baseq3");
+    } catch (e) {
+        // Already mounted or race during hot reload
+        // If already mounted, proceed.
+    }
+
+    const current = localStorage.getItem(VERSION_KEY);
+    if (current !== DATA_VERSION) {
+        try {
+            // Populate first so we can clean reliably
+            await syncfs(module, true);
+            // Remove files to force re-download
+            for (const e of FS.readdir("/baseq3")) {
+                if (e === "." || e === "..") continue;
+                const p = `/baseq3/${e}`;
+                try {
+                    const stat = FS.stat(p);
+                    // crude dir check: dirs have mode & 0o40000
+                    if ((stat.mode & 0o40000) === 0o40000) {
+                        // shallow clean: remove known child files only if needed
+                        try {
+                            for (const c of FS.readdir(p)) {
+                                if (c === "." || c === "..") continue;
+                                try { FS.unlink(`${p}/${c}`); } catch {}
+                            }
+                            FS.rmdir(p);
+                        } catch { /* ignore */ }
+                    } else {
+                        FS.unlink(p);
+                    }
+                } catch { /* ignore */ }
+            }
+            await syncfs(module, false);
+            localStorage.setItem(VERSION_KEY, DATA_VERSION);
+        } catch (e) {
+            console.warn("[ioq3] Version reset failed, continuing:", e);
+        }
+    }
+
+    // Populate from IndexedDB
+    await syncfs(module, true);
+    return { persist: true };
+}
+
 export default function GamePage() {
     const [prog, setProg] = useState<Prog>({received: 0, total: 0, pct: 0, current: ""});
 
@@ -77,7 +161,7 @@ export default function GamePage() {
             }
             const reader = resp.body.getReader();
             const chunks: Uint8Array[] = [];
-            for (; ;) {
+            for (;;) {
                 const {done, value} = await reader.read();
                 if (done) break;
                 chunks.push(value!);
@@ -114,32 +198,48 @@ export default function GamePage() {
                 async (module: any) => {
                     module.addRunDependency("setup-ioq3-filesystem");
                     try {
+                        const { persist } = await ensureMounts(module);
+
                         const gameDirs = [com_basegame, fs_basegame, fs_game];
                         const fileEntries = gameDirs.flatMap((g) => config[g].files);
                         const urls = fileEntries.map((f) => new URL(f.src, dataURL));
+
                         const totalBytes = await estimateTotalBytes(urls);
                         let receivedBytes = 0;
 
                         for (let i = 0; i < fileEntries.length; i++) {
                             const f = fileEntries[i];
                             const url = urls[i];
+                            const name = f.src.split("/").pop() as string;
+                            const dstPath = `${f.dst}/${name}`;
+
+                            const exists = (() => {
+                                try {
+                                    const st = module.FS.stat(dstPath);
+                                    return st && st.size > 0;
+                                } catch {
+                                    return false;
+                                }
+                            })();
                             setProg((p) => ({...p, current: f.src, total: totalBytes}));
 
-                            const resp = await fetch(url);
-                            if (!resp.ok) continue;
+                            if (!exists) {
+                                const resp = await fetch(url);
+                                if (!resp.ok) continue;
+                                const data = await streamToArrayBuffer(resp, (n) => {
+                                    receivedBytes += n;
+                                    const pct = totalBytes ? Math.min(100, Math.floor((receivedBytes / totalBytes) * 100)) : 0;
+                                    setProg({received: receivedBytes, total: totalBytes, pct, current: f.src});
+                                });
 
-                            const data = await streamToArrayBuffer(resp, (n) => {
-                                receivedBytes += n;
-                                const pct = totalBytes ? Math.min(100, Math.floor((receivedBytes / totalBytes) * 100)) : 0;
-                                setProg({received: receivedBytes, total: totalBytes, pct, current: f.src});
-                            });
-
-                            const name = f.src.split("/").pop() as string;
-                            const dir = f.dst;
-                            module.FS.mkdirTree(dir);
-                            module.FS.writeFile(`${dir}/${name}`, data);
+                                module.FS.mkdirTree(f.dst);
+                                module.FS.writeFile(dstPath, data);
+                            }
                         }
 
+                        if (persist) {
+                            await syncfs(module, false);
+                        }
                         setProg((p) => ({...p, pct: 100}));
                     } finally {
                         module.removeRunDependency("setup-ioq3-filesystem");
@@ -153,8 +253,7 @@ export default function GamePage() {
         <div className="relative w-full h-full">
             <canvas id="canvas" className="w-full h-full"/>
             {prog.pct < 100 && (
-                <Card
-                    className="absolute bottom-4 left-4 right-4 p-4 bg-background/80 backdrop-blur border border-border">
+                <Card className="absolute bottom-4 left-4 right-4 p-4 bg-background/80 backdrop-blur border border-border">
                     <div className="text-xs text-muted-foreground mb-2 font-mono">
                         {prog.current ? `Downloading: ${prog.current}` : "Preparing downloads"}
                     </div>
