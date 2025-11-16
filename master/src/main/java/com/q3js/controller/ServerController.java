@@ -48,14 +48,14 @@ public class ServerController {
     private String getClientIp() {
         // 1) Prefer X-Real-IP
         String xRealIp = headers.getHeaderString("X-Real-IP");
-        LOG.debugf("X-Real-IP: %s", xRealIp);
+        LOG.infof("X-Real-IP: %s", xRealIp);
         if (xRealIp != null && !xRealIp.isBlank()) {
             return xRealIp.trim();
         }
 
         // 2) Then X-Forwarded-For (first value)
         String xForwardedFor = headers.getHeaderString("X-Forwarded-For");
-        LOG.debugf("X-Forwarded-For: %s", xForwardedFor);
+        LOG.infof("X-Forwarded-For: %s", xForwardedFor);
         if (xForwardedFor != null && !xForwardedFor.isBlank()) {
             String first = xForwardedFor.split(",")[0].trim();
             if (!first.isEmpty()) {
@@ -65,7 +65,7 @@ public class ServerController {
 
         // 3) Fallback to Vert.x remote address
         String host = request.remoteAddress().host();
-        LOG.debugf("Remote Address: %s", host);
+        LOG.infof("Remote Address: %s", host);
         return host;
     }
 }
