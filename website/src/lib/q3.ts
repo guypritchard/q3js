@@ -1,6 +1,5 @@
 import {q3FetchLines} from "@/lib/q3-util.ts";
-import {getWsProtocol, stripQ3Colors, toInt} from "@/lib/utils.ts";
-import {env} from "@/env.ts";
+import {stripQ3Colors, toInt} from "@/lib/utils.ts";
 
 export type User = {
     score: number
@@ -40,13 +39,15 @@ export interface Q3ResolvedServer {
     gamename?: string
     g_maxGameClients?: number
     users: User[]
+    proxyHost: string
+    proxyPort: number
 }
 
 export type Q3ServerTarget = {
-    location?: string
-    proxy: string
-    host: string
-    port: number
+    proxyHost: string
+    proxyPort: number
+    targetHost: string
+    targetPort: number
 }
 
 export const GAME_TYPES: Record<number, string> = {
@@ -57,30 +58,6 @@ export const GAME_TYPES: Record<number, string> = {
     4: "CTF",
 }
 
-
-export async function getServers() {
-    const {lines} = await q3FetchLines({
-        server: {
-            proxy: `${getWsProtocol()}//${env.VITE_PROXY_URL}`,
-            host: env.VITE_MASTER_SERVER_HOST,
-            port: parseInt(env.VITE_MASTER_SERVER_PORT)
-        },
-        command: "getservers xxx\n"
-    })
-
-    return lines
-        .slice(1)
-        .filter(line => line.trim().length > 0)
-        .map(line => line.trim())
-        .map(line => {
-            const hostPart = line.split(":")
-            return {
-                host: hostPart[0],
-                port: parseInt(hostPart[1] ?? "27960", 10)
-            }
-        })
-
-}
 
 export async function q3GetInfo(server: Q3ServerTarget): Promise<Q3ResolvedServer | null> {
     const {lines, ping} = await q3FetchLines({
@@ -117,7 +94,7 @@ export async function q3GetInfo(server: Q3ServerTarget): Promise<Q3ResolvedServe
     }
 
     return {
-        id: `${server.host}:${server.port}`,
+        id: `${server.targetHost}:${server.targetPort}`,
         sv_hostname: stripQ3Colors(
             kv["sv_hostname"] ?? kv["hostname"] ?? "Unnamed Server"
         ),
@@ -129,12 +106,11 @@ export async function q3GetInfo(server: Q3ServerTarget): Promise<Q3ResolvedServe
         g_needpass: toInt(kv["g_needpass"]),
         capturelimit: toInt(kv["capturelimit"]),
         version: kv["version"] ?? kv["com_gamename"] ?? kv["gamename"] ?? "",
-        location: server.location,
         players: users.length,
         ping,
 
-        host: server.host,
-        port: server.port,
+        host: server.targetHost,
+        port: server.targetPort,
 
         challenge: kv["challenge"],
         sv_maxPing: toInt(kv["sv_maxping"]),
@@ -151,6 +127,9 @@ export async function q3GetInfo(server: Q3ServerTarget): Promise<Q3ResolvedServe
         bot_minplayers: toInt(kv["bot_minplayers"]),
         gamename: kv["gamename"],
         g_maxGameClients: toInt(kv["g_maxgameclients"]),
+
+        proxyHost: server.proxyHost,
+        proxyPort: server.proxyPort,
 
         users
     }

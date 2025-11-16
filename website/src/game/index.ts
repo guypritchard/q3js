@@ -5,9 +5,7 @@ import {getWsProtocol} from "@/lib/utils.ts";
 import {ensureMounts, estimateTotalBytes, fetchIntoUint8, type Prog, syncfs} from "@/lib/fs.ts";
 
 type Params = {
-    proxyUrl: string;
-    host: string;
-    port: number;
+    proxyIpHost: string;
     name: string;
     rafUpdate: (prog: Prog) => void;
 }
@@ -32,7 +30,7 @@ const config = {
     },
 } as const;
 
-export default function startGame({proxyUrl, host, port, name, rafUpdate}: Params) {
+export default function startGame({proxyIpHost, name, rafUpdate}: Params) {
     const com_basegame = "baseq3" as const;
     const fs_basegame = "baseq3" as const;
     const fs_game = "baseq3" as const;
@@ -47,7 +45,7 @@ export default function startGame({proxyUrl, host, port, name, rafUpdate}: Param
           +set con_scale 2
           +set fs_game "${fs_game}"
         `;
-    generatedArguments += ` +connect ${proxyUrl} `;
+    generatedArguments += ` +connect ${proxyIpHost} `;
     generatedArguments += ` +set name "${name.replace(/"/g, "'")}" `;
 
     if (name === "^1L^2K") {
@@ -58,7 +56,7 @@ export default function startGame({proxyUrl, host, port, name, rafUpdate}: Param
 
     ioquake3({
         websocket: {
-            url: `${getWsProtocol()}//${proxyUrl}?host=${host}&port=${port}`,
+            url: `${getWsProtocol()}//${proxyIpHost}`,
             subprotocol: "binary"
         },
         canvas: document.getElementById("canvas") as HTMLCanvasElement,

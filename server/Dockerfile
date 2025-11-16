@@ -27,7 +27,7 @@ FROM node:20-trixie AS runner
 
 ENV RCON_PASSWORD="changeme"
 
-COPY --from=proxybuilder /proxy /server/proxy
+COPY --from=proxybuilder /proxy /proxy
 
 COPY --from=serverbuilder /server/build /server/build
 COPY --from=serverbuilder /server/entrypoint.sh /server/entrypoint.sh

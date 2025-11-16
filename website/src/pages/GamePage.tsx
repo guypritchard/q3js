@@ -2,7 +2,6 @@ import {useEffect, useState} from "react";
 import {Card} from "@/components/ui/card";
 import {Progress} from "@/components/ui/progress";
 import {useLocalStorage} from "@uidotdev/usehooks";
-import {env} from "@/env.ts";
 import {useSearch} from "@tanstack/react-router";
 import {makeRafUpdater, type Prog} from "@/lib/fs.ts";
 import {useFullscreenOnF11} from "@/hooks/use-fullscreen.ts";
@@ -14,18 +13,15 @@ export default function GamePage() {
     const [prog, setProg] = useState<Prog>({received: 0, total: 0, pct: 0, current: ""});
     const rafUpdate = makeRafUpdater(setProg);
     const [name] = useLocalStorage("name", "Q3JS Player")
-    const proxyUrl = env.VITE_PROXY_URL;
 
-    const {host, port} = useSearch({
+    const {proxyIpHost} = useSearch({
         from: "/game"
     })
 
     useEffect(() => {
         startGame({
-            host,
-            port,
             name,
-            proxyUrl,
+            proxyIpHost,
             rafUpdate
         })
     }, []);

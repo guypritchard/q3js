@@ -16,7 +16,17 @@ public class ServerService {
     private final Set<Server> servers;
 
     public ServerService() {
-        this.servers = new ConcurrentSkipListSet<>(Comparator.comparing(Server::getHost));
+        this.servers = new ConcurrentSkipListSet<>(Comparator.comparing(Server::getTargetHost));
+        addDefaultServers();
+    }
+
+    private void addDefaultServers() {
+        this.servers.add(Server.builder()
+                .proxyHost("server.q3js.com")
+                .proxyPort(27961)
+                .targetHost("server.q3js.com")
+                .targetPort(27960)
+                .build());
     }
 
     public List<Server> getAllServers() {

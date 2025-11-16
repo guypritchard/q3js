@@ -1,5 +1,13 @@
+import {getWsProtocol} from "@/lib/utils.ts";
+import {env} from "@/env.ts";
+
 export async function q3FetchLines(opts: {
-    server: { proxy: string; host: string; port: number }
+    server: {
+        proxyHost: string
+        proxyPort: number
+        targetHost: string
+        targetPort: number
+    },
     command: string
     timeoutMs?: number
 }): Promise<{ lines: string[]; ping: number }> {
@@ -8,7 +16,7 @@ export async function q3FetchLines(opts: {
 
     return new Promise((resolve, reject) => {
         const ws = new WebSocket(
-            `${server.proxy}?host=${server.host}&port=${server.port}`
+            `${getWsProtocol()}//${env.VITE_PROXY_URL}?host=${server.targetHost}&port=${server.targetPort}`
         )
         ws.binaryType = "arraybuffer"
 

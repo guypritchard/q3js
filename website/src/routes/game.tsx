@@ -3,8 +3,7 @@ import GamePage from "@/pages/GamePage.tsx";
 import z from "zod";
 
 const searchParams = z.object({
-    host: z.string(),
-    port: z.number()
+    proxyIpHost: z.string(),
 })
 
 export const Route = createFileRoute('/game')({
