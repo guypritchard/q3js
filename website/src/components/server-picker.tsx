@@ -181,7 +181,7 @@ export function ServerPicker() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
                         <Input
                             placeholder="Search servers by name, location, or map..."
-                            className="pl-10 bg-secondary border-border"
+                            className="pl-10 border-border"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
