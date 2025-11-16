@@ -11,7 +11,6 @@ import {
 import {Button} from "@/components/ui/button.tsx";
 import {Zap} from "lucide-react";
 import {Input} from "@/components/ui/input.tsx";
-import {Link} from "@tanstack/react-router";
 import {env} from "@/env.ts";
 
 export function JoinServerButton(props: {
@@ -54,16 +53,12 @@ export function JoinServerButton(props: {
                 />
 
                 {/*@ts-ignore*/}
-                <Link to={`${baseUrl}/game`} search={{
-                    host: props.server.host,
-                    proxyPort: props.server.proxyPort,
-                    name
-                }}>
+                <a to={`${baseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(name)}`}>
                     <Button size="lg"
                             className="w-full bg-primary text-primary-foreground font-bold">
                         Join Server
                     </Button>
-                </Link>
+                </a>
             </div>
         </DialogContent>
     </Dialog>;
