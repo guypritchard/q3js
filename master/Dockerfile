@@ -1,27 +1,19 @@
 FROM ghcr.io/graalvm/native-image-community:21 AS build
 
+WORKDIR /master
+
 RUN microdnf install -y maven
 
-WORKDIR /workspace
+COPY master .
 
-COPY pom.xml .
+RUN mvn clean package -Dnative -DskipTests
 
-RUN mvn -q -DskipTests dependency:go-offline
 
-COPY src ./src
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5
 
-RUN mvn -DskipTests package
+EXPOSE 8080
+COPY --from=build /master/target/master-1.0-SNAPSHOT-runner /runner
 
-FROM debian:12-slim
+COPY --from=build /master/target/*.so /
 
-RUN useradd -r -s /bin/false q3js
-
-WORKDIR /app
-
-COPY --from=build /workspace/target/q3js-master /app/q3js-master
-
-EXPOSE 27950/udp
-
-USER q3js
-
-CMD ["/app/q3js-master", "27950"]
+CMD ["/runner"]

@@ -1,8 +1,29 @@
 const dgram = require('dgram');
 const WebSocket = require('ws');
 
+const MASTER_SERVER_BASE = process.env.MASTER_SERVER_URL || 'http://localhost:8080';
+const HEARTBEAT_INTERVAL_MS = 30 * 1000;
+
+async function sendHeartbeat() {
+    try {
+        const res = await fetch(`${MASTER_SERVER_BASE}/api/servers/heartbeat?port=${process.env.WS_PORT || '27961'}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+        });
+        if (!res.ok) {
+            console.warn('Heartbeat failed:', res.statusText);
+        }
+    } catch (e) {
+        console.warn('Heartbeat error:', e.message);
+    }
+}
+
+setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS);
+sendHeartbeat();
+
+
 const WS_PORT = parseInt(process.env.WS_PORT || '27961', 10);
-const wss = new WebSocket.Server({ port: WS_PORT });
+const wss = new WebSocket.Server({port: WS_PORT});
 
 console.log(`WS<->UDP proxy: ws://0.0.0.0:${WS_PORT}/`);
 
@@ -30,7 +51,10 @@ wss.on('connection', (ws, req) => {
 
     udp.on('error', err => {
         console.warn('UDP error:', err.message);
-        try { udp.close(); } catch {}
+        try {
+            udp.close();
+        } catch {
+        }
     });
 
     ws.on('message', data => {
@@ -45,7 +69,10 @@ wss.on('connection', (ws, req) => {
     });
 
     const close = () => {
-        try { udp.close(); } catch {}
+        try {
+            udp.close();
+        } catch {
+        }
     };
 
     ws.on('close', close);

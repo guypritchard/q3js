@@ -1,3 +1,12 @@
+FROM node:20-trixie AS proxybuilder
+
+WORKDIR /
+COPY . .
+WORKDIR /server/proxy
+
+RUN npm install
+
+
 FROM debian:latest AS serverbuilder
 
 RUN apt-get update && apt-get install -y \
@@ -17,6 +26,8 @@ RUN chmod +x build.sh && ./build.sh
 FROM node:20-trixie AS runner
 
 ENV RCON_PASSWORD="changeme"
+
+COPY --from=proxybuilder /server/proxy /server/proxy
 
 COPY --from=serverbuilder /server/build /server/build
 COPY --from=serverbuilder /server/entrypoint.sh /server/entrypoint.sh

@@ -1,0 +1,9 @@
+greeting:
+  message: "hello"
+quarkus:
+  http:
+    cors:
+      enabled: true
+      allowed-origins: "http://localhost:3000,https://q3js.com"
+      allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+      allowed-headers: "*"
