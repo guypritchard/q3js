@@ -4,6 +4,7 @@ import ioquake3 from "@/lib/ioquake3.js";
 import wasm from "@/lib/ioquake3.wasm?url";
 import {Card} from "@/components/ui/card";
 import {Progress} from "@/components/ui/progress";
+import {useLocalStorage} from "@uidotdev/usehooks";
 
 const config = {
     baseq3: {
@@ -182,6 +183,7 @@ async function estimateTotalBytes(fileUrls: URL[]) {
 export default function GamePage() {
     const [prog, setProg] = useState<Prog>({received: 0, total: 0, pct: 0, current: ""});
     const rafUpdate = makeRafUpdater(setProg);
+    const [name] = useLocalStorage("name", "Q3JS Player")
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -198,6 +200,8 @@ export default function GamePage() {
       +set fs_game "${fs_game}"
     `;
         generatedArguments += ` +connect server.q3js.com:443`;
+
+        generatedArguments += ` +set name "${name.replace(/"/g, "'")}" `;
 
         const queryArgs = urlParams.get("args");
         if (queryArgs) generatedArguments += ` ${queryArgs} `;

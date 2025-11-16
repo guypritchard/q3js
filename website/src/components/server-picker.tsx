@@ -1,5 +1,5 @@
 "use client"
-
+import {useLocalStorage} from "@uidotdev/usehooks";
 import {useState} from "react"
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card"
 import {Button} from "@/components/ui/button"
@@ -7,6 +7,14 @@ import {Badge} from "@/components/ui/badge"
 import {Input} from "@/components/ui/input"
 import {Search, Users, Globe, Activity, Zap, Lock} from "lucide-react"
 import {Link} from "@tanstack/react-router";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
+} from "@/components/ui/dialog.tsx";
 
 interface Server {
     id: string
@@ -52,6 +60,7 @@ const MOCK_SERVERS: Server[] = [
 
 export function ServerPicker() {
     const [searchQuery, setSearchQuery] = useState("")
+    const [name, setName] = useLocalStorage("name", "Q3JS Player")
 
     const filteredServers = MOCK_SERVERS.filter(
         (server) =>
@@ -175,22 +184,52 @@ export function ServerPicker() {
                                 </div>
 
                                 {/* Connect Button */}
-                                <Link to={"/game"}>
-                                    <Button
-                                        size="lg"
-                                        className="lg:w-auto w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
-                                        disabled={server.players >= server.sv_maxclients}
-                                    >
-                                        {server.players >= server.sv_maxclients ? (
-                                            "Server Full"
-                                        ) : (
-                                            <>
-                                                <Zap className="h-4 w-4 mr-2"/>
-                                                Connect
-                                            </>
-                                        )}
-                                    </Button>
-                                </Link>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                            size="lg"
+                                            className="lg:w-auto w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+                                            disabled={server.players >= server.sv_maxclients}
+                                        >
+                                            {server.players >= server.sv_maxclients ? (
+                                                "Server Full"
+                                            ) : (
+                                                <>
+                                                    <Zap className="h-4 w-4 mr-2"/>
+                                                    Connect
+                                                </>
+                                            )}
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>
+                                                Choose a name
+                                            </DialogTitle>
+                                            <DialogDescription>
+                                                Please enter your player name to
+                                                join <strong>{server.sv_hostname}</strong>.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="mt-4">
+                                            <Input
+                                                placeholder="Enter your player name"
+                                                className="mb-4"
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value)}
+                                            />
+                                            <Link to={"/game"}>
+                                                <Button
+                                                    size="lg"
+                                                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+                                                >
+                                                    Join Server
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+
                             </div>
                         </CardContent>
                     </Card>
