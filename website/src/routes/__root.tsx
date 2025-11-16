@@ -13,7 +13,7 @@ interface MyRouterContext {
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
     component: () => (
-        <>
+        <div className={"font-mono"}>
             <Outlet/>
             <TanStackDevtools
                 config={{
@@ -27,6 +27,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
                     TanStackQueryDevtools,
                 ]}
             />
-        </>
+        </div>
     ),
 })
