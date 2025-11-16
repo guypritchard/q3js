@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-node ../proxy/index.js &
+set -m
 
-./build/Release/ioq3ded \
-  +set dedicated 2 \
-  +set sv_pure 1 \
-  +set sv_allowDownload 1 \
-  +set net_ip 0.0.0.0 \
-  +set sv_dlrate 0 \
-  +set com_hunkMegs 256 \
-  +exec autoexec.cfg
+node ../proxy/index.js &
+PROXY_PID=$!
+
+./build/Release/ioq3ded "$@" &
+Q3_PID=$!
+
+cleanup() {
+  echo "Shutting down..."
+  kill -TERM -$PROXY_PID 2>/dev/null || true
+  kill -TERM -$Q3_PID 2>/dev/null || true
+}
+trap cleanup SIGINT SIGTERM
+
+# Wait for both
+wait $PROXY_PID
+wait $Q3_PID

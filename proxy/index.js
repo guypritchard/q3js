@@ -3,7 +3,7 @@ const WebSocket = require('ws');
 const url = require('url');
 
 const MASTER_SERVER_BASE = process.env.MASTER_SERVER_BASE || 'https://master.q3js.com';
-const HEARTBEAT_INTERVAL_MS = 30 * 1000;
+const HEARTBEAT_INTERVAL_MS = 5 * 1000;
 
 // env defaults
 const DEFAULT_TARGET_HOST = process.env.TARGET_HOST || '127.0.0.1';

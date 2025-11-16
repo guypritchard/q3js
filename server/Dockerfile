@@ -37,5 +37,7 @@ WORKDIR /server
 VOLUME ["/server/build/Release/baseq3"]
 
 EXPOSE 27961
+EXPOSE 27960/udp
 
-CMD ["./entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["+set", "dedicated", "2", "+set", "sv_pure", "1", "+set", "sv_allowDownload", "1", "+set", "net_ip", "0.0.0.0", "+set", "sv_dlrate", "0", "+set", "com_hunkMegs", "256", "+exec", "autoexec.cfg"]
