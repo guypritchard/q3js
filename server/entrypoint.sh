@@ -11,4 +11,7 @@ node ./ws-udp-proxy/index.js &
   +set sv_maxclients 64 \
   +set rconPassword "${RCON_PASSWORD}" \
   +set sv_hostname "Q3DM17 24/7" \
+  +set bot_minplayers 2 \
+  +addbot sarge 2 \
+  +addbot daemia 2
   +map q3dm17
