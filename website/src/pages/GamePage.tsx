@@ -51,10 +51,7 @@ export default function GamePage() {
                     const gameDirs = [com_basegame, fs_basegame, fs_game];
                     for (let g = 0; g < gameDirs.length; g++) {
                         const gamedir = gameDirs[g];
-                        if (config[gamedir] === null || config[gamedir].files === null) {
-                            console.warn(`Game directory ${gamedir} not found in config.json, skipping.`);
-                            continue;
-                        }
+
                         const files = config[gamedir].files;
                         const fetches = files.map(file => fetch(new URL(file.src, dataURL)));
                         for (let i = 0; i < files.length; i++) {
