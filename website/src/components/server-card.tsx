@@ -12,12 +12,21 @@ export function ServerCard(props: {
     server: Q3ServerTarget,
 }) {
 
+    const [loading, setLoading] = useState(false);
     const [info, setInfo] = useState<Q3ResolvedServer | undefined>();
+    const [error, setError] = useState<string | null>(null);
 
     async function refresh() {
-        const res = await q3GetInfo(props.server)
-        if (res) {
-            setInfo(res);
+        setLoading(true);
+        try {
+            const res = await q3GetInfo(props.server)
+            if (res) {
+                setInfo(res);
+            }
+        } catch (e) {
+            setError("Failed to fetch server info");
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -27,7 +36,7 @@ export function ServerCard(props: {
         refresh();
     }, []);
 
-    if (!info) {
+    if (!loading) {
         return <Card
             className="bg-card/50 border-border/50 hover:border-primary/50 transition-all animate-pulse">
             <CardContent className="p-6">
@@ -37,6 +46,20 @@ export function ServerCard(props: {
                         <div className="h-4 bg-secondary/50 rounded w-1/4 mb-2"/>
                         <div className="h-4 bg-secondary/50 rounded w-1/3 mb-2"/>
                         <div className="h-4 bg-secondary/50 rounded w-1/5 mb-2"/>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>;
+    }
+
+    if (error || !info) {
+        return <Card
+            className="bg-card/50 border-border/50 hover:border-destructive/50 transition-all">
+            <CardContent className="p-6">
+                <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                    <div className="flex-1 space-y-3">
+                        <div className="h-6 bg-secondary/50 rounded w-1/2 mb-4"/>
+                        <div className="text-destructive">Error: {error || "Unknown error"}</div>
                     </div>
                 </div>
             </CardContent>
