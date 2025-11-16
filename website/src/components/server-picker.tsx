@@ -6,6 +6,7 @@ import {Button} from "@/components/ui/button"
 import {Badge} from "@/components/ui/badge"
 import {Input} from "@/components/ui/input"
 import {Search, Users, Globe, Activity, Zap, Lock} from "lucide-react"
+import {Link} from "@tanstack/react-router";
 
 interface Server {
     id: string
@@ -34,7 +35,7 @@ const GAME_TYPES: Record<number, string> = {
 const MOCK_SERVERS: Server[] = [
     {
         id: "1",
-        sv_hostname: "The Proving Grounds",
+        sv_hostname: "Q3DM17 24/7 EU",
         mapname: "q3dm17",
         g_gametype: 0,
         fraglimit: 20,
@@ -43,90 +44,14 @@ const MOCK_SERVERS: Server[] = [
         g_needpass: 0,
         capturelimit: 8,
         version: "ioq3 1.36_ga0f9b5ae linux-x86_64 Nov 10 2025",
-        location: "US East",
+        location: "Nuremberg, DE",
         players: 12,
         ping: 42,
-    },
-    {
-        id: "2",
-        sv_hostname: "Euro Arena Masters",
-        mapname: "q3dm6",
-        g_gametype: 1,
-        fraglimit: 10,
-        timelimit: 15,
-        sv_maxclients: 12,
-        g_needpass: 0,
-        capturelimit: 8,
-        version: "ioq3 1.36_ga0f9b5ae linux-x86_64 Nov 10 2025",
-        location: "EU West",
-        players: 8,
-        ping: 87,
-    },
-    {
-        id: "3",
-        sv_hostname: "Pacific CTF",
-        mapname: "q3ctf1",
-        g_gametype: 4,
-        fraglimit: 0,
-        timelimit: 20,
-        sv_maxclients: 16,
-        g_needpass: 0,
-        capturelimit: 5,
-        version: "ioq3 1.36_ga0f9b5ae linux-x86_64 Nov 10 2025",
-        location: "Asia Pacific",
-        players: 14,
-        ping: 156,
-    },
-    {
-        id: "4",
-        sv_hostname: "Midnight Carnage",
-        mapname: "q3dm1",
-        g_gametype: 0,
-        fraglimit: 30,
-        timelimit: 0,
-        sv_maxclients: 16,
-        g_needpass: 0,
-        capturelimit: 8,
-        version: "ioq3 1.36_ga0f9b5ae linux-x86_64 Nov 10 2025",
-        location: "US West",
-        players: 6,
-        ping: 58,
-    },
-    {
-        id: "5",
-        sv_hostname: "Private Duel Server",
-        mapname: "q3dm7",
-        g_gametype: 1,
-        fraglimit: 15,
-        timelimit: 10,
-        sv_maxclients: 2,
-        g_needpass: 1,
-        capturelimit: 8,
-        version: "ioq3 1.36_ga0f9b5ae linux-x86_64 Nov 10 2025",
-        location: "EU Central",
-        players: 2,
-        ping: 94,
-    },
-    {
-        id: "6",
-        sv_hostname: "Aussie Thunder",
-        mapname: "q3dm13",
-        g_gametype: 3,
-        fraglimit: 50,
-        timelimit: 20,
-        sv_maxclients: 8,
-        g_needpass: 0,
-        capturelimit: 8,
-        version: "ioq3 1.36_ga0f9b5ae linux-x86_64 Nov 10 2025",
-        location: "Australia",
-        players: 4,
-        ping: 198,
     },
 ]
 
 export function ServerPicker() {
     const [searchQuery, setSearchQuery] = useState("")
-    const [selectedServer, setSelectedServer] = useState<string | null>(null)
 
     const filteredServers = MOCK_SERVERS.filter(
         (server) =>
@@ -134,12 +59,6 @@ export function ServerPicker() {
             server.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             server.mapname.toLowerCase().includes(searchQuery.toLowerCase()),
     )
-
-    const handleConnect = (serverId: string) => {
-        setSelectedServer(serverId)
-        // In a real implementation, this would connect to the game server
-        console.log("Connecting to server:", serverId)
-    }
 
     const getPingColor = (ping: number | undefined) => {
         if (!ping) return "text-muted-foreground"
@@ -194,9 +113,7 @@ export function ServerPicker() {
                 {filteredServers.map((server) => (
                     <Card
                         key={server.id}
-                        className={`bg-card/50 backdrop-blur-sm border-border/50 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 ${
-                            selectedServer === server.id ? "border-primary ring-1 ring-primary" : ""
-                        }`}
+                        className={`bg-card/50 backdrop-blur-sm border-border/50 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10`}
                     >
                         <CardContent className="p-6">
                             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -258,21 +175,22 @@ export function ServerPicker() {
                                 </div>
 
                                 {/* Connect Button */}
-                                <Button
-                                    size="lg"
-                                    className="lg:w-auto w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
-                                    onClick={() => handleConnect(server.id)}
-                                    disabled={server.players >= server.sv_maxclients}
-                                >
-                                    {server.players >= server.sv_maxclients ? (
-                                        "Server Full"
-                                    ) : (
-                                        <>
-                                            <Zap className="h-4 w-4 mr-2"/>
-                                            Connect
-                                        </>
-                                    )}
-                                </Button>
+                                <Link to={"/game"}>
+                                    <Button
+                                        size="lg"
+                                        className="lg:w-auto w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+                                        disabled={server.players >= server.sv_maxclients}
+                                    >
+                                        {server.players >= server.sv_maxclients ? (
+                                            "Server Full"
+                                        ) : (
+                                            <>
+                                                <Zap className="h-4 w-4 mr-2"/>
+                                                Connect
+                                            </>
+                                        )}
+                                    </Button>
+                                </Link>
                             </div>
                         </CardContent>
                     </Card>
