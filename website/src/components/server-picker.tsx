@@ -15,6 +15,7 @@ export function ServerPicker() {
 
     async function refreshServers() {
         try {
+            setLoading(true);
             const serversFromMaster = (await getServers()).map(s => ({
                 proxy: `${getWsProtocol()}//${import.meta.env.VITE_PROXY_URL}`,
                 host: s.host,
