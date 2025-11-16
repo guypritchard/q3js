@@ -13,7 +13,6 @@ import java.time.OffsetDateTime;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
-import org.jooq.postgres.extensions.types.Inet;
 
 
 /**
@@ -55,32 +54,64 @@ public class ServerRecord extends UpdatableRecordImpl<ServerRecord> {
     }
 
     /**
+     * Setter for <code>server.port</code>.
+     */
+    public void setPort(Integer value) {
+        set(2, value);
+    }
+
+    /**
+     * Getter for <code>server.port</code>.
+     */
+    @NotNull
+    public Integer getPort() {
+        return (Integer) get(2);
+    }
+
+    /**
+     * Setter for <code>server.status</code>.
+     */
+    public void setStatus(String value) {
+        set(3, value);
+    }
+
+    /**
+     * Getter for <code>server.status</code>.
+     */
+    @NotNull
+    @Size(max = 50)
+    public String getStatus() {
+        return (String) get(3);
+    }
+
+    /**
      * Setter for <code>server.ip_address</code>.
      */
-    public void setIpAddress(Inet value) {
-        set(2, value);
+    public void setIpAddress(String value) {
+        set(4, value);
     }
 
     /**
      * Getter for <code>server.ip_address</code>.
      */
     @NotNull
-    public Inet getIpAddress() {
-        return (Inet) get(2);
+    @Size(max = 45)
+    public String getIpAddress() {
+        return (String) get(4);
     }
 
     /**
      * Setter for <code>server.created_at</code>.
      */
     public void setCreatedAt(OffsetDateTime value) {
-        set(3, value);
+        set(5, value);
     }
 
     /**
      * Getter for <code>server.created_at</code>.
      */
     public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(3);
+        return (OffsetDateTime) get(5);
     }
 
     // -------------------------------------------------------------------------
@@ -106,11 +137,13 @@ public class ServerRecord extends UpdatableRecordImpl<ServerRecord> {
     /**
      * Create a detached, initialised ServerRecord
      */
-    public ServerRecord(Integer id, String name, Inet ipAddress, OffsetDateTime createdAt) {
+    public ServerRecord(Integer id, String name, Integer port, String status, String ipAddress, OffsetDateTime createdAt) {
         super(Server.SERVER);
 
         setId(id);
         setName(name);
+        setPort(port);
+        setStatus(status);
         setIpAddress(ipAddress);
         setCreatedAt(createdAt);
         resetTouchedOnNotNull();
@@ -125,6 +158,8 @@ public class ServerRecord extends UpdatableRecordImpl<ServerRecord> {
         if (value != null) {
             setId(value.getId());
             setName(value.getName());
+            setPort(value.getPort());
+            setStatus(value.getStatus());
             setIpAddress(value.getIpAddress());
             setCreatedAt(value.getCreatedAt());
             resetTouchedOnNotNull();

@@ -1,7 +1,7 @@
 services:
   q3js-database:
     image: postgres:16
-    container_name: q3js
+    container_name: q3js-database
     environment:
       POSTGRES_USER: q3js
       POSTGRES_PASSWORD: password

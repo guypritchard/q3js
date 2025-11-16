@@ -26,11 +26,8 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
-import org.jooq.impl.DefaultDataType;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
-import org.jooq.postgres.extensions.bindings.InetBinding;
-import org.jooq.postgres.extensions.types.Inet;
 
 
 /**
@@ -65,9 +62,19 @@ public class Server extends TableImpl<ServerRecord> {
     public final TableField<ServerRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
+     * The column <code>server.port</code>.
+     */
+    public final TableField<ServerRecord, Integer> PORT = createField(DSL.name("port"), SQLDataType.INTEGER.nullable(false), this, "");
+
+    /**
+     * The column <code>server.status</code>.
+     */
+    public final TableField<ServerRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(50).nullable(false), this, "");
+
+    /**
      * The column <code>server.ip_address</code>.
      */
-    public final TableField<ServerRecord, Inet> IP_ADDRESS = createField(DSL.name("ip_address"), DefaultDataType.getDefaultDataType("\"pg_catalog\".\"inet\"").nullable(false), this, "", new InetBinding());
+    public final TableField<ServerRecord, String> IP_ADDRESS = createField(DSL.name("ip_address"), SQLDataType.VARCHAR(45).nullable(false), this, "");
 
     /**
      * The column <code>server.created_at</code>.

@@ -1,0 +1,8 @@
+/home/luka/Projects/Other/q3js/service/shared/src/main/java/com/q3js/Main.java
+/home/luka/Projects/Other/q3js/service/shared/src/main/java/com/q3js/jooq/DefaultCatalog.java
+/home/luka/Projects/Other/q3js/service/shared/src/main/java/com/q3js/jooq/DefaultSchema.java
+/home/luka/Projects/Other/q3js/service/shared/src/main/java/com/q3js/jooq/Keys.java
+/home/luka/Projects/Other/q3js/service/shared/src/main/java/com/q3js/jooq/Tables.java
+/home/luka/Projects/Other/q3js/service/shared/src/main/java/com/q3js/jooq/tables/Server.java
+/home/luka/Projects/Other/q3js/service/shared/src/main/java/com/q3js/jooq/tables/pojos/Server.java
+/home/luka/Projects/Other/q3js/service/shared/src/main/java/com/q3js/jooq/tables/records/ServerRecord.java
