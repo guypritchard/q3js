@@ -3,10 +3,9 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Input} from "@/components/ui/input"
 import {Search} from "lucide-react"
 import {useInterval} from "usehooks-ts";
-import {getServers, q3GetInfo, type Q3ResolvedServer} from "@/lib/q3.ts";
+import {q3GetInfo, type Q3ResolvedServer} from "@/lib/q3.ts";
 import SERVER_LIST from "@/servers.ts";
 import {ServerCard} from "@/components/server-card.tsx";
-import {getWsProtocol} from "@/lib/utils.ts";
 
 
 const POLL_MS = 5000
