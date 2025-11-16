@@ -13,4 +13,6 @@ public class Server {
     private String host;
     private int proxyPort;
     private int targetPort;
+    private long lastUpdated;
+    private boolean permanent;
 }

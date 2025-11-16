@@ -43,6 +43,8 @@ public class ServerController {
                 .host(clientIp)
                 .proxyPort(heartbeatRequest.getProxyPort())
                 .targetPort(heartbeatRequest.getTargetPort())
+                .permanent(false)
+                .lastUpdated(System.currentTimeMillis())
                 .build();
         serverService.refreshServer(server);
     }

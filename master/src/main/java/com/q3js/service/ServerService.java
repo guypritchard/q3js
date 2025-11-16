@@ -2,10 +2,13 @@ package com.q3js.service;
 
 import com.q3js.domain.Server;
 import jakarta.enterprise.context.ApplicationScoped;
+import io.quarkus.scheduler.Scheduled;
 import org.jboss.logging.Logger;
 
 import java.net.InetAddress;
+import java.time.Instant;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -14,10 +17,12 @@ import java.util.concurrent.ConcurrentSkipListSet;
 public class ServerService {
     private static final Logger LOG = Logger.getLogger(ServerService.class);
 
+    private static final long TIMEOUT_MS = 15_000;
+
     private final Set<Server> servers;
 
     public ServerService() {
-        this.servers = new ConcurrentSkipListSet<>(Comparator.comparing(Server::getHost));
+        this.servers = new ConcurrentSkipListSet<>(Comparator.comparing(Server::getLastUpdated));
         addDefaultServers();
     }
 
@@ -26,6 +31,8 @@ public class ServerService {
                 .proxyPort(80)
                 .host("ffa.q3js.com")
                 .targetPort(27960)
+                .permanent(true)
+                .lastUpdated(Instant.now().toEpochMilli())
                 .build());
     }
 
@@ -39,8 +46,30 @@ public class ServerService {
             return;
         }
 
-        LOG.infof("Adding server: %s", server);
+        // update timestamp before storing
+        server.setLastUpdated(Instant.now().toEpochMilli());
+
+        LOG.infof("Refreshing server: %s", server);
+        servers.remove(server); // remove old instance if exists
         servers.add(server);
+    }
+
+    @Scheduled(every = "5s")
+    void cleanup() {
+        long now = Instant.now().toEpochMilli();
+        long cutoff = now - TIMEOUT_MS;
+
+        Iterator<Server> it = servers.iterator();
+
+        while (it.hasNext()) {
+            Server s = it.next();
+
+            if (s.isPermanent()) continue;
+            if (s.getLastUpdated() < cutoff) {
+                LOG.infof("Removing stale server: %s", s);
+                it.remove();
+            }
+        }
     }
 
     private boolean isLocalAddress(String host) {
@@ -55,5 +84,4 @@ public class ServerService {
             return true;
         }
     }
-
 }
