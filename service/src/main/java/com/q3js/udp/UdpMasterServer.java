@@ -3,8 +3,7 @@ package com.q3js.udp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jooq.DSLContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -20,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @ApplicationScoped
 public class UdpMasterServer {
-    private static final Logger log = LoggerFactory.getLogger(UdpMasterServer.class);
+    private static final Logger log = Logger.getLogger(UdpMasterServer.class);
 
     public static final int DEFAULT_PORT = 27950;
     private static final long PRUNE_INTERVAL_MS = 350_000;
@@ -48,7 +47,7 @@ public class UdpMasterServer {
     // ===== lifecycle =====
     public void start() {
         if (!running.compareAndSet(false, true)) return;
-        log.info("master server started at {} UTC, UDP {}", Instant.now(), DEFAULT_PORT);
+        log.infof("master server started at %s UTC, UDP %d", Instant.now(), DEFAULT_PORT);
 
         scheduler.scheduleAtFixedRate(this::pruneServers, PRUNE_INTERVAL_MS, PRUNE_INTERVAL_MS, TimeUnit.MILLISECONDS);
 
@@ -61,9 +60,9 @@ public class UdpMasterServer {
                     handlePacket(Arrays.copyOfRange(p.getData(), 0, p.getLength()),
                             new InetSocketAddress(p.getAddress(), p.getPort()));
                 } catch (SocketException se) {
-                    if (running.get()) log.warn("socket exception: {}", se.toString());
+                    if (running.get()) log.warnf("socket exception: %s", se.toString());
                 } catch (Exception e) {
-                    log.warn("recv error: {}", e.toString());
+                    log.warnf("recv error: %s", e.toString());
                 }
             }
         });
@@ -129,13 +128,14 @@ public class UdpMasterServer {
         try {
             socket.send(out);
         } catch (Exception e) {
-            log.warn("send error {} -> {}: {}", payload, dst, e.toString());
+            log.warnf("send error %s -> %s: %s", payload, dst, e.toString());
         }
     }
 
     private void sendGetInfo(InetSocketAddress serverAddr) {
         var chal = buildChallenge();
-        log.info("{}:{} <--- getinfo \"{}\"", serverAddr.getAddress().getHostAddress(), serverAddr.getPort(), chal);
+        log.infof("%s:%d <--- getinfo \"%s\"",
+                serverAddr.getAddress().getHostAddress(), serverAddr.getPort(), chal);
         send(serverAddr, "getinfo " + chal);
     }
 
@@ -159,7 +159,8 @@ public class UdpMasterServer {
 
     private void sendServersTo(InetSocketAddress dst, Collection<ServerInfo> list) {
         var msg = buildGetServersResponse(list);
-        log.info("{}:{} <--- getserversResponse {} server(s)", dst.getAddress().getHostAddress(), dst.getPort(), list.size());
+        log.infof("%s:%d <--- getserversResponse %d server(s)",
+                dst.getAddress().getHostAddress(), dst.getPort(), list.size());
         send(dst, msg);
     }
 
@@ -171,7 +172,7 @@ public class UdpMasterServer {
                 var out = new DatagramPacket(data, data.length, sub.getAddress(), sub.getPort());
                 socket.send(out);
             } catch (Exception e) {
-                log.warn("notify error to {}: {}", sub, e.toString());
+                log.warnf("notify error to %s: %s", sub, e.toString());
             }
         }
     }
@@ -188,7 +189,7 @@ public class UdpMasterServer {
     private void removeServer(String id) {
         var s = servers.remove(id);
         if (s != null) {
-            log.info("{}:{} timed out, {} server(s) left", s.addr, s.port, servers.size());
+            log.infof("%s:%d timed out, %d server(s) left", s.addr, s.port, servers.size());
         }
     }
 
@@ -208,22 +209,20 @@ public class UdpMasterServer {
         if (msg == null) return;
 
         if (msg.startsWith("heartbeat")) {
-            log.info("{}:{} ---> heartbeat", ip, port);
-            // source port is the game server port; query info
+            log.infof("%s:%d ---> heartbeat", ip, port);
             sendGetInfo(from);
             return;
         }
 
         if (msg.startsWith("getservers ")) {
-            log.info("{}:{} ---> getservers", ip, port);
+            log.infof("%s:%d ---> getservers", ip, port);
             sendServersTo(from, servers.values());
-            // optionally treat as a subscriber that wants deltas
             subscribers.add(from);
             return;
         }
 
         if (msg.startsWith("subscribe")) { // nonstandard, kept for convenience
-            log.info("{}:{} ---> subscribe", ip, port);
+            log.infof("%s:%d ---> subscribe", ip, port);
             subscribers.add(from);
             sendServersTo(from, servers.values());
             return;
@@ -232,7 +231,7 @@ public class UdpMasterServer {
         if (msg.startsWith("infoResponse\n")) {
             var payload = msg.substring("infoResponse\n".length());
             var info = parseInfoString(payload);
-            log.info("{}:{} ---> infoResponse keys={}", ip, port, info.keySet());
+            log.infof("%s:%d ---> infoResponse keys=%s", ip, port, info.keySet());
             updateServer(ip, port, info);
             return;
         }
@@ -241,7 +240,7 @@ public class UdpMasterServer {
             return;
         }
 
-        log.warn("{}:{} ---> unexpected: {}", ip, port, summarize(msg));
+        log.warnf("%s:%d ---> unexpected: %s", ip, port, summarize(msg));
     }
 
     private static String summarize(String s) {
@@ -272,7 +271,8 @@ public class UdpMasterServer {
                 var p = m.get("port");
                 if (p instanceof Number n) port = n.intValue();
             } catch (Exception e) {
-                System.out.println("Failed to load config: " + e);
+                // keep stderr free in Quarkus; use logger
+                Logger.getLogger(Config.class).warnf("Failed to load config: %s", e.toString());
             }
             return new Config(port);
         }

@@ -1,7 +1,7 @@
-package com.q3js.http.service;
+package com.q3js.service;
 
-import com.q3js.http.jooq.Tables;
-import com.q3js.http.service.dto.ServerResponse;
+import com.q3js.jooq.Tables;
+import com.q3js.service.dto.ServerResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

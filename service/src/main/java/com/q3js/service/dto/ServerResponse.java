@@ -1,4 +1,4 @@
-package com.q3js.http.service.dto;
+package com.q3js.service.dto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
