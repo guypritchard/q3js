@@ -15,73 +15,56 @@ code {
 }
 
 :root {
-    /* --- Base Colors (Dark/Industrial Theme) --- */
-    --background: oklch(0.15 0 0); /* Very dark gray/near black */
-    --foreground: oklch(0.85 0 0); /* Off-white/light gray */
-    --card: oklch(0.20 0 0); /* Darker gray for panels */
-    --card-foreground: oklch(0.85 0 0);
-    --popover: oklch(0.20 0 0);
-    --popover-foreground: oklch(0.85 0 0);
-
-    /* --- Primary/Accent Colors (Red/Orange/Blue Q3 Glows) --- */
-    --primary: oklch(0.60 0.18 45); /* Intense Orange/Red-Orange (e.g., Q3 logo, Red Team) */
-    --primary-foreground: oklch(1.00 0 0); /* White for contrast */
-    --secondary: oklch(0.65 0.12 250); /* Deep Cyan/Blue (e.g., Blue Team, Powerup glow) */
-    --secondary-foreground: oklch(0.15 0 0); /* Dark gray/black */
-
-    /* --- Utility Colors --- */
-    --muted: oklch(0.25 0 0); /* Dark gray for subtle text/dividers */
-    --muted-foreground: oklch(0.60 0 0); /* Medium gray */
-    --accent: oklch(0.70 0.15 150); /* Neon Green/Yellow-Green (e.g., health/armor glow) */
-    --accent-foreground: oklch(0.15 0 0);
-    --destructive: oklch(0.75 0.15 35); /* Bright Red (for errors, damage) */
-    --destructive-foreground: oklch(1.00 0 0);
-
-    /* --- Border & Interactive Elements --- */
-    --border: oklch(0.35 0 0); /* Medium-dark industrial border */
-    --input: oklch(0.20 0 0); /* Dark input field */
-    --ring: oklch(0.60 0.18 45); /* Orange focus ring */
-
-    /* --- Chart Colors (Mapped to Q3 Palette) --- */
-    --chart-1: oklch(0.60 0.18 45);   /* Orange/Red-Orange */
-    --chart-2: oklch(0.65 0.12 250);  /* Cyan/Blue */
-    --chart-3: oklch(0.70 0.15 150);  /* Neon Green */
-    --chart-4: oklch(0.75 0.15 35);   /* Bright Red */
-    --chart-5: oklch(0.50 0.05 100);  /* Yellow/Gold */
-
-    /* --- Sidebar Colors (Using Primary/Accent Scheme) --- */
-    --sidebar: oklch(0.12 0 0); /* Even darker background */
-    --sidebar-foreground: oklch(0.85 0 0);
-    --sidebar-primary: var(--primary);
-    --sidebar-primary-foreground: var(--primary-foreground);
-    --sidebar-accent: var(--secondary);
-    --sidebar-accent-foreground: var(--secondary-foreground);
-    --sidebar-border: oklch(0.30 0 0);
-    --sidebar-ring: var(--primary);
-
-    /* --- Typography & Geometry (More Q3/Industrial) --- */
-    --font-sans: "Roboto Mono", "Oxanium", sans-serif; /* Monospace/Sci-Fi look */
+    --background: oklch(0.2178 0 0);
+    --foreground: oklch(0.9067 0 0);
+    --card: oklch(0.2850 0 0);
+    --card-foreground: oklch(0.9067 0 0);
+    --popover: oklch(0.2850 0 0);
+    --popover-foreground: oklch(0.9067 0 0);
+    --primary: oklch(0.6083 0.2090 27.0276);
+    --primary-foreground: oklch(1.0000 0 0);
+    --secondary: oklch(0.6423 0.1467 133.0145);
+    --secondary-foreground: oklch(0 0 0);
+    --muted: oklch(0.2645 0 0);
+    --muted-foreground: oklch(0.7058 0 0);
+    --accent: oklch(0.7482 0.1235 244.7492);
+    --accent-foreground: oklch(0 0 0);
+    --destructive: oklch(0.7839 0.1719 68.0943);
+    --destructive-foreground: oklch(0 0 0);
+    --border: oklch(0.4091 0 0);
+    --input: oklch(0.4091 0 0);
+    --ring: oklch(0.6083 0.2090 27.0276);
+    --chart-1: oklch(0.6083 0.2090 27.0276);
+    --chart-2: oklch(0.6423 0.1467 133.0145);
+    --chart-3: oklch(0.7482 0.1235 244.7492);
+    --chart-4: oklch(0.7839 0.1719 68.0943);
+    --chart-5: oklch(0.6471 0.0334 40.7963);
+    --sidebar: oklch(0.1913 0 0);
+    --sidebar-foreground: oklch(0.9067 0 0);
+    --sidebar-primary: oklch(0.6083 0.2090 27.0276);
+    --sidebar-primary-foreground: oklch(1.0000 0 0);
+    --sidebar-accent: oklch(0.7482 0.1235 244.7492);
+    --sidebar-accent-foreground: oklch(0 0 0);
+    --sidebar-border: oklch(0.4091 0 0);
+    --sidebar-ring: oklch(0.6083 0.2090 27.0276);
+    --font-sans: "Oxanium", sans-serif;
     --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
     --font-mono: "Source Code Pro", monospace;
-    --radius: 0px; /* Sharp, geometric Q3 look */
-
-    /* --- Shadow Style (Dark/Industrial Glow) --- */
+    --radius: 0px;
     --shadow-x: 0px;
-    --shadow-y: 0px;
-    --shadow-blur: 8px;
+    --shadow-y: 2px;
+    --shadow-blur: 5px;
     --shadow-spread: 0px;
-    --shadow-opacity: 0.8;
-    --shadow-color: hsl(45 90% 50%); /* Subtle orange glow */
-
-    /* Adjusted shadow definitions to incorporate orange/red glow effect for a sci-fi look */
-    --shadow-2xs: 0px 0px 3px 0px oklch(0.60 0.18 45 / 0.30);
-    --shadow-xs: 0px 0px 5px 0px oklch(0.60 0.18 45 / 0.40);
-    --shadow-sm: 0px 0px 6px 0px oklch(0.60 0.18 45 / 0.50);
-    --shadow: 0px 0px 8px 0px oklch(0.60 0.18 45 / 0.60);
-    --shadow-md: 0px 0px 10px 0px oklch(0.60 0.18 45 / 0.70);
-    --shadow-lg: 0px 0px 12px 0px oklch(0.60 0.18 45 / 0.80);
-    --shadow-xl: 0px 0px 15px 0px oklch(0.60 0.18 45 / 0.90);
-    --shadow-2xl: 0px 0px 20px 0px oklch(0.60 0.18 45 / 1.00);
+    --shadow-opacity: 0.6;
+    --shadow-color: hsl(0 0% 0%);
+    --shadow-2xs: 0px 2px 5px 0px hsl(0 0% 0% / 0.30);
+    --shadow-xs: 0px 2px 5px 0px hsl(0 0% 0% / 0.30);
+    --shadow-sm: 0px 2px 5px 0px hsl(0 0% 0% / 0.60), 0px 1px 2px -1px hsl(0 0% 0% / 0.60);
+    --shadow: 0px 2px 5px 0px hsl(0 0% 0% / 0.60), 0px 1px 2px -1px hsl(0 0% 0% / 0.60);
+    --shadow-md: 0px 2px 5px 0px hsl(0 0% 0% / 0.60), 0px 2px 4px -1px hsl(0 0% 0% / 0.60);
+    --shadow-lg: 0px 2px 5px 0px hsl(0 0% 0% / 0.60), 0px 4px 6px -1px hsl(0 0% 0% / 0.60);
+    --shadow-xl: 0px 2px 5px 0px hsl(0 0% 0% / 0.60), 0px 8px 10px -1px hsl(0 0% 0% / 0.60);
+    --shadow-2xl: 0px 2px 5px 0px hsl(0 0% 0% / 1.50);
 }
 
 
