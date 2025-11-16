@@ -6,6 +6,26 @@ import {Card} from "@/components/ui/card";
 import {Progress} from "@/components/ui/progress";
 import {useLocalStorage} from "@uidotdev/usehooks";
 
+export function useFullscreenOnF11() {
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "F11") {
+                e.preventDefault();
+                const el = document.documentElement;
+                if (!document.fullscreenElement) {
+                    el.requestFullscreen().catch(() => {
+                    });
+                } else {
+                    document.exitFullscreen().catch(() => {
+                    });
+                }
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, []);
+}
+
 const config = {
     baseq3: {
         files: [
@@ -181,6 +201,8 @@ async function estimateTotalBytes(fileUrls: URL[]) {
 }
 
 export default function GamePage() {
+    useFullscreenOnF11();
+
     const [prog, setProg] = useState<Prog>({received: 0, total: 0, pct: 0, current: ""});
     const rafUpdate = makeRafUpdater(setProg);
     const [name] = useLocalStorage("name", "Q3JS Player")
