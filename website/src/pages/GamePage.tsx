@@ -297,7 +297,7 @@ export default function GamePage() {
     }, []);
 
     return (
-        <div className="relative w-full h-full">
+        <div className="relative w-full h-full min-h-screen">
             <canvas id="canvas" className="w-full h-full"/>
             {prog.pct < 100 && (
                 <Card
