@@ -52,8 +52,7 @@ export function JoinServerButton(props: {
                     onChange={(e) => setName(e.target.value)}
                 />
 
-                {/*@ts-ignore*/}
-                <a to={`${baseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(name)}`}>
+                <a href={`${baseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(name)}`}>
                     <Button size="lg"
                             className="w-full bg-primary text-primary-foreground font-bold">
                         Join Server
