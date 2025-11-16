@@ -16,15 +16,15 @@ export function ServerPicker() {
     const [searchQuery, setSearchQuery] = useState("")
 
     async function refreshServers() {
-        const serversFromMaster = (await getServers()).map(s => ({
-            proxy: `${getWsProtocol()}//${import.meta.env.VITE_PROXY_URL}`,
-            host: s.host,
-            port: s.port
-        }));
-        console.log(serversFromMaster);
+        // const serversFromMaster = (await getServers()).map(s => ({
+        //     proxy: `${getWsProtocol()}//${import.meta.env.VITE_PROXY_URL}`,
+        //     host: s.host,
+        //     port: s.port
+        // }));
+        // console.log(serversFromMaster);
         const serversToFetch = [
             ...SERVER_LIST,
-            ...serversFromMaster
+            // ...serversFromMaster
         ]
 
         const results = await Promise.allSettled(serversToFetch.map(q3GetInfo))
