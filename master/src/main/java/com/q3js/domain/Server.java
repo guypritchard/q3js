@@ -10,9 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Data
 public class Server {
-    private String proxyHost;
+    private String host;
     private int proxyPort;
-
-    private String targetHost;
     private int targetPort;
 }

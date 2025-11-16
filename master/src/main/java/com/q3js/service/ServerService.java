@@ -17,15 +17,14 @@ public class ServerService {
     private final Set<Server> servers;
 
     public ServerService() {
-        this.servers = new ConcurrentSkipListSet<>(Comparator.comparing(Server::getTargetHost));
+        this.servers = new ConcurrentSkipListSet<>(Comparator.comparing(Server::getHost));
         addDefaultServers();
     }
 
     private void addDefaultServers() {
         this.servers.add(Server.builder()
-                .proxyHost("ffa.q3js.com")
                 .proxyPort(443)
-                .targetHost("ffa.q3js.com")
+                .host("ffa.q3js.com")
                 .targetPort(27960)
                 .build());
     }
@@ -35,8 +34,8 @@ public class ServerService {
     }
 
     public void refreshServer(Server server) {
-        if (isLocalAddress(server.getProxyHost())) {
-            LOG.warnf("Ignoring server with local proxy host: %s", server.getProxyHost());
+        if (isLocalAddress(server.getHost())) {
+            LOG.warnf("Ignoring server with local proxy host: %s", server.getHost());
             return;
         }
 

@@ -48,7 +48,7 @@ export function JoinServerButton(props: {
                     onChange={(e) => setName(e.target.value)}
                 />
                 <Link to={"/game"} search={{
-                    proxyHost: props.server.proxyHost,
+                    host: props.server.host,
                     proxyPort: props.server.proxyPort,
                 }}>
                     <Button size="lg"

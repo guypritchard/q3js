@@ -3,7 +3,7 @@ import GamePage from "@/pages/GamePage.tsx";
 import z from "zod";
 
 const searchParams = z.object({
-    proxyHost: z.string(),
+    host: z.string(),
     proxyPort: z.number(),
 })
 

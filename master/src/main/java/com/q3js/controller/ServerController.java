@@ -40,9 +40,8 @@ public class ServerController {
     public void refreshServer(HeartbeatRequest heartbeatRequest) {
         var clientIp = getClientIp();
         var server = Server.builder()
-                .proxyHost(clientIp)
+                .host(clientIp)
                 .proxyPort(heartbeatRequest.getProxyPort())
-                .targetHost(heartbeatRequest.getTargetHost())
                 .targetPort(heartbeatRequest.getTargetPort())
                 .build();
         serverService.refreshServer(server);

@@ -39,14 +39,12 @@ export interface Q3ResolvedServer {
     gamename?: string
     g_maxGameClients?: number
     users: User[]
-    proxyHost: string
     proxyPort: number
 }
 
 export type Q3ServerTarget = {
-    proxyHost: string
+    host: string
     proxyPort: number
-    targetHost: string
     targetPort: number
 }
 
@@ -94,7 +92,7 @@ export async function q3GetInfo(server: Q3ServerTarget): Promise<Q3ResolvedServe
     }
 
     return {
-        id: `${server.targetHost}:${server.targetPort}`,
+        id: `${server.host}:${server.targetPort}`,
         sv_hostname: stripQ3Colors(
             kv["sv_hostname"] ?? kv["hostname"] ?? "Unnamed Server"
         ),
@@ -109,7 +107,6 @@ export async function q3GetInfo(server: Q3ServerTarget): Promise<Q3ResolvedServe
         players: users.length,
         ping,
 
-        host: server.targetHost,
         port: server.targetPort,
 
         challenge: kv["challenge"],
@@ -128,7 +125,7 @@ export async function q3GetInfo(server: Q3ServerTarget): Promise<Q3ResolvedServe
         gamename: kv["gamename"],
         g_maxGameClients: toInt(kv["g_maxgameclients"]),
 
-        proxyHost: server.proxyHost,
+        host: server.host,
         proxyPort: server.proxyPort,
 
         users

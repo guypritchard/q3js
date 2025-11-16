@@ -3,9 +3,8 @@ import {env} from "@/env.ts";
 
 export async function q3FetchLines(opts: {
     server: {
-        proxyHost: string
+        host: string
         proxyPort: number
-        targetHost: string
         targetPort: number
     },
     command: string
@@ -16,7 +15,7 @@ export async function q3FetchLines(opts: {
 
     return new Promise((resolve, reject) => {
         const ws = new WebSocket(
-            `${getWsProtocol()}//${env.VITE_PROXY_URL}?host=${server.targetHost}&port=${server.targetPort}`
+            `${getWsProtocol()}//${env.VITE_PROXY_URL}?host=${server.host}&port=${server.targetPort}`
         )
         ws.binaryType = "arraybuffer"
 

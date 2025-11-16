@@ -14,14 +14,14 @@ export default function GamePage() {
     const rafUpdate = makeRafUpdater(setProg);
     const [name] = useLocalStorage("name", "Q3JS Player")
 
-    const {proxyHost, proxyPort} = useSearch({
+    const {host, proxyPort} = useSearch({
         from: "/game"
     })
 
     useEffect(() => {
         startGame({
             name,
-            proxyHost,
+            host,
             proxyPort,
             rafUpdate
         })
