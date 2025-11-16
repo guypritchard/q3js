@@ -5,6 +5,8 @@ import wasm from "@/lib/ioquake3.wasm?url";
 import {Card} from "@/components/ui/card";
 import {Progress} from "@/components/ui/progress";
 import {useLocalStorage} from "@uidotdev/usehooks";
+import {env} from "@/env.ts";
+import {useSearch} from "@tanstack/react-router";
 
 export function useFullscreenOnF11() {
     useEffect(() => {
@@ -206,6 +208,11 @@ export default function GamePage() {
     const [prog, setProg] = useState<Prog>({received: 0, total: 0, pct: 0, current: ""});
     const rafUpdate = makeRafUpdater(setProg);
     const [name] = useLocalStorage("name", "Q3JS Player")
+    const proxyUrl = env.VITE_PROXY_URL;
+
+    const {host, port} = useSearch({
+        from: "/game"
+    })
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -221,7 +228,7 @@ export default function GamePage() {
       +set fs_basegame "${fs_basegame}"
       +set fs_game "${fs_game}"
     `;
-        generatedArguments += ` +connect server.q3js.com:443`;
+        generatedArguments += ` +connect ${proxyUrl} `;
 
         generatedArguments += ` +set name "${name.replace(/"/g, "'")}" `;
 
@@ -230,8 +237,19 @@ export default function GamePage() {
 
         const dataURL = new URL(location.origin + location.pathname);
 
+        const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+
+        const params = {
+            host,
+            port
+        }
+        const serializedParams = JSON.stringify(params);
+
         ioquake3({
-            websocket: {url: "wss://", subprotocol: "binary"},
+            websocket: {
+                url: `${wsProtocol}//${proxyUrl}?params=${serializedParams}`,
+                subprotocol: "binary"
+            },
             canvas: document.getElementById("canvas") as HTMLCanvasElement,
             arguments: generatedArguments.trim().split(/\s+/),
             locateFile: (path: string) => {

@@ -15,9 +15,9 @@ import {
     DialogTitle,
     DialogTrigger
 } from "@/components/ui/dialog"
+import {env} from "@/env.ts";
 
 interface Server {
-    id: string
     sv_hostname: string
     mapname: string
     g_gametype: number
@@ -29,8 +29,22 @@ interface Server {
     version: string
     location?: string
     players: number
-    ping?: number
+    ping?: number,
+
+    host: string,
+    port: number,
 }
+
+const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:"
+
+const SERVER_LIST = [
+    {
+        location: "EU",
+        proxy: `${wsProtocol}//${env.VITE_PROXY_URL}`,
+        host: "88.99.66.204",
+        port: 27960,
+    },
+]
 
 const GAME_TYPES: Record<number, string> = {
     0: "FFA",
@@ -40,9 +54,20 @@ const GAME_TYPES: Record<number, string> = {
     4: "CTF",
 }
 
-async function q3GetInfo(): Promise<Server | null> {
+async function q3GetInfo(server: {
+    location?: string,
+    proxy?: string,
+    host: string,
+    port: number
+}): Promise<Server | null> {
     return new Promise((resolve, reject) => {
-        const ws = new WebSocket("wss://server.q3js.com:443")
+        const params = {
+            host: server.host,
+            port: server.port,
+        }
+        const serializedParams = JSON.stringify(params)
+
+        const ws = new WebSocket(`${server.proxy}?params=${serializedParams}`)
         ws.binaryType = "arraybuffer"
 
         const timeout = setTimeout(() => {
@@ -79,12 +104,11 @@ async function q3GetInfo(): Promise<Server | null> {
             } catch {
             }
 
-            const ab =
-                ev.data instanceof ArrayBuffer
-                    ? ev.data
-                    : ev.data instanceof Blob
-                        ? await ev.data.arrayBuffer()
-                        : enc.encode(String(ev.data)).buffer
+            const ab = ev.data instanceof ArrayBuffer
+                ? ev.data
+                : ev.data instanceof Blob
+                    ? await ev.data.arrayBuffer()
+                    : enc.encode(String(ev.data)).buffer
 
             const text = dec.decode(ab)
             const TAG = "infoResponse\n"
@@ -94,41 +118,26 @@ async function q3GetInfo(): Promise<Server | null> {
 
             const parts = payload.split("\\")
             const kv: Record<string, string> = {}
-            for (let i = 1; i + 1 < parts.length; i += 2) {
-                const key = parts[i].toLowerCase()
-                const val = parts[i + 1] ?? ""
-                kv[key] = val
-            }
+            for (let i = 1; i + 1 < parts.length; i += 2) kv[parts[i].toLowerCase()] = parts[i + 1] ?? ""
 
-            const toInt = (s?: string, d = 0) =>
-                Number.isFinite(parseInt(s ?? "", 10)) ? parseInt(s!, 10) : d
+            const toInt = (s?: string, d = 0) => Number.isFinite(parseInt(s ?? "", 10)) ? parseInt(s!, 10) : d
             const stripColors = (s: string) => s.replace(/\^\d/g, "")
 
-            const sv_hostname = stripColors(kv["sv_hostname"] ?? kv["hostname"] ?? "Unnamed Server")
-            const mapname = kv["mapname"] ?? "unknown"
-            const g_gametype = toInt(kv["g_gametype"] ?? kv["gametype"] ?? "0")
-            const fraglimit = toInt(kv["fraglimit"])
-            const timelimit = toInt(kv["timelimit"])
-            const sv_maxclients = toInt(kv["sv_maxclients"])
-            const g_needpass = toInt(kv["g_needpass"])
-            const capturelimit = toInt(kv["capturelimit"])
-            const version = kv["version"] ?? kv["gamename"] ?? ""
-            const players = toInt(kv["g_humanplayers"] ?? kv["clients"])
-
             const sv: Server = {
-                id: "server.q3js.com",
-                sv_hostname,
-                mapname,
-                g_gametype,
-                fraglimit,
-                timelimit,
-                sv_maxclients,
-                g_needpass,
-                capturelimit,
-                version,
-                players,
-                location: "server.q3js.com",
+                sv_hostname: stripColors(kv["sv_hostname"] ?? kv["hostname"] ?? "Unnamed Server"),
+                mapname: kv["mapname"] ?? "unknown",
+                g_gametype: toInt(kv["g_gametype"] ?? kv["gametype"] ?? "0"),
+                fraglimit: toInt(kv["fraglimit"]),
+                timelimit: toInt(kv["timelimit"]),
+                sv_maxclients: toInt(kv["sv_maxclients"]),
+                g_needpass: toInt(kv["g_needpass"]),
+                capturelimit: toInt(kv["capturelimit"]),
+                version: kv["version"] ?? kv["gamename"] ?? "",
+                players: toInt(kv["g_humanplayers"] ?? kv["clients"]),
+                location: server.location,
                 ping,
+                host: server.host,
+                port: server.port,
             }
 
             resolve(sv)
@@ -161,10 +170,11 @@ export function ServerPicker() {
             if (cancelled.current || inFlight.current) return
             inFlight.current = true
             try {
-                const srv = await q3GetInfo()
-                if (!cancelled.current && srv) setServers([srv])
-            } catch {
-                // ignore
+                const results = await Promise.allSettled(SERVER_LIST.map(q3GetInfo))
+                const valid = results
+                    .filter(r => r.status === "fulfilled" && r.value)
+                    .map(r => (r as PromiseFulfilledResult<Server>).value!)
+                if (!cancelled.current) setServers(valid)
             } finally {
                 inFlight.current = false
             }
@@ -172,9 +182,7 @@ export function ServerPicker() {
 
         tick()
         const id = setInterval(tick, POLL_MS)
-        const onVis = () => {
-            if (!document.hidden) tick()
-        }
+        const onVis = () => !document.hidden && tick()
         document.addEventListener("visibilitychange", onVis, {passive: true})
 
         return () => {
@@ -185,16 +193,16 @@ export function ServerPicker() {
     }, [])
 
     const filteredServers = servers.filter(
-        (server) =>
-            server.sv_hostname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            server.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            server.mapname.toLowerCase().includes(searchQuery.toLowerCase()),
+        (s) =>
+            s.sv_hostname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            s.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            s.mapname.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
     const getPingColor = (ping?: number) =>
         !ping ? "text-muted-foreground" : ping < 50 ? "text-primary" : ping < 100 ? "text-accent" : "text-muted-foreground"
 
-    const getPlayersFillPercentage = (players: number, max: number) => (players / max) * 100
+    const getPlayersFillPercentage = (p: number, m: number) => (p / m) * 100
 
     const getGameLimits = (s: Server) =>
         s.g_gametype === 4 && s.capturelimit > 0
@@ -229,7 +237,7 @@ export function ServerPicker() {
 
             <div className="grid gap-4">
                 {filteredServers.map((server) => (
-                    <Card key={server.id}
+                    <Card key={server.sv_hostname}
                           className="bg-card/50 border-border/50 hover:border-primary/50 transition-all">
                         <CardContent className="p-6">
                             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -313,7 +321,10 @@ export function ServerPicker() {
                                                 value={name}
                                                 onChange={(e) => setName(e.target.value)}
                                             />
-                                            <Link to={"/game"}>
+                                            <Link to={"/game"} search={{
+                                                host: server.host,
+                                                port: server.port,
+                                            }}>
                                                 <Button size="lg"
                                                         className="w-full bg-primary text-primary-foreground font-bold">
                                                     Join Server
@@ -330,7 +341,9 @@ export function ServerPicker() {
 
             {filteredServers.length === 0 && (
                 <Card className="bg-card/50 border-border/50">
-                    <CardContent className="py-12 text-center text-muted-foreground">No servers found.</CardContent>
+                    <CardContent className="py-12 text-center text-muted-foreground">
+                        No servers found.
+                    </CardContent>
                 </Card>
             )}
         </div>
