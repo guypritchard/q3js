@@ -5,6 +5,10 @@ CURRENT_DIR="$(pwd)"
 BASEQ3_SRC="${BASEQ3_SRC:-$CURRENT_DIR/../baseq3}"
 BUILD_DIR="${BUILD_DIR:-$CURRENT_DIR/build}"
 
+cd "$CURRENT_DIR/.."
+unzip baseq3.zip
+cd "$CURRENT_DIR"
+
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 pushd "$BUILD_DIR" >/dev/null
