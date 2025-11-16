@@ -1,3 +1,6 @@
+import {Link} from "@tanstack/react-router";
+import {Button} from "@/components/ui/button.tsx";
+
 export function Hero() {
     return <section className="container mx-auto px-4 py-16 md:py-24">
         <div className="mx-auto text-center space-y-6">
@@ -27,13 +30,13 @@ export function Hero() {
             </p>
 
 
-            {/*<div>*/}
-            {/*    <Link to={"/run-your-server-guide"}>*/}
-            {/*        <Button>*/}
-            {/*            Run your own server*/}
-            {/*        </Button>*/}
-            {/*    </Link>*/}
-            {/*</div>*/}
+            <div>
+                <Link to={"/guide"}>
+                    <Button>
+                        Run your own server
+                    </Button>
+                </Link>
+            </div>
 
 
 
