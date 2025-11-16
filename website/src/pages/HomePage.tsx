@@ -45,18 +45,12 @@ export default function HomePage() {
                         className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
                         <p className="font-mono">Built with ❤️ by <span className="text-red-500">L</span><span
                             className="text-green-500">K</span></p>
-                        <div className="flex items-center gap-4">
-                            <a href="https://github.com/lklacar/q3js"
-                               className="hover:text-foreground transition-colors">
-                                GitHub
-                            </a>
-                            {/*<a href="#" className="hover:text-foreground transition-colors">*/}
-                            {/*    Discord*/}
-                            {/*</a>*/}
-                            {/*<a href="#" className="hover:text-foreground transition-colors">*/}
-                            {/*    Docs*/}
-                            {/*</a>*/}
-                        </div>
+                        {/*<div className="flex items-center gap-4">*/}
+                        {/*    <a href="https://github.com/lklacar/q3js"*/}
+                        {/*       className="hover:text-foreground transition-colors">*/}
+                        {/*        GitHub*/}
+                        {/*    </a>*/}
+                        {/*</div>*/}
                     </div>
                 </div>
             </footer>
