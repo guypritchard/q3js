@@ -2,8 +2,8 @@
 set -Eeuo pipefail
 
 cat > ./build/Release/baseq3/autoexec.cfg <<EOL
-addbot sarge 2 blue 0
-addbot visor 2 red 0
+addbot sarge 1 blue 0
+addbot visor 1 red 0
 seta bot_nochat 1
 EOL
 
