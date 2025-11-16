@@ -226,6 +226,7 @@ export default function GamePage() {
       +set r_mode -2
       +set com_basegame "${com_basegame}"
       +set fs_basegame "${fs_basegame}"
+      +set cl_allowDownload 1
       +set fs_game "${fs_game}"
     `;
         generatedArguments += ` +connect ${proxyUrl} `;
