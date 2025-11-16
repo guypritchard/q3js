@@ -227,6 +227,7 @@ export default function GamePage() {
       +set com_basegame "${com_basegame}"
       +set fs_basegame "${fs_basegame}"
       +set cl_allowDownload 1
+      +set con_scale 2
       +set fs_game "${fs_game}"
     `;
         generatedArguments += ` +connect ${proxyUrl} `;
