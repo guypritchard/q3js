@@ -7,6 +7,7 @@ import {Progress} from "@/components/ui/progress";
 import {useLocalStorage} from "@uidotdev/usehooks";
 import {env} from "@/env.ts";
 import {useSearch} from "@tanstack/react-router";
+import {getWsProtocol} from "@/lib/utils.ts";
 
 export function useFullscreenOnF11() {
     useEffect(() => {
@@ -237,7 +238,7 @@ export default function GamePage() {
         // bind 3 "weapon 7"
         // bind e "+zoom"
         // seta cg_autoswitch "0"
-        if(name === "^1L^2K") {
+        if (name === "^1L^2K") {
             generatedArguments += ` +set cg_autoswitch "0" +bind 3 "weapon 7" +bind e "+zoom" `;
         }
 
@@ -247,12 +248,9 @@ export default function GamePage() {
 
         const dataURL = new URL(location.origin + location.pathname);
 
-        const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
-
-
         ioquake3({
             websocket: {
-                url: `${wsProtocol}//${proxyUrl}?host=${host}&port=${port}`,
+                url: `${getWsProtocol()}//${proxyUrl}?host=${host}&port=${port}`,
                 subprotocol: "binary"
             },
             canvas: document.getElementById("canvas") as HTMLCanvasElement,
