@@ -45,7 +45,7 @@ export function ServerPicker() {
             <section className="container mx-auto px-4 pb-24">
                 <div className="max-w-5xl mx-auto space-y-6">
                     <div className="grid gap-4">
-                        {[...Array(5)].map((_, i) => (
+                        {[...Array(1)].map((_, i) => (
                             <Card
                                 key={i}
                                 className="bg-card/50 border-border/50 hover:border-primary/50 transition-all animate-pulse">
