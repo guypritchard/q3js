@@ -6,9 +6,7 @@ RUN apt-get update && apt-get install -y unzip
 
 COPY . .
 
-RUN unzip -o baseq3.zip
 RUN mv -f baseq3 website/public/baseq3
-
 
 WORKDIR /app/website
 
