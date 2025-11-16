@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-PROJECT_ROOT="$(pwd)"
-EMSDK_ROOT="${EMSDK_ROOT:-$PROJECT_ROOT/emsdk}"
-BASEQ3_SRC="${BASEQ3_SRC:-$PROJECT_ROOT/baseq3}"
-BUILD_DIR="${BUILD_DIR:-$PROJECT_ROOT/build/game}"
+CURRENT_DIR="$(pwd)"
+EMSDK_ROOT="${EMSDK_ROOT:-$CURRENT_DIR/../emsdk}"
+BASEQ3_SRC="${BASEQ3_SRC:-$CURRENT_DIR/../baseq3}"
+BUILD_DIR="${BUILD_DIR:-$CURRENT_DIR/build}"
+SHADER_DIR="$CURRENT_DIR/../ioq3/code/renderergl2/glsl"
 WEB_PORT="${WEB_PORT:-8000}"
-SHADER_DIR="./ioq3/code/renderergl2/glsl"
-
 
 # Patch shaders
 HEADER='#ifdef GL_ES
@@ -55,7 +54,7 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 pushd "$BUILD_DIR" >/dev/null
 
-emcmake cmake ../../ioq3 \
+emcmake cmake ../../../ioq3 \
   -DBUILD_CLIENT=ON \
   -DBUILD_SERVER=OFF \
   -DBUILD_GAME_SO=OFF \
@@ -76,8 +75,7 @@ cd Release
 if [[ ! -d "$BASEQ3_SRC" ]]; then
   echo "baseq3 source not found at $BASEQ3_SRC" >&2; exit 1
 fi
+
+
 rm -rf baseq3
 cp -r "$BASEQ3_SRC" ./baseq3
-
-echo "Starting HTTP server on http://127.0.0.1:${WEB_PORT}/ioquake3.html"
-python -m http.server "${WEB_PORT}" --bind 0.0.0.0

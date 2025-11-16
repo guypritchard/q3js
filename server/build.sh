@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-PROJECT_ROOT="$(pwd)"
-BASEQ3_SRC="${BASEQ3_SRC:-$PROJECT_ROOT/baseq3}"
-BUILD_DIR="${BUILD_DIR:-$PROJECT_ROOT/build/server}"
-
+CURRENT_DIR="$(pwd)"
+BASEQ3_SRC="${BASEQ3_SRC:-$CURRENT_DIR/../baseq3}"
+BUILD_DIR="${BUILD_DIR:-$CURRENT_DIR/build}"
 
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 pushd "$BUILD_DIR" >/dev/null
 
-cmake ../../ioq3 \
+cmake ../../../ioq3 \
   -DBUILD_CLIENT=OFF \
   -DBUILD_SERVER=ON \
   -DBUILD_GAME_QVMS=ON \
