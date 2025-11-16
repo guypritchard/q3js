@@ -12,6 +12,7 @@ FROM debian:latest AS serverbuilder
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
+    unzip \
     pkg-config
 
 WORKDIR /
