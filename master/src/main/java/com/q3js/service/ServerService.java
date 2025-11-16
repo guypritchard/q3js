@@ -4,6 +4,7 @@ import com.q3js.domain.Server;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
+import java.net.InetAddress;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -34,7 +35,26 @@ public class ServerService {
     }
 
     public void refreshServer(Server server) {
+        if (isLocalAddress(server.getProxyHost())) {
+            LOG.warnf("Ignoring server with local proxy host: %s", server.getProxyHost());
+            return;
+        }
+
         LOG.infof("Adding server: %s", server);
         servers.add(server);
     }
+
+    private boolean isLocalAddress(String host) {
+        if (host == null || host.isBlank()) return true;
+
+        host = host.trim().toLowerCase();
+
+        try {
+            var addr = InetAddress.getByName(host);
+            return addr.isSiteLocalAddress();
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
 }
