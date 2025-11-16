@@ -52,75 +52,136 @@ function syncfs(module: any, populate: boolean) {
 
 // Resolve IDBFS across different Emscripten variants
 function resolveIDBFS(module: any) {
-    // Newer: module.FS.filesystems.IDBFS
     if (module?.FS?.filesystems?.IDBFS) return module.FS.filesystems.IDBFS;
-    // Some bundles expose module.IDBFS
     if (module?.IDBFS) return module.IDBFS;
-    // Legacy global
     // @ts-ignore
     if ((globalThis as any).IDBFS) return (globalThis as any).IDBFS;
     return null;
 }
 
-async function ensureMounts(module: any): Promise<{persist: boolean}> {
-    const { FS } = module;
+async function ensureMounts(module: any): Promise<{ persist: boolean }> {
+    const {FS} = module;
     FS.mkdirTree("/baseq3");
     FS.mkdirTree("/baseq3/vm");
 
     const IDBFS = resolveIDBFS(module);
     if (!IDBFS) {
         console.warn("[ioq3] IDBFS not linked. Running without persistence.");
-        return { persist: false };
+        return {persist: false};
     }
 
-    // Mount once at /baseq3; /baseq3/vm lives under same tree so no need for a second mount.
     try {
         FS.mount(IDBFS, {}, "/baseq3");
-    } catch (e) {
-        // Already mounted or race during hot reload
-        // If already mounted, proceed.
+    } catch {
+        // already mounted
     }
 
     const current = localStorage.getItem(VERSION_KEY);
     if (current !== DATA_VERSION) {
         try {
-            // Populate first so we can clean reliably
             await syncfs(module, true);
-            // Remove files to force re-download
             for (const e of FS.readdir("/baseq3")) {
                 if (e === "." || e === "..") continue;
                 const p = `/baseq3/${e}`;
                 try {
                     const stat = FS.stat(p);
-                    // crude dir check: dirs have mode & 0o40000
                     if ((stat.mode & 0o40000) === 0o40000) {
-                        // shallow clean: remove known child files only if needed
                         try {
                             for (const c of FS.readdir(p)) {
                                 if (c === "." || c === "..") continue;
-                                try { FS.unlink(`${p}/${c}`); } catch {}
+                                try {
+                                    FS.unlink(`${p}/${c}`);
+                                } catch {
+                                }
                             }
                             FS.rmdir(p);
-                        } catch { /* ignore */ }
+                        } catch {
+                        }
                     } else {
                         FS.unlink(p);
                     }
-                } catch { /* ignore */ }
+                } catch {
+                }
             }
             await syncfs(module, false);
             localStorage.setItem(VERSION_KEY, DATA_VERSION);
         } catch (e) {
-            console.warn("[ioq3] Version reset failed, continuing:", e);
+            console.warn("[ioq3] Version reset failed:", e);
         }
     }
 
-    // Populate from IndexedDB
     await syncfs(module, true);
-    return { persist: true };
+    return {persist: true};
+}
+
+// rAF-throttled progress updater
+function makeRafUpdater(setter: (p: Prog) => void) {
+    let scheduled = false;
+    let last: Prog | null = null;
+    return (v: Prog) => {
+        last = v;
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(() => {
+            if (last) setter(last);
+            scheduled = false;
+        });
+    };
+}
+
+// Fetch into a single preallocated Uint8Array using Content-Length
+async function fetchIntoUint8(url: URL, onChunk: (n: number) => void) {
+    // HEAD for length
+    let expected: number | undefined;
+    try {
+        const h = await fetch(url, {method: "HEAD"});
+        const cl = h.headers.get("content-length");
+        if (cl) expected = parseInt(cl, 10);
+    } catch {
+        // ignore
+    }
+
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
+
+    if (expected && resp.body) {
+        const out = new Uint8Array(expected);
+        const reader = resp.body.getReader();
+        let off = 0;
+        for (; ;) {
+            const {done, value} = await reader.read();
+            if (done) break;
+            out.set(value!, off);
+            off += value!.length;
+            onChunk(value!.length);
+        }
+        return off === expected ? out : out.subarray(0, off);
+    }
+
+    // Fallback: single allocation
+    const buf = new Uint8Array(await resp.arrayBuffer());
+    onChunk(buf.byteLength);
+    return buf;
+}
+
+async function estimateTotalBytes(fileUrls: URL[]) {
+    let total = 0;
+    await Promise.all(
+        fileUrls.map(async (u) => {
+            try {
+                const r = await fetch(u, {method: "HEAD"});
+                const cl = r.headers.get("content-length");
+                if (cl) total += parseInt(cl, 10);
+            } catch {
+            }
+        })
+    );
+    return total;
 }
 
 export default function GamePage() {
     const [prog, setProg] = useState<Prog>({received: 0, total: 0, pct: 0, current: ""});
+    const rafUpdate = makeRafUpdater(setProg);
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -143,50 +204,6 @@ export default function GamePage() {
 
         const dataURL = new URL(location.origin + location.pathname);
 
-        function toUint8(chunks: Uint8Array[], totalLen: number) {
-            const out = new Uint8Array(totalLen);
-            let off = 0;
-            for (const c of chunks) {
-                out.set(c, off);
-                off += c.length;
-            }
-            return out;
-        }
-
-        async function streamToArrayBuffer(resp: Response, onChunk: (n: number) => void) {
-            if (!resp.body) {
-                const buf = await resp.arrayBuffer();
-                onChunk(buf.byteLength);
-                return new Uint8Array(buf);
-            }
-            const reader = resp.body.getReader();
-            const chunks: Uint8Array[] = [];
-            for (;;) {
-                const {done, value} = await reader.read();
-                if (done) break;
-                chunks.push(value!);
-                onChunk(value!.length);
-            }
-            const totalLen = chunks.reduce((s, c) => s + c.length, 0);
-            return toUint8(chunks, totalLen);
-        }
-
-        async function estimateTotalBytes(fileUrls: URL[]) {
-            let total = 0;
-            await Promise.all(
-                fileUrls.map(async (u) => {
-                    try {
-                        const r = await fetch(u, {method: "HEAD"});
-                        const cl = r.headers.get("content-length");
-                        if (cl) total += parseInt(cl, 10);
-                    } catch {
-                        // ignore
-                    }
-                })
-            );
-            return total;
-        }
-
         ioquake3({
             websocket: {url: "wss://", subprotocol: "binary"},
             canvas: document.getElementById("canvas") as HTMLCanvasElement,
@@ -198,11 +215,11 @@ export default function GamePage() {
                 async (module: any) => {
                     module.addRunDependency("setup-ioq3-filesystem");
                     try {
-                        const { persist } = await ensureMounts(module);
+                        const {persist} = await ensureMounts(module);
 
                         const gameDirs = [com_basegame, fs_basegame, fs_game];
-                        const fileEntries = gameDirs.flatMap((g) => config[g].files);
-                        const urls = fileEntries.map((f) => new URL(f.src, dataURL));
+                        const fileEntries = gameDirs.flatMap((g) => (config as any)[g].files);
+                        const urls = fileEntries.map((f: { src: string }) => new URL(f.src, dataURL));
 
                         const totalBytes = await estimateTotalBytes(urls);
                         let receivedBytes = 0;
@@ -221,15 +238,19 @@ export default function GamePage() {
                                     return false;
                                 }
                             })();
-                            setProg((p) => ({...p, current: f.src, total: totalBytes}));
+
+                            rafUpdate({
+                                received: receivedBytes,
+                                total: totalBytes,
+                                pct: totalBytes ? Math.floor((receivedBytes / totalBytes) * 100) : 0,
+                                current: f.src
+                            });
 
                             if (!exists) {
-                                const resp = await fetch(url);
-                                if (!resp.ok) continue;
-                                const data = await streamToArrayBuffer(resp, (n) => {
+                                const data = await fetchIntoUint8(url, (n) => {
                                     receivedBytes += n;
                                     const pct = totalBytes ? Math.min(100, Math.floor((receivedBytes / totalBytes) * 100)) : 0;
-                                    setProg({received: receivedBytes, total: totalBytes, pct, current: f.src});
+                                    rafUpdate({received: receivedBytes, total: totalBytes, pct, current: f.src});
                                 });
 
                                 module.FS.mkdirTree(f.dst);
@@ -240,7 +261,7 @@ export default function GamePage() {
                         if (persist) {
                             await syncfs(module, false);
                         }
-                        setProg((p) => ({...p, pct: 100}));
+                        rafUpdate({received: totalBytes, total: totalBytes, pct: 100, current: "done"});
                     } finally {
                         module.removeRunDependency("setup-ioq3-filesystem");
                     }
@@ -253,7 +274,8 @@ export default function GamePage() {
         <div className="relative w-full h-full">
             <canvas id="canvas" className="w-full h-full"/>
             {prog.pct < 100 && (
-                <Card className="absolute bottom-4 left-4 right-4 p-4 bg-background/80 backdrop-blur border border-border">
+                <Card
+                    className="absolute bottom-4 left-4 right-4 p-4 bg-background/80 backdrop-blur border border-border">
                     <div className="text-xs text-muted-foreground mb-2 font-mono">
                         {prog.current ? `Downloading: ${prog.current}` : "Preparing downloads"}
                     </div>
