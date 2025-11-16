@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-cat > ./build/Release/ioq3ded/baseq3/autoexec.cfg <<EOL
+cat > ./build/Release/baseq3/autoexec.cfg <<EOL
 addbot sarge 2 blue 0
 addbot visor 2 red 0
 EOL
