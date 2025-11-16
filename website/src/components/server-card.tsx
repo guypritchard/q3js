@@ -36,7 +36,7 @@ export function ServerCard(props: {
         refresh();
     }, []);
 
-    if (!loading) {
+    if (!loading && !info && !error) {
         return <Card
             className="bg-card/50 border-border/50 hover:border-primary/50 transition-all animate-pulse">
             <CardContent className="p-6">
