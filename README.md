@@ -157,5 +157,9 @@ Browser (React + ioquake3.wasm)
 - Engine source is derived from [ioquake3](https://github.com/ioquake/ioq3) (GPLv2). See `ioq3/`.
 - Game assets remain © id Software / Bethesda. Supply your own `baseq3` data.
 - New code in this repository is licensed under the same terms as the respective sub-projects unless noted otherwise.
+- The WebSocket proxy and integration glue were developed by
+  [lklacar](https://github.com/lklacar); please provide attribution if you reuse these components.
+- The `q3js.com` website and its original content are likewise authored and owned by lklacar; include proper credit when
+  referencing or republishing any portion of it.
 
 Happy fragging! Feel free to open issues or PRs with improvements to the stack.
