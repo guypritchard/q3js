@@ -15,7 +15,7 @@ set d4 "map q3tourney7; set nextmap vstr d1"
 // Start rotation
 vstr d1
 
-EOL`
+EOL
 
 node ./ws-udp-proxy/index.js &
 
