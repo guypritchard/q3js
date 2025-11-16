@@ -21,7 +21,7 @@ node ./ws-udp-proxy/index.js &
   +set g_dropInactive 1 \
   +set bot_enable 1 \
   +set timelimit 0 \
-  +set fraglimit 0 \
+  +set fraglimit 30 \
   +set sv_maxPing 500 \
   +set sv_minPing 0 \
   +map q3dm17 \
