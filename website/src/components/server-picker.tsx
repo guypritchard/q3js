@@ -24,7 +24,7 @@ export function ServerPicker() {
         console.log(serversFromMaster);
         const serversToFetch = [
             ...SERVER_LIST,
-            // ...serversFromMaster
+            ...serversFromMaster
         ]
 
         const results = await Promise.allSettled(serversToFetch.map(q3GetInfo))

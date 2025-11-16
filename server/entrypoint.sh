@@ -7,6 +7,6 @@ set -Eeuo pipefail
   +set sv_allowDownload 1 \
   +set net_ip 0.0.0.0 \
   +set sv_dlrate 0 \
-  +set sv_master3 "master.q3js.com:27950" \
+  +set sv_master3 "master.q3js.com:27951" \
   +set com_hunkMegs 256 \
   +exec autoexec.cfg
