@@ -1,4 +1,4 @@
-package com.q3js.domain;
+package com.q3js.service.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,10 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 @Data
-public class Server {
-    private String proxyHost;
+public class HeartbeatRequest {
     private int proxyPort;
-
     private String targetHost;
     private int targetPort;
 }

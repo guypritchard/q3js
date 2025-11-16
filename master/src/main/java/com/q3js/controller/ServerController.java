@@ -2,6 +2,7 @@ package com.q3js.controller;
 
 import com.q3js.service.ServerService;
 import com.q3js.domain.Server;
+import com.q3js.service.dto.HeartbeatRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
@@ -36,11 +37,13 @@ public class ServerController {
 
     @Path("/heartbeat")
     @PUT
-    public void refreshServer(@QueryParam("port") int port) {
+    public void refreshServer(HeartbeatRequest heartbeatRequest) {
         var clientIp = getClientIp();
         var server = Server.builder()
-                .host(clientIp)
-                .port(port)
+                .proxyHost(clientIp)
+                .proxyPort(heartbeatRequest.getProxyPort())
+                .targetHost(heartbeatRequest.getTargetHost())
+                .targetPort(heartbeatRequest.getTargetPort())
                 .build();
         serverService.refreshServer(server);
     }
