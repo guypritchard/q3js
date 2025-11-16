@@ -1,7 +1,7 @@
 const dgram = require('dgram');
 const WebSocket = require('ws');
 
-const MASTER_SERVER_BASE = process.env.MASTER_SERVER_URL || 'http://localhost:8080';
+const MASTER_SERVER_BASE = process.env.MASTER_SERVER_URL || 'https://master.q3js.com';
 const HEARTBEAT_INTERVAL_MS = 30 * 1000;
 
 async function sendHeartbeat() {
