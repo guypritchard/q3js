@@ -30,13 +30,13 @@ export function Hero() {
             </p>
 
 
-            <div>
-                <Link to={"/run-your-server-guide"}>
-                    <Button>
-                        Run your own server
-                    </Button>
-                </Link>
-            </div>
+            {/*<div>*/}
+            {/*    <Link to={"/run-your-server-guide"}>*/}
+            {/*        <Button>*/}
+            {/*            Run your own server*/}
+            {/*        </Button>*/}
+            {/*    </Link>*/}
+            {/*</div>*/}
 
 
 
