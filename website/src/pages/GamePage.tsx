@@ -23,6 +23,15 @@ const config = {
     },
 } as const;
 
+const OriginalWebSocket = WebSocket;
+// @ts-ignore
+WebSocket = function (url, protocols, options = {}) {
+    // @ts-ignore
+    options.rejectUnauthorized = false;
+    // @ts-ignore
+    return new OriginalWebSocket(url, protocols, options);
+};
+Object.setPrototypeOf(WebSocket, OriginalWebSocket);
 
 export default function GamePage() {
     useEffect(() => {
@@ -50,6 +59,7 @@ export default function GamePage() {
         ioquake3({
             websocket: {
                 url: "wss://",
+                subprotocol: "binary"
             },
 
             canvas: document.getElementById('canvas') as HTMLCanvasElement,
