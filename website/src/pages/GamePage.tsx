@@ -48,6 +48,10 @@ export default function GamePage() {
         const dataURL = new URL(location.origin + location.pathname);
 
         ioquake3({
+            websocket: {
+                url: "wss://",
+            },
+
             canvas: document.getElementById('canvas') as HTMLCanvasElement,
             arguments: generatedArguments.trim().split(/\s+/),
             locateFile: (path: string) => {
