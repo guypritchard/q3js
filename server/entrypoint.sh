@@ -18,7 +18,8 @@ node ./ws-udp-proxy/index.js &
   +set fraglimit 0 \
   +set sv_maxPing 500 \
   +set sv_minPing 0 \
-  +addbot sarge 2 \
-  +addbot visor 2 \
+  +set b1 "addbot sarge 2; addbot visor 2" \
+  +set m1 "map q3dm17; set nextmap vstr b1" \
+  +vstr m1
   +map q3dm17
 
