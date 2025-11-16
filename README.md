@@ -4,7 +4,7 @@
 > repo.
 
 Q3JS compiles `ioquake3` to WebAssembly, streams the original `pak` assets through a modern React front end, tunnels UDP
-traffic through a WebSocket proxy, and keeps server metadata in a Quarkus + PostgreSQL backend. This document explains
+traffic through a WebSocket proxy, and keeps server metadata in a Quarkus backend. This document explains
 how the pieces fit together and how to work on each one locally.
 
 ## Highlights
@@ -12,36 +12,30 @@ how the pieces fit together and how to work on each one locally.
 - **Browser-native Quake 3** – the `game/` module builds `ioquake3` with Emscripten 4.0.19 and serves it through the
   Vite/TanStack app in `website/`.
 - **Dedicated server + WS bridge** – the `server/` module builds `ioq3ded` and exposes it to browsers via a Node-based
-  WebSocket↔UDP proxy (auto-kicks stuck `ping=999` players).
-- **Master/API service** – the Quarkus service listens for heartbeats on UDP :27950, mirrors the master-server protocol,
-  and exposes a REST API backed by PostgreSQL + jOOQ.
+  WebSocket↔UDP proxy.
+- **Master/API service** – the Quarkus service listens for heartbeats on /api/servers/heartbeat, and exposes a REST API.
 - **Single workspace** – scripts, Dockerfiles, and helper tooling live alongside the code so you can spin up the entire
   stack with a few commands.
 
 ## Repository map
 
-| Path                    | Description                                                                     |
-|-------------------------|---------------------------------------------------------------------------------|
-| `baseq3/`, `baseq3.zip` | Retail Quake III assets (not distributed; you must supply your own).            |
-| `game/`                 | Emscripten build scripts that compile `ioquake3` into `ioquake3.{js,wasm}`.     |
-| `server/`               | Native dedicated server build, Dockerfile, entrypoint, and WebSocket↔UDP proxy. |
-| `master/`               | Quarkus app (REST + UDP master server + jOOQ codegen + Flyway migrations).      |
-| `website/`              | Vite + React + TanStack Router UI that embeds the WASM build and server picker. |
-| `compose.yml`           | Minimal Postgres 16 instance for local development.                             |
-| `reset-database.sh`     | Helper script that recreates the DB, runs Flyway, and regenerates jOOQ.         |
-| `emsdk/`                | Local Emscripten SDK checkout used by `game/build.sh`.                          |
+| Path       | Description                                                                     |
+|------------|---------------------------------------------------------------------------------|
+| `game/`    | Emscripten build scripts that compile `ioquake3` into `ioquake3.{js,wasm}`.     |
+| `server/`  | Native dedicated server build, Dockerfile, entrypoint, and WebSocket↔UDP proxy. |
+| `master/`  | Quarkus app (REST master server)                                                |
+| `website/` | Vite + React + TanStack Router UI that embeds the WASM build and server picker. |
+| `emsdk/`   | Local Emscripten SDK checkout used by `game/build.sh`.                          |
+| `ioq3/`    | Submodule pointing to the `ioquake3` source code.                               |~~~~
 
 ## Architecture
 
 ```
 Browser (React + ioquake3.wasm)
     │
-    ├── HTTP(S) → Quarkus Service (REST /api/servers) → PostgreSQL (server metadata)
+    ├── HTTP(S) → Quarkus Service (REST /api/servers)
     └── WebSocket → ws-udp-proxy → UDP → ioq3ded (maps, rcon, gameplay)
 ```
-
-The Quarkus service also runs a UDP listener on port 27950 so real game servers can heartbeat and clients can issue
-`getservers` queries exactly like the original id master server.
 
 ## Requirements
 
@@ -66,13 +60,7 @@ The Quarkus service also runs a UDP listener on port 27950 so real game servers 
     - Zip the folder into `baseq3.zip` (the server build unpacks this file automatically).
     - Copy the same files into `website/public/baseq3/` so the browser client can download them.
 
-2. **Start PostgreSQL**
-   ```bash
-   docker compose up -d         # starts q3js-database on localhost:5432
-   ./reset-database.sh          # runs Flyway + jOOQ codegen via Maven
-   ```
-
-3. **Build the WebAssembly client**
+2. **Build the WebAssembly client**
    ```bash
    pushd game
    ./build.sh                   # installs/activates emsdk 4.0.19 and compiles ioquake3
@@ -81,7 +69,7 @@ The Quarkus service also runs a UDP listener on port 27950 so real game servers 
    The output `game/build/Release/ioquake3.{js,wasm}` must be copied (or symlinked) into `website/src/lib/`. The script
    already patches OpenGL shaders for WebGL 2 / GLES precision requirements.
 
-4. **Run the Quarkus service**
+3. **Run the Quarkus service**
    ```bash
    pushd master
    ./mvnw quarkus:dev           # REST API on http://localhost:8080, UDP master on :27950
@@ -89,7 +77,7 @@ The Quarkus service also runs a UDP listener on port 27950 so real game servers 
    ```
    Test the API: `curl http://localhost:8080/api/servers`.
 
-5. **Build & run the dedicated server + proxy**
+4. **Build & run the dedicated server + proxy**
    ```bash
    pushd server
    ./build.sh                   # cmake build of ioq3ded in server/build/Release
@@ -99,7 +87,7 @@ The Quarkus service also runs a UDP listener on port 27950 so real game servers 
     - The proxy listens on `WS_PORT` (default `27961`) and points to `Q3_HOST:Q3_PORT` (default `127.0.0.1:27960`).
       Override via env vars when running `entrypoint.sh` or the Docker container.
 
-6. **Run the web UI**
+5. **Run the web UI**
    ```bash
    pushd website
    npm install
@@ -116,8 +104,6 @@ The Quarkus service also runs a UDP listener on port 27950 so real game servers 
   SDL2, WebGL2, and filesystem support (`-sFORCE_FILESYSTEM=1 -lidbfs.js`).
 - The generated artifacts are consumed by the React app (`website/src/lib/ioquake3.js` and `.wasm`). Persistent data
   lives in IDBFS; `GamePage.tsx` handles mounting/syncing and versioned cache invalidation.
-- `website/src/pages/GamePage.tsx` hardcodes the proxy URL (`wss://server.q3js.com:443`). Change `q3GetInfo()` and the
-  websocket bootstrap if you want to target a local proxy (e.g., `ws://localhost:27961`).
 - Tooling: Vite + Tailwind CSS, TanStack Router, TanStack Query, shadcn/ui, Vitest, and Biome for formatting/linting.
   Use `npm run test`, `npm run lint`, `npm run format`, `npm run check`.
 
@@ -137,40 +123,27 @@ The Quarkus service also runs a UDP listener on port 27950 so real game servers 
 ### Master/API service (`master/`)
 
 - Built with Quarkus 3.29 (Jakarta EE 10 APIs), exposes `GET /api/servers` returning `ServerResponse` DTOs.
-- `UdpMasterServer` (enabled via `UdpServerBootstrap`) listens on UDP 27950 for `heartbeat`, `getservers`, and
-  `subscribe` packets, mirroring the classic master-server protocol and notifying subscribers.
-- Persistence: PostgreSQL via `quarkus-jdbc-postgresql`; schema migrations live in
-  `master/src/main/resources/db/migration`. `reset-database.sh` runs Flyway and regenerates jOOQ classes.
-- Configuration lives in `master/src/main/resources/application.yml`. Override via standard Quarkus env vars (e.g.,
-  `QUARKUS_DATASOURCE_JDBC_URL`).
 - Tests: `./mvnw test`. Native builds: `./mvnw package -Dnative`.
 
 ## Running everything with Docker
 
-- **Database:** `docker compose up -d` (already covered).
 - **Server:** `docker build -t q3js/server ./server && docker run --rm -p 27960:27960/udp -p 27961:27961 q3js/server`.
   Mount `baseq3/` if you do not bake assets into the image.
 - **Website:** `docker build -t q3js/website ./website` (Dockerfile provided), or deploy the static `dist/` folder
   produced by `npm run build`.
-- **Service:** `./mvnw package -Dquarkus.container-image.build=true` to build an OCI image using Quarkus tooling.
 
 ## Useful scripts
 
-| Command               | Purpose                                                                                                        |
-|-----------------------|----------------------------------------------------------------------------------------------------------------|
-| `./reset-database.sh` | Recreate the Postgres container, run Flyway migrations, regenerate jOOQ sources.                               |
-| `game/build.sh`       | Full WebAssembly rebuild (deletes `game/build/`). Accepts `EMSDK_ROOT`, `BASEQ3_SRC`, `BUILD_DIR`, `WEB_PORT`. |
-| `server/build.sh`     | Native server rebuild. Set `BASEQ3_SRC`/`BUILD_DIR` to override defaults.                                      |
+| Command           | Purpose                                                                                                        |
+|-------------------|----------------------------------------------------------------------------------------------------------------|
+| `game/build.sh`   | Full WebAssembly rebuild (deletes `game/build/`). Accepts `EMSDK_ROOT`, `BASEQ3_SRC`, `BUILD_DIR`, `WEB_PORT`. |
+| `server/build.sh` | Native server rebuild. Set `BASEQ3_SRC`/`BUILD_DIR` to override defaults.                                      |
 
 ## Troubleshooting
 
 - **Browser shows black screen:** Ensure `website/src/lib/ioquake3.{js,wasm}` matches the latest build and that the
   files are referenced by Vite (restart `npm run dev` after copying).
 - **`emsdk_env.sh not found`:** Set `EMSDK_ROOT=/path/to/emsdk` before running `game/build.sh`.
-- **WebSocket connection fails:** Update the hard-coded URL in `website/src/components/server-picker.tsx` and
-  `website/src/pages/GamePage.tsx` to point at your proxy, or run the proxy with TLS termination.
-- **Quarkus cannot reach Postgres:** Verify `compose.yml` container is up and ports are free. Override credentials with
-  `QUARKUS_DATASOURCE_USERNAME/PASSWORD`.
 
 ## License & credits
 
