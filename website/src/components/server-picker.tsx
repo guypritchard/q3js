@@ -3,9 +3,10 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Input} from "@/components/ui/input"
 import {Search} from "lucide-react"
 import {useInterval} from "usehooks-ts";
-import {q3GetInfo, type Q3ResolvedServer} from "@/lib/q3.ts";
+import {getServers, q3GetInfo, type Q3ResolvedServer} from "@/lib/q3.ts";
 import SERVER_LIST from "@/servers.ts";
 import {ServerCard} from "@/components/server-card.tsx";
+import {getWsProtocol} from "@/lib/utils.ts";
 
 
 const POLL_MS = 5000
@@ -15,12 +16,12 @@ export function ServerPicker() {
     const [searchQuery, setSearchQuery] = useState("")
 
     async function refreshServers() {
-        // const serversFromMaster = (await getServers()).map(s => ({
-        //     proxy: `${getWsProtocol()}//${import.meta.env.VITE_PROXY_URL}`,
-        //     host: s.host,
-        //     port: s.port
-        // }));
-        // console.log(serversFromMaster);
+        const serversFromMaster = (await getServers()).map(s => ({
+            proxy: `${getWsProtocol()}//${import.meta.env.VITE_PROXY_URL}`,
+            host: s.host,
+            port: s.port
+        }));
+        console.log(serversFromMaster);
         const serversToFetch = [
             ...SERVER_LIST,
             // ...serversFromMaster
