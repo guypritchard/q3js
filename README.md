@@ -56,9 +56,7 @@ Browser (React + ioquake3.wasm)
 ## Quick start
 
 1. **Acquire assets**
-    - Copy `pak0.pk3`…`pak8.pk3` plus the `vm/` QVM files from your Quake III install into `baseq3/`.
-    - Zip the folder into `baseq3.zip` (the server build unpacks this file automatically).
-    - Copy the same files into `website/public/baseq3/` so the browser client can download them.
+    - Copy the baseq3 folder into `website/public/` so the browser client can download them.
 
 2. **Build the WebAssembly client**
    ```bash
