@@ -22,9 +22,11 @@ public class ServerService {
     private final Set<Server> servers;
 
     private static final Comparator<Server> SERVER_COMPARATOR =
-            Comparator.comparing(Server::getHost, Comparator.nullsFirst(String::compareTo))
+            Comparator.comparing(Server::isPermanent, Comparator.reverseOrder())
+                    .thenComparing(Server::getHost, Comparator.nullsFirst(String::compareToIgnoreCase))
                     .thenComparingInt(Server::getProxyPort)
                     .thenComparingInt(Server::getTargetPort);
+
 
     public ServerService() {
         this.servers = new ConcurrentSkipListSet<>(SERVER_COMPARATOR);
