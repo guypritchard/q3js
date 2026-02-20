@@ -68,6 +68,14 @@ public class ServerService {
                 .permanent(true)
                 .lastUpdated(Instant.now().toEpochMilli())
                 .build());
+
+        this.servers.add(Server.builder()
+                .proxyPort(80)
+                .host("ctf.q3js.com")
+                .targetPort(27960)
+                .permanent(true)
+                .lastUpdated(Instant.now().toEpochMilli())
+                .build());
     }
 
     public List<ServerResponse> getAllServers() {
