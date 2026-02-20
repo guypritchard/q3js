@@ -3,6 +3,7 @@ package com.q3js.controller;
 import com.q3js.service.ServerService;
 import com.q3js.domain.Server;
 import com.q3js.service.dto.HeartbeatRequest;
+import com.q3js.service.dto.ServerResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
@@ -13,7 +14,6 @@ import io.vertx.core.http.HttpServerRequest;
 import org.jboss.logging.Logger;
 
 import java.util.List;
-import java.util.Map;
 
 @ApplicationScoped
 @Path("/api/servers")
@@ -32,14 +32,8 @@ public class ServerController {
     HttpServerRequest request;
 
     @GET
-    public List<Server> getAllServers() {
+    public List<ServerResponse> getAllServers() {
         return serverService.getAllServers();
-    }
-
-    @GET
-    @Path("/details")
-    public List<Map<String, Object>> getAllServerDetails() {
-        return serverService.getAllServerDetails();
     }
 
     @Path("/heartbeat")

@@ -9,7 +9,7 @@ const POLL_MS = 5000
 export function ServerPicker() {
     const serversResponse = useSuspenseQuery<Q3ResolvedServer[]>({
         queryFn: async () => {
-            return fetch(`${env.VITE_MASTER_SERVER_URL}/api/servers/details`).then(res => res.json())
+            return fetch(`${env.VITE_MASTER_SERVER_URL}/api/servers`).then(res => res.json())
         },
         queryKey: ['servers'],
         staleTime: POLL_MS,

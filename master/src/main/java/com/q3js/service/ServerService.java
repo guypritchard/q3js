@@ -1,8 +1,8 @@
 package com.q3js.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.q3js.domain.Server;
+import com.q3js.service.dto.ServerResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import io.quarkus.scheduler.Scheduled;
@@ -16,10 +16,10 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -54,6 +54,7 @@ public class ServerService {
         this.infoScheme = "https".equalsIgnoreCase(infoScheme) ? "https" : "http";
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(infoTimeoutMs))
+                .version(HttpClient.Version.HTTP_1_1)
                 .build();
         this.servers = new ConcurrentSkipListSet<>(SERVER_COMPARATOR);
         addDefaultServers();
@@ -69,11 +70,7 @@ public class ServerService {
                 .build());
     }
 
-    public List<Server> getAllServers() {
-        return servers.stream().toList();
-    }
-
-    public List<Map<String, Object>> getAllServerDetails() {
+    public List<ServerResponse> getAllServers() {
         return servers.stream()
                 .map(this::fetchServerDetails)
                 .flatMap(Optional::stream)
@@ -125,10 +122,11 @@ public class ServerService {
         }
     }
 
-    private Optional<Map<String, Object>> fetchServerDetails(Server server) {
+    private Optional<ServerResponse> fetchServerDetails(Server server) {
         try {
             var uri = new URI(infoScheme, null, server.getHost(), server.getProxyPort(), "/info", null, null);
             var request = HttpRequest.newBuilder(uri)
+                    .version(HttpClient.Version.HTTP_1_1)
                     .timeout(Duration.ofMillis(infoTimeoutMs))
                     .header("Accept", "application/json")
                     .GET()
@@ -145,18 +143,24 @@ public class ServerService {
                 return Optional.empty();
             }
 
-            Map<String, Object> info = objectMapper.readValue(
-                    response.body(),
-                    new TypeReference<Map<String, Object>>() {
-                    }
-            );
+            ServerResponse info = objectMapper.readValue(response.body(), ServerResponse.class);
 
             // Ensure routing-critical fields are always present in the response.
-            info.put("host", server.getHost());
-            info.put("proxyPort", server.getProxyPort());
-            info.put("targetPort", server.getTargetPort());
-            info.putIfAbsent("port", server.getTargetPort());
-            info.putIfAbsent("id", server.getHost() + ":" + server.getTargetPort());
+            info.setHost(server.getHost());
+            info.setProxyPort(server.getProxyPort());
+            info.setTargetPort(server.getTargetPort());
+            if (info.getPort() == null) {
+                info.setPort(server.getTargetPort());
+            }
+            if (info.getId() == null || info.getId().isBlank()) {
+                info.setId(server.getHost() + ":" + server.getTargetPort());
+            }
+            if (info.getUsers() == null) {
+                info.setUsers(new ArrayList<>());
+            }
+            if (info.getPlayers() == null) {
+                info.setPlayers(info.getUsers().size());
+            }
 
             return Optional.of(info);
         } catch (Exception e) {
