@@ -1,6 +1,3 @@
-import {q3FetchLines} from "@/lib/q3-util.ts";
-import {stripQ3Colors, toInt} from "@/lib/utils.ts";
-
 export type User = {
     score: number
     ping: number
@@ -58,76 +55,28 @@ export const GAME_TYPES: Record<number, string> = {
 
 
 export async function q3GetInfo(server: Q3ServerTarget): Promise<Q3ResolvedServer | null> {
-    const {lines, ping} = await q3FetchLines({
-        server,
-        command: "getstatus xxx\n"
-    })
+    const protocol = location.protocol === "https:" ? "https:" : "http:"
+    const infoUrl = `${protocol}//${server.host}:${server.proxyPort}/info`
+    const res = await fetch(infoUrl)
 
-    const idx = lines.findIndex(l => l.includes("statusResponse"))
-    if (idx === -1) return null
-
-    const rulesLine = (lines[idx + 1] ?? "").trim()
-    if (!rulesLine) return null
-
-    const playerLines = lines
-        .slice(idx + 2)
-        .filter(l => l.trim().length > 0)
-
-    const parts = rulesLine.split("\\")
-    const kv: Record<string, string> = {}
-
-    for (let i = 1; i + 1 < parts.length; i += 2) {
-        kv[parts[i].toLowerCase()] = parts[i + 1] ?? ""
+    if (!res.ok) {
+        throw new Error(`Failed to fetch server info: ${res.status}`)
     }
 
-    const users: User[] = []
-    for (const line of playerLines) {
-        const m = line.match(/^\s*(-?\d+)\s+(\d+)\s+"(.*)"\s*$/)
-        if (!m) continue
-        users.push({
-            score: parseInt(m[1], 10),
-            ping: parseInt(m[2], 10),
-            name: stripQ3Colors(m[3])
-        })
+    const payload = await res.json() as Partial<Q3ResolvedServer> | null
+    if (!payload || typeof payload !== "object") {
+        return null
     }
+
+    const users = Array.isArray(payload.users) ? payload.users : []
 
     return {
-        id: `${server.host}:${server.targetPort}`,
-        sv_hostname: stripQ3Colors(
-            kv["sv_hostname"] ?? kv["hostname"] ?? "Unnamed Server"
-        ),
-        mapname: kv["mapname"] ?? "unknown",
-        g_gametype: toInt(kv["g_gametype"] ?? kv["gametype"] ?? "0"),
-        fraglimit: toInt(kv["fraglimit"]),
-        timelimit: toInt(kv["timelimit"]),
-        sv_maxclients: toInt(kv["sv_maxclients"]),
-        g_needpass: toInt(kv["g_needpass"]),
-        capturelimit: toInt(kv["capturelimit"]),
-        version: kv["version"] ?? kv["com_gamename"] ?? kv["gamename"] ?? "",
-        players: users.length,
-        ping,
-
-        port: server.targetPort,
-
-        challenge: kv["challenge"],
-        sv_maxPing: toInt(kv["sv_maxping"]),
-        sv_minPing: toInt(kv["sv_minping"]),
-        com_gamename: kv["com_gamename"],
-        com_protocol: toInt(kv["com_protocol"]),
-        dmflags: toInt(kv["dmflags"]),
-        sv_privateClients: toInt(kv["sv_privateclients"]),
-        sv_minRate: toInt(kv["sv_minrate"]),
-        sv_maxRate: toInt(kv["sv_maxrate"]),
-        sv_dlRate: toInt(kv["sv_dlrate"]),
-        sv_floodProtect: toInt(kv["sv_floodprotect"]),
-        sv_allowDownload: toInt(kv["sv_allowdownload"]),
-        bot_minplayers: toInt(kv["bot_minplayers"]),
-        gamename: kv["gamename"],
-        g_maxGameClients: toInt(kv["g_maxgameclients"]),
-
+        ...payload,
+        id: typeof payload.id === "string" ? payload.id : `${server.host}:${server.targetPort}`,
         host: server.host,
         proxyPort: server.proxyPort,
-
+        port: typeof payload.port === "number" ? payload.port : server.targetPort,
+        players: typeof payload.players === "number" ? payload.players : users.length,
         users
-    }
+    } as Q3ResolvedServer
 }
