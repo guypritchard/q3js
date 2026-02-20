@@ -5,9 +5,9 @@ import {SiGithub} from "react-icons/si";
 export function Hero() {
     return <section className="container mx-auto px-4 py-16 md:py-24">
         <div className="mx-auto text-center space-y-6">
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-balance">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-balance">
                 Play Quake III Arena in your browser
-            </h2>
+            </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground mx-auto text-balance leading-relaxed">
                 Experience the thrill of Quake III Arena without any downloads or installations.

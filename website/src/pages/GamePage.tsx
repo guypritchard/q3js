@@ -5,6 +5,7 @@ import {useSearch} from "@tanstack/react-router";
 import {makeRafUpdater, type Prog} from "@/lib/fs.ts";
 import {useFullscreenOnF11} from "@/hooks/use-fullscreen.ts";
 import startGame from "@/game";
+import {useSeo} from "@/hooks/use-seo.ts";
 
 export default function GamePage() {
     useFullscreenOnF11();
@@ -16,6 +17,13 @@ export default function GamePage() {
         from: "/game"
     })
 
+    useSeo({
+        title: `Play on ${name}`,
+        description: `Join ${name} and play Quake III Arena in your browser.`,
+        path: "/game",
+        noindex: true,
+    });
+
     useEffect(() => {
         startGame({
             name,
@@ -26,7 +34,8 @@ export default function GamePage() {
     }, []);
 
     return (
-        <div className="relative w-full h-full min-h-screen">
+        <main className="relative w-full h-full min-h-screen">
+            <h1 className="sr-only">Play Quake III Arena in your browser</h1>
             <canvas id="canvas" className="w-full h-full"/>
             {prog.pct < 100 && (
                 <Card
@@ -42,6 +51,6 @@ export default function GamePage() {
                     </div>
                 </Card>
             )}
-        </div>
+        </main>
     );
 }
