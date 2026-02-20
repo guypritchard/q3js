@@ -6,14 +6,24 @@ import {env} from "@/env.ts";
 
 const POLL_MS = 5000
 
+async function fetchServers() {
+    const response = await fetch(`${env.VITE_MASTER_SERVER_URL}/api/servers`);
+
+    if (!response.ok) {
+        throw new Error(`Failed to load servers (${response.status})`);
+    }
+
+    return response.json() as Promise<Q3ResolvedServer[]>;
+}
+
 export function ServerPicker() {
     const serversResponse = useSuspenseQuery<Q3ResolvedServer[]>({
-        queryFn: async () => {
-            return fetch(`${env.VITE_MASTER_SERVER_URL}/api/servers`).then(res => res.json())
-        },
+        queryFn: fetchServers,
         queryKey: ['servers'],
         staleTime: POLL_MS,
         refetchInterval: POLL_MS,
+        retry: 2,
+        retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
     })
     const servers = serversResponse.data;
 

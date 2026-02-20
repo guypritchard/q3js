@@ -4,6 +4,8 @@ import {Suspense} from "react";
 import ServerPickerSkeleton from "@/components/server-picker-skeleton.tsx";
 import {ErrorBoundary} from 'react-error-boundary'
 import {useSeo} from "@/hooks/use-seo.ts";
+import {QueryErrorResetBoundary} from "@tanstack/react-query";
+import {Button} from "@/components/ui/button.tsx";
 
 export default function HomePage() {
     useSeo({
@@ -16,11 +18,31 @@ export default function HomePage() {
         <main>
             <Hero/>
 
-            <ErrorBoundary fallback={<p role="alert">Something went wrong loading the server list.</p>}>
-                <Suspense fallback={<ServerPickerSkeleton/>}>
-                    <ServerPicker/>
-                </Suspense>
-            </ErrorBoundary>
+            <QueryErrorResetBoundary>
+                {({reset}) => (
+                    <ErrorBoundary
+                        onReset={reset}
+                        fallbackRender={({resetErrorBoundary}) => (
+                            <div role="alert" className="container mx-auto px-4 pb-24">
+                                <div className="max-w-5xl mx-auto rounded border border-destructive/50 bg-destructive/10 p-4">
+                                    <p className="text-sm">Something went wrong loading the server list.</p>
+                                    <Button
+                                        variant="outline"
+                                        className="mt-3"
+                                        onClick={resetErrorBoundary}
+                                    >
+                                        Retry
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    >
+                        <Suspense fallback={<ServerPickerSkeleton/>}>
+                            <ServerPicker/>
+                        </Suspense>
+                    </ErrorBoundary>
+                )}
+            </QueryErrorResetBoundary>
         </main>
     )
 }

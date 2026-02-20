@@ -35,22 +35,22 @@ export default function startGame({host, proxyPort, name, rafUpdate}: Params) {
     const com_basegame = "baseq3" as const;
     const fs_basegame = "baseq3" as const;
     const fs_game = "baseq3" as const;
+    const sanitizedName = name.replace(/"/g, "'").trim() || "Q3JS Player";
+    const engineArguments = [
+        "+set", "sv_pure", "0",
+        "+set", "net_enabled", "1",
+        "+set", "r_mode", "-2",
+        "+set", "com_basegame", com_basegame,
+        "+set", "fs_basegame", fs_basegame,
+        "+set", "cl_allowDownload", "1",
+        "+set", "con_scale", "2",
+        "+set", "fs_game", fs_game,
+        "+connect", `${host}:${proxyPort}`,
+        "+set", "name", sanitizedName
+    ];
 
-    let generatedArguments = `
-          +set sv_pure 0
-          +set net_enabled 1
-          +set r_mode -2
-          +set com_basegame "${com_basegame}"
-          +set fs_basegame "${fs_basegame}"
-          +set cl_allowDownload 1
-          +set con_scale 2
-          +set fs_game "${fs_game}"
-        `;
-    generatedArguments += ` +connect ${host}:${proxyPort} `;
-    generatedArguments += ` +set name "${name.replace(/"/g, "'")}" `;
-
-    if (name === "^1L^2K") {
-        generatedArguments += ` +set cg_autoswitch "0" +bind 3 "weapon 7" +bind e "+zoom" `;
+    if (sanitizedName === "^1L^2K") {
+        engineArguments.push("+set", "cg_autoswitch", "0", "+bind", "3", "weapon 7", "+bind", "e", "+zoom");
     }
 
     const dataURL = new URL(location.origin + location.pathname);
@@ -61,7 +61,7 @@ export default function startGame({host, proxyPort, name, rafUpdate}: Params) {
             subprotocol: "binary"
         },
         canvas: document.getElementById("canvas") as HTMLCanvasElement,
-        arguments: generatedArguments.trim().split(/\s+/),
+        arguments: engineArguments,
         locateFile: (path: string) => {
             if (path.endsWith(".wasm")) return wasm;
         },

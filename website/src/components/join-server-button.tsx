@@ -19,9 +19,8 @@ export function JoinServerButton(props: {
     const [name, setName] = useLocalStorage("name", "Q3JS Player")
 
     const baseUrl = env.VITE_GAME_URL ? env.VITE_GAME_URL : "";
+    const gameUrl = `${baseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(name)}`;
 
-    // @ts-ignore
-    // @ts-ignore
     return <Dialog>
         <DialogTrigger asChild>
             <Button
@@ -52,12 +51,11 @@ export function JoinServerButton(props: {
                     onChange={(e) => setName(e.target.value)}
                 />
 
-                <a href={`${baseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(name)}`}>
-                    <Button size="lg"
-                            className="w-full bg-primary text-primary-foreground font-bold">
+                <Button asChild size="lg" className="w-full bg-primary text-primary-foreground font-bold">
+                    <a href={gameUrl}>
                         Join Server
-                    </Button>
-                </a>
+                    </a>
+                </Button>
             </div>
         </DialogContent>
     </Dialog>;

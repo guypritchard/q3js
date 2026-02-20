@@ -13,19 +13,19 @@ export function Hero() {
                 Experience the thrill of Quake III Arena without any downloads or installations.
             </p>
 
-            <div className="flex justify-center items-center">
-                <a href={"https://github.com/lklacar/q3js"} target={"_blank"} rel={"noreferrer"}>
-                    <Button variant={"outline"} className={"mr-4"}>
+            <div className="flex justify-center items-center gap-4 flex-wrap">
+                <Button variant={"outline"} asChild>
+                    <a href={"https://github.com/lklacar/q3js"} target={"_blank"} rel={"noreferrer"}>
                         <SiGithub className="w-6 h-6 fill-white"/>
                         View on GitHub
-                    </Button>
-                </a>
+                    </a>
+                </Button>
 
-                <Link to={"/guide"}>
-                    <Button>
+                <Button asChild>
+                    <Link to={"/guide"}>
                         Run your own server
-                    </Button>
-                </Link>
+                    </Link>
+                </Button>
             </div>
 
 
