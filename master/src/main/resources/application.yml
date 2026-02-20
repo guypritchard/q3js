@@ -6,3 +6,8 @@ quarkus:
       methods: "GET,PUT,POST,DELETE,OPTIONS"
       headers: "origin,accept,authorization,content-type,x-requested-with"
       access-control-allow-credentials: true
+
+q3js:
+  server-info:
+    timeout-ms: 3000
+    scheme: http

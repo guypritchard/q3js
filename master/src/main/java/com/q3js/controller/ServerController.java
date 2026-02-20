@@ -13,6 +13,7 @@ import io.vertx.core.http.HttpServerRequest;
 import org.jboss.logging.Logger;
 
 import java.util.List;
+import java.util.Map;
 
 @ApplicationScoped
 @Path("/api/servers")
@@ -33,6 +34,12 @@ public class ServerController {
     @GET
     public List<Server> getAllServers() {
         return serverService.getAllServers();
+    }
+
+    @GET
+    @Path("/details")
+    public List<Map<String, Object>> getAllServerDetails() {
+        return serverService.getAllServerDetails();
     }
 
     @Path("/heartbeat")

@@ -1,15 +1,26 @@
 package com.q3js.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.q3js.domain.Server;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import io.quarkus.scheduler.Scheduled;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import java.net.URI;
 import java.net.InetAddress;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -27,8 +38,23 @@ public class ServerService {
                     .thenComparingInt(Server::getProxyPort)
                     .thenComparingInt(Server::getTargetPort);
 
+    private final ObjectMapper objectMapper;
+    private final HttpClient httpClient;
+    private final int infoTimeoutMs;
+    private final String infoScheme;
 
-    public ServerService() {
+    @Inject
+    public ServerService(
+            ObjectMapper objectMapper,
+            @ConfigProperty(name = "q3js.server-info.timeout-ms", defaultValue = "3000") int infoTimeoutMs,
+            @ConfigProperty(name = "q3js.server-info.scheme", defaultValue = "http") String infoScheme
+    ) {
+        this.objectMapper = objectMapper;
+        this.infoTimeoutMs = infoTimeoutMs;
+        this.infoScheme = "https".equalsIgnoreCase(infoScheme) ? "https" : "http";
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(infoTimeoutMs))
+                .build();
         this.servers = new ConcurrentSkipListSet<>(SERVER_COMPARATOR);
         addDefaultServers();
     }
@@ -45,6 +71,13 @@ public class ServerService {
 
     public List<Server> getAllServers() {
         return servers.stream().toList();
+    }
+
+    public List<Map<String, Object>> getAllServerDetails() {
+        return servers.stream()
+                .map(this::fetchServerDetails)
+                .flatMap(Optional::stream)
+                .toList();
     }
 
     public void refreshServer(Server server) {
@@ -89,6 +122,51 @@ public class ServerService {
             return addr.isSiteLocalAddress();
         } catch (Exception e) {
             return true;
+        }
+    }
+
+    private Optional<Map<String, Object>> fetchServerDetails(Server server) {
+        try {
+            var uri = new URI(infoScheme, null, server.getHost(), server.getProxyPort(), "/info", null, null);
+            var request = HttpRequest.newBuilder(uri)
+                    .timeout(Duration.ofMillis(infoTimeoutMs))
+                    .header("Accept", "application/json")
+                    .GET()
+                    .build();
+
+            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                LOG.warnf(
+                        "Skipping server %s:%d, /info returned %d",
+                        server.getHost(),
+                        server.getProxyPort(),
+                        response.statusCode()
+                );
+                return Optional.empty();
+            }
+
+            Map<String, Object> info = objectMapper.readValue(
+                    response.body(),
+                    new TypeReference<Map<String, Object>>() {
+                    }
+            );
+
+            // Ensure routing-critical fields are always present in the response.
+            info.put("host", server.getHost());
+            info.put("proxyPort", server.getProxyPort());
+            info.put("targetPort", server.getTargetPort());
+            info.putIfAbsent("port", server.getTargetPort());
+            info.putIfAbsent("id", server.getHost() + ":" + server.getTargetPort());
+
+            return Optional.of(info);
+        } catch (Exception e) {
+            LOG.warnf(
+                    e,
+                    "Skipping server %s:%d, failed to fetch /info",
+                    server.getHost(),
+                    server.getProxyPort()
+            );
+            return Optional.empty();
         }
     }
 }

@@ -1,52 +1,13 @@
-import {GAME_TYPES, q3GetInfo, type Q3ResolvedServer, type Q3ServerTarget} from "@/lib/q3.ts";
+import {GAME_TYPES, type Q3ResolvedServer} from "@/lib/q3.ts";
 import {Card, CardContent} from "@/components/ui/card.tsx";
 import {Activity, Globe, Lock, Users} from "lucide-react";
 import {Badge} from "@/components/ui/badge.tsx";
 import {getGameLimits, getPercentage, getPingColor} from "@/lib/utils.ts";
 import {JoinServerButton} from "@/components/join-server-button.tsx";
 import {PlayerList} from "@/components/player-list.tsx";
-import {useEffect, useState} from "react";
-import {useInterval} from "usehooks-ts";
-import ServerSkeleton from "@/components/server-skeleton.tsx";
 
-export function ServerCard(props: { server: Q3ServerTarget }) {
-    const [info, setInfo] = useState<Q3ResolvedServer | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [initialLoading, setInitialLoading] = useState(true);
-
-    async function refresh() {
-        try {
-            const res = await q3GetInfo(props.server);
-            if (res) {
-                setInfo(res);
-                setError(null);
-            }
-        } catch (e) {
-            if (!info) {
-                setError("Failed to fetch server info");
-            }
-        } finally {
-            setInitialLoading(false);
-        }
-    }
-
-    useInterval(refresh, 5000);
-
-    useEffect(() => {
-        refresh();
-    }, []);
-
-    if (initialLoading && !info && !error) {
-        return <ServerSkeleton/>;
-    }
-
-    if (!info && error) {
-        return null;
-    }
-
-    if (!info) {
-        return null;
-    }
+export function ServerCard(props: { server: Q3ResolvedServer }) {
+    const info = props.server;
 
     const sortedUsers = [...info.users].sort((a, b) => b.score - a.score);
 
@@ -70,7 +31,7 @@ export function ServerCard(props: { server: Q3ServerTarget }) {
                                         variant="outline"
                                         className="font-mono text-xs border-border/50 text-muted-foreground"
                                     >
-                                        <Globe className="h-3 w-3 mr-1"/> {info.location}
+                                        <Globe className="h-3 w-3 mr-1"/> {info.location ?? "Unknown"}
                                     </Badge>
                                     <Badge
                                         variant="outline"

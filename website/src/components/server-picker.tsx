@@ -1,5 +1,5 @@
 import {Card, CardContent} from "@/components/ui/card"
-import {type Q3ServerTarget} from "@/lib/q3.ts";
+import {type Q3ResolvedServer} from "@/lib/q3.ts";
 import {ServerCard} from "@/components/server-card.tsx";
 import {useSuspenseQuery} from "@tanstack/react-query";
 import {env} from "@/env.ts";
@@ -7,12 +7,13 @@ import {env} from "@/env.ts";
 const POLL_MS = 5000
 
 export function ServerPicker() {
-    const serversResponse = useSuspenseQuery<Q3ServerTarget[]>({
+    const serversResponse = useSuspenseQuery<Q3ResolvedServer[]>({
         queryFn: async () => {
-            return fetch(`${env.VITE_MASTER_SERVER_URL}/api/servers`).then(res => res.json())
+            return fetch(`${env.VITE_MASTER_SERVER_URL}/api/servers/details`).then(res => res.json())
         },
         queryKey: ['servers'],
         staleTime: POLL_MS,
+        refetchInterval: POLL_MS,
     })
     const servers = serversResponse.data;
 
@@ -25,7 +26,7 @@ export function ServerPicker() {
                     {servers.map((server, i) => {
                         return (
                             <ServerCard
-                                key={i}
+                                key={server.id ?? i}
                                 server={server}
                             />
                         )
