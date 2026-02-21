@@ -7,8 +7,8 @@ export default function ServerPickerSkeleton() {
                 <h2 className="text-3xl font-bold">Select a Server</h2>
 
                 <div className="grid gap-4">
-                    {[...Array(1)].map((_, i) => (
-                        <ServerSkeleton key={i}/>
+                    {["server-skeleton-1", "server-skeleton-2"].map((id) => (
+                        <ServerSkeleton key={id}/>
                     ))}
                 </div>
             </div>

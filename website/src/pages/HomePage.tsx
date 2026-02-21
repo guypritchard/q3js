@@ -6,6 +6,7 @@ import {ErrorBoundary} from 'react-error-boundary'
 import {useSeo} from "@/hooks/use-seo.ts";
 import {QueryErrorResetBoundary} from "@tanstack/react-query";
 import {Button} from "@/components/ui/button.tsx";
+import {Link} from "@tanstack/react-router";
 
 export default function HomePage() {
     useSeo({
@@ -32,6 +33,9 @@ export default function HomePage() {
                                         onClick={resetErrorBoundary}
                                     >
                                         Retry
+                                    </Button>
+                                    <Button className="mt-3 ml-2" asChild>
+                                        <Link to="/guide">Run your own server</Link>
                                     </Button>
                                 </div>
                             </div>

@@ -1,4 +1,13 @@
-export type Prog = { received: number; total: number; pct: number; current?: string };
+export type LoadStage = "initializing" | "downloading" | "launching" | "ready";
+
+export type Prog = {
+    received: number;
+    total: number;
+    pct: number;
+    current?: string;
+    stage: LoadStage;
+    etaSeconds?: number;
+};
 
 // Persistent data versioning
 const DATA_VERSION = "v1";
