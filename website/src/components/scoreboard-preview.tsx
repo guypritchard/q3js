@@ -6,6 +6,7 @@ import {fetchScoreboard, type ScoreboardEntry} from "@/lib/scoreboard.ts";
 import {useMemo} from "react";
 import {stripQ3Colors} from "@/lib/utils.ts";
 import {Q3ColoredText} from "@/components/q3-colored-text.tsx";
+import {trackEvent} from "@/lib/analytics.ts";
 
 function formatKills(kills: number) {
     return new Intl.NumberFormat().format(kills);
@@ -43,7 +44,12 @@ export function ScoreboardPreview() {
                                 </p>
                             </div>
                             <Button variant="outline" asChild>
-                                <Link to="/scoreboard">View full scoreboard</Link>
+                                <Link
+                                    to="/scoreboard"
+                                    onClick={() => trackEvent("cta_click", {target: "view_scoreboard", source: "scoreboard_preview"})}
+                                >
+                                    View full scoreboard
+                                </Link>
                             </Button>
                         </div>
 

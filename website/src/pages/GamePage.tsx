@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {Card} from "@/components/ui/card";
 import {Progress} from "@/components/ui/progress";
 import {useSearch} from "@tanstack/react-router";
@@ -6,6 +6,7 @@ import {makeRafUpdater, type Prog} from "@/lib/fs.ts";
 import {useFullscreenOnF11} from "@/hooks/use-fullscreen.ts";
 import startGame from "@/game";
 import {useSeo} from "@/hooks/use-seo.ts";
+import {trackEvent} from "@/lib/analytics.ts";
 
 export default function GamePage() {
     useFullscreenOnF11();
@@ -18,6 +19,8 @@ export default function GamePage() {
         stage: "initializing"
     });
     const rafUpdate = makeRafUpdater(setProg);
+    const launchStartedAtRef = useRef(performance.now());
+    const readyTrackedRef = useRef(false);
 
     const {host, proxyPort, name} = useSearch({
         from: "/game"
@@ -31,12 +34,31 @@ export default function GamePage() {
     });
 
     useEffect(() => {
+        trackEvent("game_launch_started");
         startGame({
             name,
             host,
             proxyPort,
             rafUpdate
         })
+    }, []);
+
+    useEffect(() => {
+        if (prog.stage !== "ready" || readyTrackedRef.current) return;
+
+        readyTrackedRef.current = true;
+        trackEvent("game_launch_ready", {
+            load_time_seconds: Number(((performance.now() - launchStartedAtRef.current) / 1000).toFixed(1)),
+        });
+    }, [prog.stage]);
+
+    useEffect(() => {
+        return () => {
+            trackEvent("game_page_exit", {
+                duration_seconds: Math.round((performance.now() - launchStartedAtRef.current) / 1000),
+                reached_ready: readyTrackedRef.current,
+            });
+        };
     }, []);
 
     const stageLabel = prog.stage === "initializing"

@@ -1,8 +1,10 @@
 import {Link} from "@tanstack/react-router";
 import {Button} from "@/components/ui/button.tsx";
+import {trackEvent} from "@/lib/analytics.ts";
 
 export function Hero() {
     function scrollToServers() {
+        trackEvent("cta_click", {target: "play_now", source: "hero"});
         document.getElementById("server-browser")?.scrollIntoView({
             behavior: "smooth",
             block: "start"
@@ -25,7 +27,10 @@ export function Hero() {
                 </Button>
 
                 <Button variant="secondary" asChild>
-                    <Link to={"/guide"}>
+                    <Link
+                        to={"/guide"}
+                        onClick={() => trackEvent("cta_click", {target: "run_server", source: "hero"})}
+                    >
                         Run your own server
                     </Link>
                 </Button>

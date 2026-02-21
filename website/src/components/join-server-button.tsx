@@ -3,6 +3,7 @@ import {Button} from "@/components/ui/button.tsx";
 import {Zap} from "lucide-react";
 import {env} from "@/env.ts";
 import {storeRecentServer} from "@/lib/recent-servers.ts";
+import {trackEvent} from "@/lib/analytics.ts";
 
 export function JoinServerButton(props: {
     server: Q3ResolvedServer;
@@ -35,6 +36,14 @@ export function JoinServerButton(props: {
             <a
                 href={gameUrl}
                 onClick={() => {
+                    trackEvent("join_server_click", {
+                        server_region: props.server.location ?? "Unknown",
+                        map_name: props.server.mapname.toLowerCase(),
+                        game_type: props.server.g_gametype,
+                        player_count: props.server.players,
+                        max_players: props.server.sv_maxclients,
+                        password_protected: props.server.g_needpass === 1,
+                    });
                     storeRecentServer(props.server);
                     props.onJoin?.(props.server);
                 }}

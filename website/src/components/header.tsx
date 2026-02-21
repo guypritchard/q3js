@@ -3,6 +3,7 @@ import {Badge} from "@/components/ui/badge.tsx";
 import {useQuery} from "@tanstack/react-query";
 import {fetchServers} from "@/lib/servers.ts";
 import {SiGithub} from "react-icons/si";
+import {trackEvent} from "@/lib/analytics.ts";
 
 export function Header() {
     const statusQuery = useQuery({
@@ -49,7 +50,10 @@ export function Header() {
                     variant="outline"
                     className="h-6 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
                 >
-                    <Link to="/scoreboard">
+                    <Link
+                        to="/scoreboard"
+                        onClick={() => trackEvent("navigation_click", {target: "scoreboard", source: "header"})}
+                    >
                         <span className="sm:hidden">Scores</span>
                         <span className="hidden sm:inline">Global Scoreboard</span>
                     </Link>
@@ -59,8 +63,13 @@ export function Header() {
                     variant="outline"
                     className="h-6 gap-1.5 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
                 >
-                    <a href="https://github.com/lklacar/q3js" target="_blank" rel="noreferrer"
-                       aria-label="View Q3JS on GitHub">
+                    <a
+                        href="https://github.com/lklacar/q3js"
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label="View Q3JS on GitHub"
+                        onClick={() => trackEvent("outbound_click", {target: "github", source: "header"})}
+                    >
                         <SiGithub className="w-3.5 h-3.5"/>
                         <span className="hidden md:inline">GitHub</span>
                     </a>
@@ -70,7 +79,10 @@ export function Header() {
                     variant="outline"
                     className="h-6 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
                 >
-                    <a href={"https://discord.gg/mKvM9su443"}>
+                    <a
+                        href={"https://discord.gg/mKvM9su443"}
+                        onClick={() => trackEvent("outbound_click", {target: "discord", source: "header"})}
+                    >
                         Join Discord
                     </a>
                 </Badge>

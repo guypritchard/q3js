@@ -7,6 +7,7 @@ import {useSeo} from "@/hooks/use-seo.ts";
 import {useMemo} from "react";
 import {useQuery} from "@tanstack/react-query";
 import {Q3ColoredText} from "@/components/q3-colored-text.tsx";
+import {trackEvent} from "@/lib/analytics.ts";
 
 function rankBadge(rank: number) {
     if (rank === 1) return <Badge className="min-w-10 justify-center bg-primary text-primary-foreground">#1</Badge>;
@@ -42,6 +43,11 @@ export default function ScoreboardPage() {
         });
     }, [scoreboardQuery.data]);
 
+    function refreshScoreboard(source: "refresh_button" | "error_retry") {
+        trackEvent("scoreboard_refresh_click", {source});
+        scoreboardQuery.refetch();
+    }
+
     return (
         <main className="container mx-auto px-4 py-12 md:py-16">
             <section className="mx-auto max-w-5xl space-y-6">
@@ -63,7 +69,7 @@ export default function ScoreboardPage() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => scoreboardQuery.refetch()}
+                                onClick={() => refreshScoreboard("refresh_button")}
                                 disabled={scoreboardQuery.isFetching}
                             >
                                 {scoreboardQuery.isFetching ? "Refreshing..." : "Refresh"}
@@ -73,7 +79,7 @@ export default function ScoreboardPage() {
                         {scoreboardQuery.isError && (
                             <div className="p-6 text-center space-y-3">
                                 <p className="text-sm text-destructive">Failed to load the global scoreboard.</p>
-                                <Button variant="outline" onClick={() => scoreboardQuery.refetch()}>
+                                <Button variant="outline" onClick={() => refreshScoreboard("error_retry")}>
                                     Retry
                                 </Button>
                             </div>

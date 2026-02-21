@@ -3,7 +3,7 @@ import {type Q3ResolvedServer} from "@/lib/q3.ts";
 import {ServerCard} from "@/components/server-card.tsx";
 import {useSuspenseQuery} from "@tanstack/react-query";
 import {fetchServers} from "@/lib/servers.ts";
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {stripQ3Colors} from "@/lib/utils.ts";
@@ -16,6 +16,7 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select.tsx";
+import {trackEvent} from "@/lib/analytics.ts";
 
 const POLL_MS = 5000
 
@@ -25,6 +26,7 @@ export function ServerPicker() {
     const [name, setName] = useState("Q3JS Player");
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState<SortKey>("players");
+    const hasTrackedSearchUsageRef = useRef(false);
 
     const serversResponse = useSuspenseQuery<Q3ResolvedServer[]>({
         queryFn: fetchServers,
@@ -53,6 +55,14 @@ export function ServerPicker() {
             window.removeEventListener("storage", syncName);
         };
     }, []);
+
+    useEffect(() => {
+        if (hasTrackedSearchUsageRef.current) return;
+        if (searchTerm.trim().length === 0) return;
+
+        hasTrackedSearchUsageRef.current = true;
+        trackEvent("server_search_used");
+    }, [searchTerm]);
 
     const filteredServers = useMemo(() => {
         const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -92,6 +102,10 @@ export function ServerPicker() {
     ].filter(Boolean).length;
 
     function clearFilters() {
+        trackEvent("server_filters_cleared", {
+            had_search_term: searchTerm.trim().length > 0,
+            previous_sort: sortBy,
+        });
         setSearchTerm("");
         setSortBy("players");
     }
@@ -99,6 +113,21 @@ export function ServerPicker() {
     function handleNameChange(nextName: string) {
         setName(nextName);
         localStorage.setItem("name", nextName);
+    }
+
+    function handleSortChange(value: string) {
+        if (value !== "players" && value !== "ping" && value !== "name") return;
+
+        if (value !== sortBy) {
+            trackEvent("server_sort_changed", {sort_by: value});
+        }
+
+        setSortBy(value);
+    }
+
+    function refreshServerList(source: "empty" | "filtered_empty") {
+        trackEvent("server_list_refreshed", {source});
+        serversResponse.refetch();
     }
 
     return (
@@ -139,11 +168,7 @@ export function ServerPicker() {
                             <div>
                                 <Select
                                     value={sortBy}
-                                    onValueChange={(value) => {
-                                        if (value === "players" || value === "ping" || value === "name") {
-                                            setSortBy(value);
-                                        }
-                                    }}
+                                    onValueChange={handleSortChange}
                                 >
                                     <SelectTrigger aria-label="Sort servers">
                                         <SelectValue placeholder="Sort: most players"/>
@@ -187,7 +212,7 @@ export function ServerPicker() {
                         <CardContent className="py-10 text-center space-y-3">
                             <p className="text-muted-foreground">No servers are live right now.</p>
                             <div className="flex items-center justify-center gap-2">
-                                <Button variant="outline" onClick={() => serversResponse.refetch()}>
+                                <Button variant="outline" onClick={() => refreshServerList("empty")}>
                                     Refresh list
                                 </Button>
                                 <Button asChild>
@@ -206,7 +231,7 @@ export function ServerPicker() {
                                 <Button variant="outline" onClick={clearFilters}>
                                     Clear filters
                                 </Button>
-                                <Button variant="outline" onClick={() => serversResponse.refetch()}>
+                                <Button variant="outline" onClick={() => refreshServerList("filtered_empty")}>
                                     Refresh list
                                 </Button>
                             </div>
