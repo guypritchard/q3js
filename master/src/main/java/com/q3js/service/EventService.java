@@ -16,7 +16,7 @@ public class EventService {
     @Transactional
     public void ingestEvent(CreateEventRequest createEventRequest) {
         var event = dsl.newRecord(EVENTS);
-        event.setEventType(event.getEventType());
+        event.setEventType(createEventRequest.getEvent());
         event.setGameTime(createEventRequest.getGameTime());
         event.setKillerClientNum(createEventRequest.getKiller().getClientNum());
         event.setKillerName(createEventRequest.getKiller().getName());
