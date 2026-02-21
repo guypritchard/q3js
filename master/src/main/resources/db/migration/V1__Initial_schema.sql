@@ -2,8 +2,8 @@
 CREATE TABLE IF NOT EXISTS events
 (
     id                BIGSERIAL PRIMARY KEY,
-    source_ip         TEXT        NOT NULL,
-    event_type        TEXT        NOT NULL,
+    source_ip         TEXT,
+    event_type        TEXT        NOT NULL DEFAULT 'unknown',
     killer_client_num INTEGER     NOT NULL,
     killer_name       TEXT        NOT NULL,
     victim_client_num INTEGER     NOT NULL,
