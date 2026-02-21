@@ -50,7 +50,7 @@ export default function startGame({host, proxyPort, name, rafUpdate}: Params) {
     ];
 
     if (sanitizedName === "^1L^2K") {
-        engineArguments.push("+set", "cg_autoswitch", "0", "+bind", "3", "weapon 7", "+bind", "e", '"+zoom"');
+        engineArguments.push(` +set cg_autoswitch "0" +bind 3 "weapon 7" +bind e "+zoom" `);
     }
 
     const dataURL = new URL(location.origin + location.pathname);
