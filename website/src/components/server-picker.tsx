@@ -17,13 +17,14 @@ import {
     SelectValue
 } from "@/components/ui/select.tsx";
 import {trackEvent} from "@/lib/analytics.ts";
+import {useLocalStorage} from "@/hooks/use-local-storage.ts";
 
 const POLL_MS = 5000
 
 type SortKey = "players" | "ping" | "name";
 
 export function ServerPicker() {
-    const [name, setName] = useState("Q3JS Player");
+    const [name, setName] = useLocalStorage("name", "Q3JS Player");
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState<SortKey>("players");
     const hasTrackedSearchUsageRef = useRef(false);
@@ -38,23 +39,6 @@ export function ServerPicker() {
     })
     const servers = serversResponse.data ?? [];
     const playerName = name;
-
-    useEffect(() => {
-        const storedName = localStorage.getItem("name");
-        const initialName = storedName ?? "Q3JS Player";
-        setName(initialName);
-        localStorage.setItem("name", initialName);
-        const syncName = (event: StorageEvent) => {
-            if (event.key === "name") {
-                setName(event.newValue ?? "Q3JS Player");
-            }
-        };
-
-        window.addEventListener("storage", syncName);
-        return () => {
-            window.removeEventListener("storage", syncName);
-        };
-    }, []);
 
     useEffect(() => {
         if (hasTrackedSearchUsageRef.current) return;
@@ -112,7 +96,6 @@ export function ServerPicker() {
 
     function handleNameChange(nextName: string) {
         setName(nextName);
-        localStorage.setItem("name", nextName);
     }
 
     function handleSortChange(value: string) {
