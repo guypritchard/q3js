@@ -47,6 +47,16 @@ export function Header() {
                 <Badge
                     asChild
                     variant="outline"
+                    className="h-6 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
+                >
+                    <Link to="/scoreboard">
+                        <span className="sm:hidden">Scores</span>
+                        <span className="hidden sm:inline">Global Scoreboard</span>
+                    </Link>
+                </Badge>
+                <Badge
+                    asChild
+                    variant="outline"
                     className="h-6 gap-1.5 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
                 >
                     <a href="https://github.com/lklacar/q3js" target="_blank" rel="noreferrer"

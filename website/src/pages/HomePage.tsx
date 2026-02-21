@@ -7,6 +7,7 @@ import {useSeo} from "@/hooks/use-seo.ts";
 import {QueryErrorResetBoundary} from "@tanstack/react-query";
 import {Button} from "@/components/ui/button.tsx";
 import {Link} from "@tanstack/react-router";
+import {ScoreboardPreview} from "@/components/scoreboard-preview.tsx";
 
 export default function HomePage() {
     useSeo({
@@ -18,6 +19,7 @@ export default function HomePage() {
     return (
         <main>
             <Hero/>
+            <ScoreboardPreview/>
 
             <QueryErrorResetBoundary>
                 {({reset}) => (

@@ -9,8 +9,6 @@ import {Button} from "@/components/ui/button.tsx";
 import {stripQ3Colors} from "@/lib/utils.ts";
 import {Link} from "@tanstack/react-router";
 import {Search} from "lucide-react";
-import {getRecentServers, type RecentServer} from "@/lib/recent-servers.ts";
-import {env} from "@/env.ts";
 import {
     Select,
     SelectContent,
@@ -27,7 +25,6 @@ export function ServerPicker() {
     const [name, setName] = useState("Q3JS Player");
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState<SortKey>("players");
-    const [recentServers, setRecentServers] = useState<RecentServer[]>([]);
 
     const serversResponse = useSuspenseQuery<Q3ResolvedServer[]>({
         queryFn: fetchServers,
@@ -38,7 +35,6 @@ export function ServerPicker() {
         retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
     })
     const servers = serversResponse.data ?? [];
-    const baseUrl = env.VITE_GAME_URL ? env.VITE_GAME_URL : "";
     const playerName = name;
 
     useEffect(() => {
@@ -46,14 +42,10 @@ export function ServerPicker() {
         const initialName = storedName ?? "Q3JS Player";
         setName(initialName);
         localStorage.setItem("name", initialName);
-        setRecentServers(getRecentServers());
-
-        const syncRecent = () => setRecentServers(getRecentServers());
         const syncName = (event: StorageEvent) => {
             if (event.key === "name") {
                 setName(event.newValue ?? "Q3JS Player");
             }
-            syncRecent();
         };
 
         window.addEventListener("storage", syncName);
@@ -102,14 +94,6 @@ export function ServerPicker() {
     function clearFilters() {
         setSearchTerm("");
         setSortBy("players");
-    }
-
-    function toGameUrl(server: { host: string; proxyPort: number }) {
-        return `${baseUrl}/game?host=${server.host}&proxyPort=${server.proxyPort}&name=${encodeURIComponent(playerName)}`;
-    }
-
-    function handleJoin() {
-        setRecentServers(getRecentServers());
     }
 
     function handleNameChange(nextName: string) {
@@ -186,29 +170,6 @@ export function ServerPicker() {
                     </CardContent>
                 </Card>
 
-                {recentServers.length > 0 && (
-                    <Card className="bg-card/40 border-border/50">
-                        <CardContent className="p-4">
-                            <h3 className="font-semibold mb-3">Recently played</h3>
-                            <div className="grid gap-2 sm:grid-cols-3">
-                                {recentServers.map((server) => (
-                                    <a
-                                        key={server.id}
-                                        href={toGameUrl(server)}
-                                        className="rounded border border-border/60 p-3 hover:border-primary/50 transition-colors"
-                                    >
-                                        <p className="font-semibold truncate">{stripQ3Colors(server.name)}</p>
-                                        <p className="text-xs text-muted-foreground truncate">
-                                            {server.location ?? "Unknown region"} · {server.mapname?.toUpperCase() ?? "N/A"}
-                                        </p>
-                                        <p className="mt-2 text-xs text-primary">Reconnect</p>
-                                    </a>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
                 <div className="grid gap-4">
                     {filteredServers.map((server) => {
                         return (
@@ -216,7 +177,6 @@ export function ServerPicker() {
                                 key={server.id}
                                 server={server}
                                 playerName={playerName}
-                                onJoin={handleJoin}
                             />
                         )
                     })}

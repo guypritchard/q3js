@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as GameRouteImport } from './routes/game'
 import { Route as withLayoutRouteRouteImport } from './routes/(withLayout)/route'
 import { Route as withLayoutIndexRouteImport } from './routes/(withLayout)/index'
+import { Route as withLayoutScoreboardRouteImport } from './routes/(withLayout)/scoreboard'
 import { Route as withLayoutGuideRouteImport } from './routes/(withLayout)/guide'
 
 const GameRoute = GameRouteImport.update({
@@ -28,6 +29,11 @@ const withLayoutIndexRoute = withLayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => withLayoutRouteRoute,
 } as any)
+const withLayoutScoreboardRoute = withLayoutScoreboardRouteImport.update({
+  id: '/scoreboard',
+  path: '/scoreboard',
+  getParentRoute: () => withLayoutRouteRoute,
+} as any)
 const withLayoutGuideRoute = withLayoutGuideRouteImport.update({
   id: '/guide',
   path: '/guide',
@@ -37,11 +43,13 @@ const withLayoutGuideRoute = withLayoutGuideRouteImport.update({
 export interface FileRoutesByFullPath {
   '/game': typeof GameRoute
   '/guide': typeof withLayoutGuideRoute
+  '/scoreboard': typeof withLayoutScoreboardRoute
   '/': typeof withLayoutIndexRoute
 }
 export interface FileRoutesByTo {
   '/game': typeof GameRoute
   '/guide': typeof withLayoutGuideRoute
+  '/scoreboard': typeof withLayoutScoreboardRoute
   '/': typeof withLayoutIndexRoute
 }
 export interface FileRoutesById {
@@ -49,18 +57,20 @@ export interface FileRoutesById {
   '/(withLayout)': typeof withLayoutRouteRouteWithChildren
   '/game': typeof GameRoute
   '/(withLayout)/guide': typeof withLayoutGuideRoute
+  '/(withLayout)/scoreboard': typeof withLayoutScoreboardRoute
   '/(withLayout)/': typeof withLayoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/game' | '/guide' | '/'
+  fullPaths: '/game' | '/guide' | '/scoreboard' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/game' | '/guide' | '/'
+  to: '/game' | '/guide' | '/scoreboard' | '/'
   id:
     | '__root__'
     | '/(withLayout)'
     | '/game'
     | '/(withLayout)/guide'
+    | '/(withLayout)/scoreboard'
     | '/(withLayout)/'
   fileRoutesById: FileRoutesById
 }
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof withLayoutIndexRouteImport
       parentRoute: typeof withLayoutRouteRoute
     }
+    '/(withLayout)/scoreboard': {
+      id: '/(withLayout)/scoreboard'
+      path: '/scoreboard'
+      fullPath: '/scoreboard'
+      preLoaderRoute: typeof withLayoutScoreboardRouteImport
+      parentRoute: typeof withLayoutRouteRoute
+    }
     '/(withLayout)/guide': {
       id: '/(withLayout)/guide'
       path: '/guide'
@@ -104,11 +121,13 @@ declare module '@tanstack/react-router' {
 
 interface withLayoutRouteRouteChildren {
   withLayoutGuideRoute: typeof withLayoutGuideRoute
+  withLayoutScoreboardRoute: typeof withLayoutScoreboardRoute
   withLayoutIndexRoute: typeof withLayoutIndexRoute
 }
 
 const withLayoutRouteRouteChildren: withLayoutRouteRouteChildren = {
   withLayoutGuideRoute: withLayoutGuideRoute,
+  withLayoutScoreboardRoute: withLayoutScoreboardRoute,
   withLayoutIndexRoute: withLayoutIndexRoute,
 }
 
