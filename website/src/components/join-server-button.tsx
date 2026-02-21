@@ -11,7 +11,7 @@ export function JoinServerButton(props: {
 }) {
     const baseUrl = env.VITE_GAME_URL ? env.VITE_GAME_URL : "";
     const normalizedName = props.playerName;
-    const gameUrl = `${baseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(normalizedName)}`;
+    const gameUrl = `${baseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${normalizedName}`;
     const isFull = props.server.players >= props.server.sv_maxclients;
 
     if (isFull) {
