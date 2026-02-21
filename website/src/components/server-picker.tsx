@@ -6,7 +6,7 @@ import {fetchServers} from "@/lib/servers.ts";
 import {useEffect, useMemo, useState} from "react";
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
-import {normalizePlayerName, stripQ3Colors} from "@/lib/utils.ts";
+import {stripQ3Colors} from "@/lib/utils.ts";
 import {Link} from "@tanstack/react-router";
 import {Search} from "lucide-react";
 import {getRecentServers, type RecentServer} from "@/lib/recent-servers.ts";
@@ -39,11 +39,11 @@ export function ServerPicker() {
     })
     const servers = serversResponse.data ?? [];
     const baseUrl = env.VITE_GAME_URL ? env.VITE_GAME_URL : "";
-    const normalizedName = normalizePlayerName(name);
+    const playerName = name;
 
     useEffect(() => {
         const storedName = localStorage.getItem("name");
-        const initialName = normalizePlayerName(storedName);
+        const initialName = storedName ?? "Q3JS Player";
         setName(initialName);
         localStorage.setItem("name", initialName);
         setRecentServers(getRecentServers());
@@ -51,7 +51,7 @@ export function ServerPicker() {
         const syncRecent = () => setRecentServers(getRecentServers());
         const syncName = (event: StorageEvent) => {
             if (event.key === "name") {
-                setName(normalizePlayerName(event.newValue));
+                setName(event.newValue ?? "Q3JS Player");
             }
             syncRecent();
         };
@@ -105,7 +105,7 @@ export function ServerPicker() {
     }
 
     function toGameUrl(server: { host: string; proxyPort: number }) {
-        return `${baseUrl}/game?host=${server.host}&proxyPort=${server.proxyPort}&name=${encodeURIComponent(normalizedName)}`;
+        return `${baseUrl}/game?host=${server.host}&proxyPort=${server.proxyPort}&name=${encodeURIComponent(playerName)}`;
     }
 
     function handleJoin() {
@@ -114,7 +114,7 @@ export function ServerPicker() {
 
     function handleNameChange(nextName: string) {
         setName(nextName);
-        localStorage.setItem("name", normalizePlayerName(nextName));
+        localStorage.setItem("name", nextName);
     }
 
     return (
@@ -215,7 +215,7 @@ export function ServerPicker() {
                             <ServerCard
                                 key={server.id}
                                 server={server}
-                                playerName={normalizedName}
+                                playerName={playerName}
                                 onJoin={handleJoin}
                             />
                         )
