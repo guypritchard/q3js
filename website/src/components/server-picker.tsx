@@ -6,7 +6,7 @@ import {fetchServers} from "@/lib/servers.ts";
 import {useEffect, useMemo, useState} from "react";
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
-import {stripQ3Colors} from "@/lib/utils.ts";
+import {normalizePlayerName, stripQ3Colors} from "@/lib/utils.ts";
 import {Link} from "@tanstack/react-router";
 import {Search} from "lucide-react";
 import {getRecentServers, type RecentServer} from "@/lib/recent-servers.ts";
@@ -39,17 +39,19 @@ export function ServerPicker() {
     })
     const servers = serversResponse.data ?? [];
     const baseUrl = env.VITE_GAME_URL ? env.VITE_GAME_URL : "";
-    const normalizedName = name.trim() || "Q3JS Player";
+    const normalizedName = normalizePlayerName(name);
 
     useEffect(() => {
         const storedName = localStorage.getItem("name");
-        setName(storedName && storedName.trim().length > 0 ? storedName : "Q3JS Player");
+        const initialName = normalizePlayerName(storedName);
+        setName(initialName);
+        localStorage.setItem("name", initialName);
         setRecentServers(getRecentServers());
 
         const syncRecent = () => setRecentServers(getRecentServers());
         const syncName = (event: StorageEvent) => {
             if (event.key === "name") {
-                setName(event.newValue && event.newValue.trim().length > 0 ? event.newValue : "Q3JS Player");
+                setName(normalizePlayerName(event.newValue));
             }
             syncRecent();
         };
@@ -112,7 +114,7 @@ export function ServerPicker() {
 
     function handleNameChange(nextName: string) {
         setName(nextName);
-        localStorage.setItem("name", nextName);
+        localStorage.setItem("name", normalizePlayerName(nextName));
     }
 
     return (
