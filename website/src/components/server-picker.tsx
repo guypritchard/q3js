@@ -18,13 +18,15 @@ import {
 } from "@/components/ui/select.tsx";
 import {trackEvent} from "@/lib/analytics.ts";
 import {useLocalStorage} from "@/hooks/use-local-storage.ts";
+import {createRandomPlayerName} from "@/lib/player-name-generator.ts";
 
 const POLL_MS = 5000
 
 type SortKey = "players" | "ping" | "name";
 
 export function ServerPicker() {
-    const [name, setName] = useLocalStorage("name", "Q3JS Player");
+    const defaultPlayerName = useMemo(() => createRandomPlayerName(), []);
+    const [name, setName] = useLocalStorage("name", defaultPlayerName);
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState<SortKey>("players");
     const hasTrackedSearchUsageRef = useRef(false);
@@ -98,6 +100,16 @@ export function ServerPicker() {
         setName(nextName);
     }
 
+    function resolvePlayerNameForJoin() {
+        if (name.trim().length > 0) {
+            return name;
+        }
+
+        const generatedName = createRandomPlayerName();
+        setName(generatedName);
+        return generatedName;
+    }
+
     function handleSortChange(value: string) {
         if (value !== "players" && value !== "ping" && value !== "name") return;
 
@@ -131,7 +143,7 @@ export function ServerPicker() {
                             </label>
                             <Input
                                 id="player-name"
-                                placeholder="Q3JS Player"
+                                placeholder="Player name"
                                 value={name}
                                 onChange={(event) => handleNameChange(event.target.value)}
                             />
@@ -185,6 +197,7 @@ export function ServerPicker() {
                                 key={server.id}
                                 server={server}
                                 playerName={playerName}
+                                resolvePlayerName={resolvePlayerNameForJoin}
                             />
                         )
                     })}

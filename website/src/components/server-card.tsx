@@ -9,6 +9,7 @@ import {PlayerList} from "@/components/player-list.tsx";
 export function ServerCard(props: {
     server: Q3ResolvedServer;
     playerName: string;
+    resolvePlayerName?: () => string;
     onJoin?: (server: Q3ResolvedServer) => void;
 }) {
     const info = props.server;
@@ -58,6 +59,7 @@ export function ServerCard(props: {
                             <JoinServerButton
                                 server={info}
                                 playerName={props.playerName}
+                                resolvePlayerName={props.resolvePlayerName}
                                 onJoin={props.onJoin}
                             />
                         </div>
