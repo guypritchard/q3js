@@ -1,4 +1,4 @@
-const PLAYER_NAME_PREFIXES = [
+const PLAYER_NAME_FIRST_WORDS = [
     "Aero",
     "Alpha",
     "Arc",
@@ -51,150 +51,84 @@ const PLAYER_NAME_PREFIXES = [
     "Zero",
 ];
 
-const PLAYER_NAME_CORES = [
+const PLAYER_NAME_SECOND_WORDS = [
+    "Ace",
     "Apex",
     "Arrow",
+    "Bandit",
     "Barrage",
     "Beacon",
     "Blade",
+    "Breaker",
+    "Bruiser",
     "Burst",
     "Cannon",
+    "Captain",
+    "Champion",
     "Circuit",
     "Clutch",
     "Crash",
     "Crown",
     "Dash",
     "Drift",
-    "Drive",
-    "Engine",
+    "Duelist",
+    "Enforcer",
     "Falcon",
     "Fang",
     "Forge",
-    "Frame",
     "Fury",
-    "Grid",
-    "Halo",
-    "Hammer",
-    "Horizon",
-    "Impulse",
-    "Inferno",
-    "Jaguar",
-    "Laser",
-    "Matrix",
-    "Meteor",
-    "Nebula",
-    "Nitro",
-    "Orbit",
-    "Phaser",
-    "Quake",
-    "Raptor",
-    "Reactor",
-    "Rocket",
-    "Rogue",
-    "Rush",
-    "Sector",
-    "Shard",
-    "Shock",
-    "Siege",
-    "Signal",
-    "Spark",
-    "Specter",
-    "Strike",
-    "Surge",
-    "Switch",
-    "Tempest",
-    "Thruster",
-    "Vector",
-    "Venom",
-    "Warp",
-    "Wolf",
-];
-
-const PLAYER_NAME_SUFFIXES = [
-    "Ace",
-    "Agent",
-    "Archer",
-    "Bandit",
-    "Baron",
-    "Breaker",
-    "Bruiser",
-    "Captain",
-    "Champion",
-    "Chief",
-    "Crusher",
-    "Duelist",
-    "Enforcer",
-    "Ghost",
     "Gladiator",
     "Guardian",
     "Gunner",
-    "Hacker",
+    "Hammer",
+    "Horizon",
     "Hunter",
+    "Impulse",
+    "Inferno",
+    "Jaguar",
     "Juggernaut",
     "Knight",
     "Legend",
     "Marshal",
-    "Merc",
+    "Matrix",
+    "Meteor",
     "Nomad",
+    "Orbit",
     "Outlaw",
     "Paladin",
-    "Pilot",
     "Predator",
     "Raider",
     "Ranger",
     "Reaper",
     "Rider",
+    "Rogue",
     "Ronin",
     "Scout",
     "Sentinel",
-    "Shaman",
+    "Shock",
+    "Siege",
+    "Signal",
     "Sniper",
     "Soldier",
     "Specter",
     "Striker",
-    "Tech",
+    "Surge",
+    "Tempest",
     "Titan",
     "Tracker",
     "Trooper",
     "Vanguard",
+    "Vector",
     "Viper",
     "Warden",
     "Warlock",
     "Wolf",
 ];
 
-const PLAYER_NAME_SEPARATORS = ["", "", "", "", "-", "_", "."];
-
 function pickRandom<T>(items: T[]): T {
     return items[Math.floor(Math.random() * items.length)];
 }
 
-function randomInt(min: number, max: number) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function chance(probability: number) {
-    return Math.random() < probability;
-}
-
-function createRandomTag() {
-    const style = randomInt(0, 3);
-    if (style === 0) return String(randomInt(10, 99));
-    if (style === 1) return String(randomInt(100, 999));
-    if (style === 2) return randomInt(0, 255).toString(16).toUpperCase().padStart(2, "0");
-    return "";
-}
-
 export function createRandomPlayerName() {
-    const separator = pickRandom(PLAYER_NAME_SEPARATORS);
-    const parts = [pickRandom(PLAYER_NAME_PREFIXES), pickRandom(PLAYER_NAME_CORES), pickRandom(PLAYER_NAME_SUFFIXES)];
-
-    if (chance(0.35)) {
-        parts.splice(2, 0, pickRandom(PLAYER_NAME_CORES));
-    }
-
-    const numericTag = createRandomTag();
-    const baseName = parts.join(separator);
-
-    return `${baseName}${numericTag}`;
+    return `${pickRandom(PLAYER_NAME_FIRST_WORDS)} ${pickRandom(PLAYER_NAME_SECOND_WORDS)}`;
 }
