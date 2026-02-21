@@ -6,8 +6,31 @@ quarkus:
       methods: "GET,PUT,POST,DELETE,OPTIONS"
       headers: "origin,accept,authorization,content-type,x-requested-with"
       access-control-allow-credentials: true
+  vertx:
+    event-loops-pool-size: 24
+  thread-pool:
+    max-threads: 64
+
+  datasource:
+    db-kind: postgresql
+    username: ${Q3JS_DB_USER:postgres}
+    password: ${Q3JS_DB_PASSWORD:postgres}
+    jdbc:
+      url: ${Q3JS_DB_URL:jdbc:postgresql://localhost:5432/postgres}
+      min-size: 20
+      max-size: 120
+      acquisition-timeout: 1S
+      max-lifetime: 20M
+      idle-removal-interval: 2M
+
+  flyway:
+    migrate-at-start: true
+
+  jooq:
+    dialect: POSTGRES
 
 q3js:
   server-info:
     timeout-ms: 3000
     scheme: http
+
