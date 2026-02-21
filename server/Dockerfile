@@ -12,6 +12,7 @@ FROM debian:latest AS serverbuilder
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
+    libcurl4-openssl-dev \
     unzip \
     pkg-config && \
     rm -rf /var/lib/apt/lists/*
@@ -27,6 +28,11 @@ FROM node:20-trixie AS runner
 
 ENV RCON_PASSWORD="changeme"
 
+RUN apt-get update && apt-get install -y \
+    libcurl4 \
+    ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY --from=proxybuilder /proxy /proxy
 
 COPY --from=serverbuilder /server/build/Release /server
@@ -40,4 +46,4 @@ EXPOSE 27961
 EXPOSE 27960/udp
 
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["+set", "dedicated", "2", "+set", "sv_pure", "1", "+set", "sv_allowDownload", "1", "+set", "net_ip", "0.0.0.0", "+set", "sv_dlrate", "0", "+set", "com_hunkMegs", "256", "+exec", "autoexec.cfg"]
+CMD ["+set", "dedicated", "2", "+set", "sv_pure", "1", "+set", "sv_allowDownload", "1", "+set", "net_ip", "0.0.0.0", "+set", "sv_dlrate", "0", "+set", "com_hunkMegs", "256", "+set", "sv_killpost_url", "https://master.q3js.com/api/events", "+exec", "autoexec.cfg"]
