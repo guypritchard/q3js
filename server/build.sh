@@ -20,10 +20,10 @@ make -j"$(nproc)"
 
 cd Release
 
-# Optional: for local (non-Docker) builds, still copy baseq3 if present.
+# Keep compiled game modules in baseq3 and optionally merge assets on top.
 if [[ -d "$BASEQ3_SRC" ]]; then
-  rm -rf baseq3
-  cp -r "$BASEQ3_SRC" ./baseq3
+  mkdir -p baseq3
+  cp -a "$BASEQ3_SRC"/. ./baseq3/
 else
   echo "WARNING: baseq3 source not found at $BASEQ3_SRC; expecting it to be mounted at runtime" >&2
   mkdir -p baseq3
