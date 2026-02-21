@@ -54,6 +54,7 @@ public class ServerService {
         this.infoScheme = "https".equalsIgnoreCase(infoScheme) ? "https" : "http";
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(infoTimeoutMs))
+                .followRedirects(HttpClient.Redirect.NORMAL)
                 .version(HttpClient.Version.HTTP_1_1)
                 .build();
         this.servers = new ConcurrentSkipListSet<>(SERVER_COMPARATOR);
