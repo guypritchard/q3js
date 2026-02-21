@@ -14,7 +14,6 @@ export const env = createEnv({
 
     client: {
         VITE_APP_TITLE: z.string().min(1).optional(),
-        VITE_PROXY_URL: z.string(),
         VITE_MASTER_SERVER_URL: z.string(),
         VITE_GAME_URL: z.string().optional(),
     },
