@@ -48,4 +48,4 @@ EXPOSE 27961
 EXPOSE 27960/udp
 
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["+set", "dedicated", "2", "+set", "sv_pure", "1", "+set", "sv_allowDownload", "1", "+set", "net_ip", "0.0.0.0", "+set", "sv_dlrate", "0", "+set", "com_hunkMegs", "256", "+set", "fs_game", "q3js", "+set", "sv_killpost_url", "https://master.q3js.com/api/events", "+exec", "autoexec.cfg"]
+CMD ["+set", "dedicated", "2", "+set", "sv_pure", "1", "+set", "sv_allowDownload", "1", "+set", "net_ip", "0.0.0.0", "+set", "sv_dlrate", "0", "+set", "com_hunkMegs", "256", "+set", "fs_game", "q3js", "+exec", "autoexec.cfg"]
