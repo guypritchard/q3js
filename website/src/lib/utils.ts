@@ -39,28 +39,3 @@ export function getWsProtocol() {
     return location.protocol === "https:" ? "wss:" : "ws:";
 }
 
-export function normalizePlayerName(value: string | null | undefined): string {
-    let name = String(value ?? "").replace(/\\"/g, "\"").replace(/\\'/g, "'").trim();
-
-    // Unwrap accidental quoted values such as "\"Q3JS Player\"" or "“Name”".
-    for (let i = 0; i < 2; i++) {
-        if (
-            (name.startsWith("\"") && name.endsWith("\"")) ||
-            (name.startsWith("'") && name.endsWith("'")) ||
-            (name.startsWith("“") && name.endsWith("”")) ||
-            (name.startsWith("‘") && name.endsWith("’"))
-        ) {
-            name = name.slice(1, -1).trim();
-        } else {
-            break;
-        }
-    }
-
-    name = name
-        .replace(/[“”"]/g, "'")
-        .replace(/[‘’]/g, "'")
-        .replace(/\s+/g, " ")
-        .trim();
-
-    return name || "Q3JS Player";
-}

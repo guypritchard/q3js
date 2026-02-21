@@ -3,7 +3,6 @@ import {Button} from "@/components/ui/button.tsx";
 import {Zap} from "lucide-react";
 import {env} from "@/env.ts";
 import {storeRecentServer} from "@/lib/recent-servers.ts";
-import {normalizePlayerName} from "@/lib/utils.ts";
 
 export function JoinServerButton(props: {
     server: Q3ResolvedServer;
@@ -11,7 +10,7 @@ export function JoinServerButton(props: {
     onJoin?: (server: Q3ResolvedServer) => void;
 }) {
     const baseUrl = env.VITE_GAME_URL ? env.VITE_GAME_URL : "";
-    const normalizedName = normalizePlayerName(props.playerName);
+    const normalizedName = props.playerName;
     const gameUrl = `${baseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(normalizedName)}`;
     const isFull = props.server.players >= props.server.sv_maxclients;
 
