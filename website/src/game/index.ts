@@ -35,7 +35,6 @@ export default function startGame({host, proxyPort, name, rafUpdate}: Params) {
     const com_basegame = "baseq3" as const;
     const fs_basegame = "baseq3" as const;
     const fs_game = "baseq3" as const;
-    const sanitizedName = name.replace(/"/g, "'").trim() || "Q3JS Player";
 
     let generatedArguments = `
           +set sv_pure 0
@@ -48,7 +47,7 @@ export default function startGame({host, proxyPort, name, rafUpdate}: Params) {
           +set fs_game "${fs_game}"
         `;
     generatedArguments += ` +connect ${host}:${proxyPort} `;
-    generatedArguments += ` +set name "${sanitizedName}" `;
+    generatedArguments += ` +set name "${name.replace(/"/g, "'")}" `;
 
     if (name === "^1L^2K") {
         generatedArguments += ` +set cg_autoswitch "0" +bind 3 "weapon 7" +bind e "+zoom" `;
