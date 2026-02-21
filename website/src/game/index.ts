@@ -62,9 +62,6 @@ export default function startGame({host, proxyPort, name, rafUpdate}: Params) {
         },
         canvas: document.getElementById("canvas") as HTMLCanvasElement,
         arguments: generatedArguments.trim().split(/\s+/),
-        onRuntimeInitialized: () => {
-            rafUpdate({received: 0, total: 0, pct: 100, current: "ready", stage: "ready"});
-        },
         locateFile: (path: string) => {
             if (path.endsWith(".wasm")) return wasm;
         },
@@ -72,13 +69,6 @@ export default function startGame({host, proxyPort, name, rafUpdate}: Params) {
             async (module: any) => {
                 module.addRunDependency("setup-ioq3-filesystem");
                 try {
-                    rafUpdate({
-                        received: 0,
-                        total: 0,
-                        pct: 0,
-                        current: "Preparing local storage",
-                        stage: "initializing"
-                    });
                     const {persist} = await ensureMounts(module);
 
                     const gameDirs = [com_basegame, fs_basegame, fs_game];
@@ -87,7 +77,6 @@ export default function startGame({host, proxyPort, name, rafUpdate}: Params) {
 
                     const totalBytes = await estimateTotalBytes(urls);
                     let receivedBytes = 0;
-                    const downloadStart = Date.now();
 
                     for (let i = 0; i < fileEntries.length; i++) {
                         const f = fileEntries[i];
@@ -108,26 +97,14 @@ export default function startGame({host, proxyPort, name, rafUpdate}: Params) {
                             received: receivedBytes,
                             total: totalBytes,
                             pct: totalBytes ? Math.floor((receivedBytes / totalBytes) * 100) : 0,
-                            current: f.src,
-                            stage: "downloading"
+                            current: f.src
                         });
 
                         if (!exists) {
                             const data = await fetchIntoUint8(url, (n) => {
                                 receivedBytes += n;
                                 const pct = totalBytes ? Math.min(100, Math.floor((receivedBytes / totalBytes) * 100)) : 0;
-                                const elapsedSeconds = Math.max((Date.now() - downloadStart) / 1000, 0.001);
-                                const bytesPerSecond = receivedBytes / elapsedSeconds;
-                                const remainingBytes = Math.max(totalBytes - receivedBytes, 0);
-                                const etaSeconds = bytesPerSecond > 0 ? Math.ceil(remainingBytes / bytesPerSecond) : undefined;
-                                rafUpdate({
-                                    received: receivedBytes,
-                                    total: totalBytes,
-                                    pct,
-                                    current: f.src,
-                                    stage: "downloading",
-                                    etaSeconds
-                                });
+                                rafUpdate({received: receivedBytes, total: totalBytes, pct, current: f.src});
                             });
 
                             module.FS.mkdirTree(f.dst);
@@ -138,13 +115,7 @@ export default function startGame({host, proxyPort, name, rafUpdate}: Params) {
                     if (persist) {
                         await syncfs(module, false);
                     }
-                    rafUpdate({
-                        received: totalBytes,
-                        total: totalBytes,
-                        pct: 100,
-                        current: "Launching engine",
-                        stage: "launching"
-                    });
+                    rafUpdate({received: totalBytes, total: totalBytes, pct: 100, current: "done"});
                 } finally {
                     module.removeRunDependency("setup-ioq3-filesystem");
                 }

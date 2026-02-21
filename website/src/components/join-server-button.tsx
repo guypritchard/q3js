@@ -1,52 +1,64 @@
 import type {Q3ResolvedServer} from "@/lib/q3.ts";
+import {useLocalStorage} from "@uidotdev/usehooks";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
+} from "@/components/ui/dialog.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {Zap} from "lucide-react";
+import {Input} from "@/components/ui/input.tsx";
 import {env} from "@/env.ts";
-import {storeRecentServer} from "@/lib/recent-servers.ts";
-import {normalizePlayerName} from "@/lib/utils.ts";
 
 export function JoinServerButton(props: {
-    server: Q3ResolvedServer;
-    playerName: string;
-    onJoin?: (server: Q3ResolvedServer) => void;
+    server: Q3ResolvedServer,
 }) {
-    const baseUrl = env.VITE_GAME_URL ? env.VITE_GAME_URL : "";
-    const normalizedName = normalizePlayerName(props.playerName);
-    const gameUrl = `${baseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(normalizedName)}`;
-    const isFull = props.server.players >= props.server.sv_maxclients;
+    const [name, setName] = useLocalStorage("name", "Q3JS Player")
 
-    if (isFull) {
-        return (
+    const baseUrl = env.VITE_GAME_URL ? env.VITE_GAME_URL : "";
+
+    // @ts-ignore
+    // @ts-ignore
+    return <Dialog>
+        <DialogTrigger asChild>
             <Button
                 size="lg"
                 className="lg:w-auto w-full bg-primary text-primary-foreground font-bold"
-                disabled
+                disabled={props.server.players >= props.server.sv_maxclients}
             >
-                Server Full
-            </Button>
-        );
-    }
-
-    return (
-        <Button
-            asChild
-            size="lg"
-            className="lg:w-auto w-full bg-primary text-primary-foreground font-bold"
-        >
-            <a
-                href={gameUrl}
-                onClick={() => {
-                    storeRecentServer(props.server);
-                    props.onJoin?.(props.server);
-                }}
-                aria-label={`Join ${props.server.sv_hostname} as ${normalizedName}`}
-            >
-                {isFull
+                {props.server.players >= props.server.sv_maxclients
                     ? "Server Full"
                     : <>
-                        <Zap className="h-4 w-4 mr-2"/>Join now
+                        <Zap className="h-4 w-4 mr-2"/>Connect
                     </>}
-            </a>
-        </Button>
-    );
+            </Button>
+        </DialogTrigger>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Choose a name</DialogTitle>
+                <DialogDescription>
+                    Enter your player name to
+                    join <strong>{props.server.sv_hostname}</strong>.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4">
+                <Input
+                    placeholder="Enter your player name"
+                    className="mb-4"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                />
+
+                <a href={`${baseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(name)}`}>
+                    <Button size="lg"
+                            className="w-full bg-primary text-primary-foreground font-bold">
+                        Join Server
+                    </Button>
+                </a>
+            </div>
+        </DialogContent>
+    </Dialog>;
 }

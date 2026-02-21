@@ -6,11 +6,7 @@ import {getGameLimits, getPercentage, getPingColor} from "@/lib/utils.ts";
 import {JoinServerButton} from "@/components/join-server-button.tsx";
 import {PlayerList} from "@/components/player-list.tsx";
 
-export function ServerCard(props: {
-    server: Q3ResolvedServer;
-    playerName: string;
-    onJoin?: (server: Q3ResolvedServer) => void;
-}) {
+export function ServerCard(props: { server: Q3ResolvedServer }) {
     const info = props.server;
 
     const sortedUsers = [...info.users].sort((a, b) => b.score - a.score);
@@ -55,11 +51,7 @@ export function ServerCard(props: {
                                 </div>
                             </div>
 
-                            <JoinServerButton
-                                server={info}
-                                playerName={props.playerName}
-                                onJoin={props.onJoin}
-                            />
+                            <JoinServerButton server={info}/>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-4 text-sm">

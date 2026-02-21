@@ -1,4 +1,5 @@
-import {createFileRoute, lazyRouteComponent} from '@tanstack/react-router'
+import {createFileRoute} from '@tanstack/react-router'
+import GamePage from "@/pages/GamePage.tsx";
 import z from "zod";
 
 const searchParams = z.object({
@@ -8,6 +9,7 @@ const searchParams = z.object({
 })
 
 export const Route = createFileRoute('/game')({
-    component: lazyRouteComponent(() => import("@/pages/GamePage.tsx")),
+    component: GamePage,
     validateSearch: searchParams
 })
+

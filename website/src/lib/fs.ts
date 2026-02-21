@@ -1,13 +1,4 @@
-export type LoadStage = "initializing" | "downloading" | "launching" | "ready";
-
-export type Prog = {
-    received: number;
-    total: number;
-    pct: number;
-    current?: string;
-    stage: LoadStage;
-    etaSeconds?: number;
-};
+export type Prog = { received: number; total: number; pct: number; current?: string };
 
 // Persistent data versioning
 const DATA_VERSION = "v1";
