@@ -81,28 +81,39 @@ export default function startGame({host, proxyPort, name, rafUpdate}: Params) {
                     });
                     const {persist} = await ensureMounts(module);
 
-                    const gameDirs = [com_basegame, fs_basegame, fs_game];
-                    const fileEntries = gameDirs.flatMap((g) => (config as any)[g].files);
-                    const urls = fileEntries.map((f: { src: string }) => new URL(f.src, dataURL));
+                    const gameDirs = Array.from(new Set([com_basegame, fs_basegame, fs_game]));
+                    const allFileEntries = gameDirs.flatMap((g) => (config as any)[g].files);
+                    const uniqueFileEntries = Array.from(
+                        new Map(
+                            allFileEntries.map((f: { src: string; dst: string }) => {
+                                const assetName = f.src.split("/").pop() as string;
+                                const dstPath = `${f.dst}/${assetName}`;
+                                return [dstPath, f] as const;
+                            })
+                        ).values()
+                    );
 
-                    const totalBytes = await estimateTotalBytes(urls);
+                    const pendingEntries = uniqueFileEntries.filter((f: { src: string; dst: string }) => {
+                        const assetName = f.src.split("/").pop() as string;
+                        const dstPath = `${f.dst}/${assetName}`;
+                        try {
+                            const st = module.FS.stat(dstPath);
+                            return !(st && st.size > 0);
+                        } catch {
+                            return true;
+                        }
+                    });
+
+                    const pendingUrls = pendingEntries.map((f: { src: string }) => new URL(f.src, dataURL));
+                    const totalBytes = await estimateTotalBytes(pendingUrls);
                     let receivedBytes = 0;
                     const downloadStart = Date.now();
 
-                    for (let i = 0; i < fileEntries.length; i++) {
-                        const f = fileEntries[i];
-                        const url = urls[i];
+                    for (let i = 0; i < pendingEntries.length; i++) {
+                        const f = pendingEntries[i];
+                        const url = pendingUrls[i];
                         const name = f.src.split("/").pop() as string;
                         const dstPath = `${f.dst}/${name}`;
-
-                        const exists = (() => {
-                            try {
-                                const st = module.FS.stat(dstPath);
-                                return st && st.size > 0;
-                            } catch {
-                                return false;
-                            }
-                        })();
 
                         rafUpdate({
                             received: receivedBytes,
@@ -112,27 +123,25 @@ export default function startGame({host, proxyPort, name, rafUpdate}: Params) {
                             stage: "downloading"
                         });
 
-                        if (!exists) {
-                            const data = await fetchIntoUint8(url, (n) => {
-                                receivedBytes += n;
-                                const pct = totalBytes ? Math.min(100, Math.floor((receivedBytes / totalBytes) * 100)) : 0;
-                                const elapsedSeconds = Math.max((Date.now() - downloadStart) / 1000, 0.001);
-                                const bytesPerSecond = receivedBytes / elapsedSeconds;
-                                const remainingBytes = Math.max(totalBytes - receivedBytes, 0);
-                                const etaSeconds = bytesPerSecond > 0 ? Math.ceil(remainingBytes / bytesPerSecond) : undefined;
-                                rafUpdate({
-                                    received: receivedBytes,
-                                    total: totalBytes,
-                                    pct,
-                                    current: f.src,
-                                    stage: "downloading",
-                                    etaSeconds
-                                });
+                        const data = await fetchIntoUint8(url, (n) => {
+                            receivedBytes += n;
+                            const pct = totalBytes ? Math.min(100, Math.floor((receivedBytes / totalBytes) * 100)) : 0;
+                            const elapsedSeconds = Math.max((Date.now() - downloadStart) / 1000, 0.001);
+                            const bytesPerSecond = receivedBytes / elapsedSeconds;
+                            const remainingBytes = Math.max(totalBytes - receivedBytes, 0);
+                            const etaSeconds = bytesPerSecond > 0 ? Math.ceil(remainingBytes / bytesPerSecond) : undefined;
+                            rafUpdate({
+                                received: receivedBytes,
+                                total: totalBytes,
+                                pct,
+                                current: f.src,
+                                stage: "downloading",
+                                etaSeconds
                             });
+                        });
 
-                            module.FS.mkdirTree(f.dst);
-                            module.FS.writeFile(dstPath, data);
-                        }
+                        module.FS.mkdirTree(f.dst);
+                        module.FS.writeFile(dstPath, data);
                     }
 
                     if (persist) {
