@@ -4,19 +4,12 @@ import {Card, CardContent} from "@/components/ui/card";
 import {type Q3ResolvedServer} from "@/lib/q3.ts";
 import {ServerCard} from "@/components/server-card.tsx";
 import {fetchServers} from "@/lib/servers.ts";
-import {useEffect, useMemo, useRef, useState} from "react";
+import {useEffect, useMemo, useRef, useState, useSyncExternalStore} from "react";
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {stripQ3Colors} from "@/lib/utils.ts";
 import Link from "next/link";
 import {Search} from "lucide-react";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from "@/components/ui/select.tsx";
 import {trackEvent} from "@/lib/analytics.ts";
 import {useLocalStorage} from "@/hooks/use-local-storage.ts";
 import {createRandomPlayerName} from "@/lib/player-name-generator.ts";
@@ -24,14 +17,12 @@ import {usePollingQuery} from "@/hooks/use-polling-query.ts";
 import ServerSkeleton from "@/components/server-skeleton.tsx";
 
 const POLL_MS = 5000;
-
-type SortKey = "players" | "ping" | "name";
+const subscribe = () => () => {};
 
 export function ServerPicker(props: { initialServers: Q3ResolvedServer[] }) {
-    const defaultPlayerName = useMemo(() => createRandomPlayerName(), []);
-    const [name, setName] = useLocalStorage("name", defaultPlayerName);
+    const [name, setName] = useLocalStorage("name", "");
     const [searchTerm, setSearchTerm] = useState("");
-    const [sortBy, setSortBy] = useState<SortKey>("players");
+    const isHydrated = useSyncExternalStore(subscribe, () => true, () => false);
     const hasTrackedSearchUsageRef = useRef(false);
 
     const serversResponse = usePollingQuery<Q3ResolvedServer[]>({
@@ -42,7 +33,7 @@ export function ServerPicker(props: { initialServers: Q3ResolvedServer[] }) {
     });
 
     const servers = serversResponse.data;
-    const playerName = name;
+    const playerName = isHydrated ? name : "";
 
     useEffect(() => {
         if (hasTrackedSearchUsageRef.current) return;
@@ -67,33 +58,16 @@ export function ServerPicker(props: { initialServers: Q3ResolvedServer[] }) {
             return matchesSearch;
         });
 
-        next.sort((a, b) => {
-            if (sortBy === "ping") {
-                const pingA = a.ping ?? Number.POSITIVE_INFINITY;
-                const pingB = b.ping ?? Number.POSITIVE_INFINITY;
-                if (pingA !== pingB) return pingA - pingB;
-                return b.players - a.players;
-            }
-            if (sortBy === "name") {
-                const nameA = stripQ3Colors(a.sv_hostname);
-                const nameB = stripQ3Colors(b.sv_hostname);
-                return nameA.localeCompare(nameB);
-            }
-            return b.players - a.players;
-        });
-
         return next;
-    }, [servers, searchTerm, sortBy]);
+    }, [servers, searchTerm]);
 
     const activeFilterCount = [searchTerm.trim().length > 0].filter(Boolean).length;
 
     function clearFilters() {
         trackEvent("server_filters_cleared", {
             had_search_term: searchTerm.trim().length > 0,
-            previous_sort: sortBy,
         });
         setSearchTerm("");
-        setSortBy("players");
     }
 
     function handleNameChange(nextName: string) {
@@ -108,16 +82,6 @@ export function ServerPicker(props: { initialServers: Q3ResolvedServer[] }) {
         const generatedName = createRandomPlayerName();
         setName(generatedName);
         return generatedName;
-    }
-
-    function handleSortChange(value: string) {
-        if (value !== "players" && value !== "ping" && value !== "name") return;
-
-        if (value !== sortBy) {
-            trackEvent("server_sort_changed", {sort_by: value});
-        }
-
-        setSortBy(value);
     }
 
     function refreshServerList(source: "empty" | "filtered_empty" | "error") {
@@ -149,12 +113,12 @@ export function ServerPicker(props: { initialServers: Q3ResolvedServer[] }) {
                             <Input
                                 id="player-name"
                                 placeholder="Player name"
-                                value={name}
+                                value={isHydrated ? name : ""}
                                 onChange={(event) => handleNameChange(event.target.value)}
                             />
                         </div>
 
-                        <div className="grid gap-3 md:grid-cols-[1fr_220px]">
+                        <div className="grid gap-3">
                             <div className="relative">
                                 <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2"/>
                                 <Input
@@ -163,19 +127,6 @@ export function ServerPicker(props: { initialServers: Q3ResolvedServer[] }) {
                                     value={searchTerm}
                                     onChange={(event) => setSearchTerm(event.target.value)}
                                 />
-                            </div>
-
-                            <div>
-                                <Select value={sortBy} onValueChange={handleSortChange}>
-                                    <SelectTrigger aria-label="Sort servers">
-                                        <SelectValue placeholder="Sort: most players"/>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="players">Sort: most players</SelectItem>
-                                        <SelectItem value="ping">Sort: lowest ping</SelectItem>
-                                        <SelectItem value="name">Sort: name A-Z</SelectItem>
-                                    </SelectContent>
-                                </Select>
                             </div>
                         </div>
 
