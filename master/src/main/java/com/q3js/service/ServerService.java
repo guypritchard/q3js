@@ -47,7 +47,7 @@ public class ServerService {
     public ServerService(
             ObjectMapper objectMapper,
             @ConfigProperty(name = "q3js.server-info.timeout-ms", defaultValue = "3000") int infoTimeoutMs,
-            @ConfigProperty(name = "q3js.server-info.scheme", defaultValue = "http") String infoScheme
+            @ConfigProperty(name = "q3js.server-info.scheme", defaultValue = "https") String infoScheme
     ) {
         this.objectMapper = objectMapper;
         this.infoTimeoutMs = infoTimeoutMs;
@@ -63,7 +63,7 @@ public class ServerService {
 
     private void addDefaultServers() {
         this.servers.add(Server.builder()
-                .proxyPort(80)
+                .proxyPort(443)
                 .host("ffa.q3js.com")
                 .targetPort(27960)
                 .permanent(true)
@@ -71,7 +71,7 @@ public class ServerService {
                 .build());
 
         this.servers.add(Server.builder()
-                .proxyPort(80)
+                .proxyPort(443)
                 .host("ctf.q3js.com")
                 .targetPort(27960)
                 .permanent(true)

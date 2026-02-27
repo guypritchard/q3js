@@ -22,6 +22,7 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index IDX_EVENTS_EVENT_TYPE_KILLER_NAME = Internal.createIndex(DSL.name("idx_events_event_type_killer_name"), Events.EVENTS, new OrderField[] { Events.EVENTS.EVENT_TYPE, Events.EVENTS.KILLER_NAME }, false);
     public static final Index IDX_EVENTS_EVENT_TYPE_RECEIVED_AT = Internal.createIndex(DSL.name("idx_events_event_type_received_at"), Events.EVENTS, new OrderField[] { Events.EVENTS.EVENT_TYPE, Events.EVENTS.RECEIVED_AT.desc() }, false);
     public static final Index IDX_EVENTS_RECEIVED_AT = Internal.createIndex(DSL.name("idx_events_received_at"), Events.EVENTS, new OrderField[] { Events.EVENTS.RECEIVED_AT.desc() }, false);
 }

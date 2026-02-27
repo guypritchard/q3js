@@ -63,12 +63,12 @@ public class Events extends TableImpl<EventsRecord> {
     /**
      * The column <code>events.source_ip</code>.
      */
-    public final TableField<EventsRecord, String> SOURCE_IP = createField(DSL.name("source_ip"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<EventsRecord, String> SOURCE_IP = createField(DSL.name("source_ip"), SQLDataType.CLOB, this, "");
 
     /**
      * The column <code>events.event_type</code>.
      */
-    public final TableField<EventsRecord, String> EVENT_TYPE = createField(DSL.name("event_type"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<EventsRecord, String> EVENT_TYPE = createField(DSL.name("event_type"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field(DSL.raw("'unknown'::text"), SQLDataType.CLOB)), this, "");
 
     /**
      * The column <code>events.killer_client_num</code>.
@@ -151,7 +151,7 @@ public class Events extends TableImpl<EventsRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.IDX_EVENTS_EVENT_TYPE_RECEIVED_AT, Indexes.IDX_EVENTS_RECEIVED_AT);
+        return Arrays.asList(Indexes.IDX_EVENTS_EVENT_TYPE_KILLER_NAME, Indexes.IDX_EVENTS_EVENT_TYPE_RECEIVED_AT, Indexes.IDX_EVENTS_RECEIVED_AT);
     }
 
     @Override

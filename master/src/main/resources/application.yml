@@ -32,5 +32,5 @@ quarkus:
 q3js:
   server-info:
     timeout-ms: 3000
-    scheme: http
+    scheme: https
 
