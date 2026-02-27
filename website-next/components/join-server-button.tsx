@@ -3,7 +3,6 @@
 import type {Q3ResolvedServer} from "@/lib/q3.ts";
 import {Button} from "@/components/ui/button.tsx";
 import {Zap} from "lucide-react";
-import {env} from "@/env.ts";
 import {storeRecentServer} from "@/lib/recent-servers.ts";
 import {trackEvent} from "@/lib/analytics.ts";
 
@@ -13,9 +12,8 @@ export function JoinServerButton(props: {
     resolvePlayerName?: () => string;
     onJoin?: (server: Q3ResolvedServer) => void;
 }) {
-    const baseUrl = env.NEXT_PUBLIC_GAME_URL ? env.NEXT_PUBLIC_GAME_URL : "";
     const normalizedName = props.playerName;
-    const gameUrl = `${baseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(normalizedName)}`;
+    const gameUrl = `/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(normalizedName)}`;
     const isFull = props.server.players >= props.server.sv_maxclients;
 
     if (isFull) {
@@ -40,7 +38,7 @@ export function JoinServerButton(props: {
                 href={gameUrl}
                 onClick={(event) => {
                     const resolvedName = props.resolvePlayerName?.() ?? props.playerName;
-                    event.currentTarget.href = `${baseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(resolvedName)}`;
+                    event.currentTarget.href = `/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(resolvedName)}`;
                     trackEvent("join_server_click", {
                         server_region: props.server.location ?? "Unknown",
                         map_name: props.server.mapname.toLowerCase(),

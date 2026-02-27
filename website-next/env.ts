@@ -7,7 +7,6 @@ export const env = createEnv({
     client: {
         NEXT_PUBLIC_APP_TITLE: z.string().min(1).optional(),
         NEXT_PUBLIC_MASTER_SERVER_URL: z.string().default("https://master.q3js.com"),
-        NEXT_PUBLIC_GAME_URL: z.string().optional(),
     },
     runtimeEnv: process.env,
     emptyStringAsUndefined: true,
