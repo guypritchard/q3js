@@ -15,4 +15,5 @@ public class Server {
     private int targetPort;
     private long lastUpdated;
     private boolean permanent;
+    private int order;
 }

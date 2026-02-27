@@ -3,26 +3,23 @@ package com.q3js.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.q3js.domain.Server;
 import com.q3js.service.dto.ServerResponse;
+import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import io.quarkus.scheduler.Scheduled;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
-import java.net.URI;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 @ApplicationScoped
 public class ServerService {
@@ -30,13 +27,7 @@ public class ServerService {
 
     private static final long TIMEOUT_MS = 15_000;
 
-    private final Set<Server> servers;
-
-    private static final Comparator<Server> SERVER_COMPARATOR =
-            Comparator.comparing(Server::isPermanent, Comparator.reverseOrder())
-                    .thenComparing(Server::getHost, Comparator.nullsFirst(String::compareToIgnoreCase))
-                    .thenComparingInt(Server::getProxyPort)
-                    .thenComparingInt(Server::getTargetPort);
+    private final List<Server> servers;
 
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
@@ -57,7 +48,7 @@ public class ServerService {
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .version(HttpClient.Version.HTTP_1_1)
                 .build();
-        this.servers = new ConcurrentSkipListSet<>(SERVER_COMPARATOR);
+        this.servers = new ArrayList<>();
         addDefaultServers();
     }
 
@@ -68,6 +59,7 @@ public class ServerService {
                 .targetPort(27960)
                 .permanent(true)
                 .lastUpdated(Instant.now().toEpochMilli())
+                .order(1)
                 .build());
 
         this.servers.add(Server.builder()
@@ -76,6 +68,7 @@ public class ServerService {
                 .targetPort(27960)
                 .permanent(true)
                 .lastUpdated(Instant.now().toEpochMilli())
+                .order(2)
                 .build());
     }
 
