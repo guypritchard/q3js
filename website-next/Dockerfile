@@ -23,7 +23,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
-RUN npm i -g pm2 --registry=https://registry.npmjs.org/ --no-audit --no-fund --verbose --foreground-scripts
+RUN NODE_OPTIONS=--dns-result-order=ipv4first \
+    npm i -g pm2
 
 # Copy only the necessary build output
 COPY --from=builder /app/.next/standalone ./

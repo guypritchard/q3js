@@ -1,3 +1,5 @@
+"use client";
+
 import type {Q3ResolvedServer} from "@/lib/q3.ts";
 import {Button} from "@/components/ui/button.tsx";
 import {Zap} from "lucide-react";

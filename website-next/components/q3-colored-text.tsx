@@ -1,3 +1,5 @@
+"use client";
+
 import {Fragment, useMemo} from "react";
 import {cn} from "@/lib/utils.ts";
 

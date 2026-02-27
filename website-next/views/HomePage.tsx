@@ -1,56 +1,53 @@
-"use client";
-
 import {ServerPicker} from "@/components/server-picker"
 import {Hero} from "@/components/hero.tsx";
-import {Suspense} from "react";
-import ServerPickerSkeleton from "@/components/server-picker-skeleton.tsx";
-import {ErrorBoundary} from 'react-error-boundary'
-import {useSeo} from "@/hooks/use-seo.ts";
-import {QueryErrorResetBoundary} from "@tanstack/react-query";
-import {Button} from "@/components/ui/button.tsx";
-import Link from "next/link";
 import {ScoreboardPreview} from "@/components/scoreboard-preview.tsx";
+import {Suspense} from "react";
+import {getInitialScoreboard, getInitialServers} from "@/lib/initial-data";
+import ServerPickerSkeleton from "@/components/server-picker-skeleton";
+import {Card, CardContent} from "@/components/ui/card";
+
+async function HomeScoreboardSection() {
+    const initialScoreboard = await getInitialScoreboard();
+    return <ScoreboardPreview initialScoreboard={initialScoreboard}/>;
+}
+
+async function HomeServerSection() {
+    const initialServers = await getInitialServers();
+    return <ServerPicker initialServers={initialServers}/>;
+}
+
+function ScoreboardPreviewSkeleton() {
+    return (
+        <section className="container mx-auto px-4 pb-8">
+            <div className="mx-auto max-w-5xl">
+                <Card className="border-border/60 bg-card/60">
+                    <CardContent className="p-4 md:p-6">
+                        <div className="divide-y divide-border/40">
+                            {Array.from({length: 5}).map((_, idx) => (
+                                <div key={idx} className="grid grid-cols-[56px_1fr_100px] items-center gap-3 px-2 py-3">
+                                    <div className="h-4 w-8 animate-pulse bg-muted"/>
+                                    <div className="h-4 w-2/5 animate-pulse bg-muted"/>
+                                    <div className="ml-auto h-4 w-12 animate-pulse bg-muted"/>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </section>
+    );
+}
 
 export default function HomePage() {
-    useSeo({
-        title: "Play Quake III Arena in Your Browser",
-        description: "Play Quake III Arena instantly with no install. Q3JS brings the classic arena shooter to the web with WebAssembly and online servers.",
-        path: "/",
-    });
-
     return (
         <main>
             <Hero/>
-            <ScoreboardPreview/>
-
-            <QueryErrorResetBoundary>
-                {({reset}) => (
-                    <ErrorBoundary
-                        onReset={reset}
-                        fallbackRender={({resetErrorBoundary}) => (
-                            <div role="alert" className="container mx-auto px-4 pb-24">
-                                <div className="max-w-5xl mx-auto rounded border border-destructive/50 bg-destructive/10 p-4">
-                                    <p className="text-sm">Something went wrong loading the server list.</p>
-                                    <Button
-                                        variant="outline"
-                                        className="mt-3"
-                                        onClick={resetErrorBoundary}
-                                    >
-                                        Retry
-                                    </Button>
-                                    <Button className="mt-3 ml-2" asChild>
-                                        <Link href="/guide">Run your own server</Link>
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                    >
-                        <Suspense fallback={<ServerPickerSkeleton/>}>
-                            <ServerPicker/>
-                        </Suspense>
-                    </ErrorBoundary>
-                )}
-            </QueryErrorResetBoundary>
+            <Suspense fallback={<ScoreboardPreviewSkeleton/>}>
+                <HomeScoreboardSection/>
+            </Suspense>
+            <Suspense fallback={<ServerPickerSkeleton/>}>
+                <HomeServerSection/>
+            </Suspense>
         </main>
     )
 }

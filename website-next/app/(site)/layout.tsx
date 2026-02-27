@@ -1,9 +1,15 @@
 import {AppShell} from "@/components/app-shell";
+import {getInitialServers} from "@/lib/initial-data";
+import React from "react";
 
-export default function SiteLayout({
-    children,
-}: Readonly<{
+export const dynamic = "force-dynamic";
+
+export default async function SiteLayout({
+                                             children,
+                                         }: Readonly<{
     children: React.ReactNode;
 }>) {
-    return <AppShell>{children}</AppShell>;
+    const initialServers = await getInitialServers();
+
+    return <AppShell initialServers={initialServers}>{children}</AppShell>;
 }

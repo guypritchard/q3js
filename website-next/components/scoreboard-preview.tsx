@@ -1,24 +1,25 @@
+"use client";
+
 import {Card, CardContent} from "@/components/ui/card.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import Link from "next/link";
-import {useQuery} from "@tanstack/react-query";
 import {fetchScoreboard, type ScoreboardEntry} from "@/lib/scoreboard.ts";
 import {useMemo} from "react";
 import {stripQ3Colors} from "@/lib/utils.ts";
 import {Q3ColoredText} from "@/components/q3-colored-text.tsx";
 import {trackEvent} from "@/lib/analytics.ts";
+import {usePollingQuery} from "@/hooks/use-polling-query.ts";
 
 function formatKills(kills: number) {
     return new Intl.NumberFormat().format(kills);
 }
 
-export function ScoreboardPreview() {
-    const scoreboardQuery = useQuery<ScoreboardEntry[]>({
-        queryKey: ["scoreboard", "preview"],
+export function ScoreboardPreview(props: { initialScoreboard: ScoreboardEntry[] }) {
+    const scoreboardQuery = usePollingQuery<ScoreboardEntry[]>({
         queryFn: fetchScoreboard,
-        refetchInterval: 30000,
-        staleTime: 20000,
-        retry: 1,
+        intervalMs: 30000,
+        initialData: props.initialScoreboard,
+        isPendingInitial: false,
     });
 
     const topFraggers = useMemo(() => {

@@ -1,7 +1,8 @@
-import {Card, CardContent} from "@/components/ui/card"
+"use client";
+
+import {Card, CardContent} from "@/components/ui/card";
 import {type Q3ResolvedServer} from "@/lib/q3.ts";
 import {ServerCard} from "@/components/server-card.tsx";
-import {useSuspenseQuery} from "@tanstack/react-query";
 import {fetchServers} from "@/lib/servers.ts";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {Input} from "@/components/ui/input.tsx";
@@ -19,27 +20,28 @@ import {
 import {trackEvent} from "@/lib/analytics.ts";
 import {useLocalStorage} from "@/hooks/use-local-storage.ts";
 import {createRandomPlayerName} from "@/lib/player-name-generator.ts";
+import {usePollingQuery} from "@/hooks/use-polling-query.ts";
+import ServerSkeleton from "@/components/server-skeleton.tsx";
 
-const POLL_MS = 5000
+const POLL_MS = 5000;
 
 type SortKey = "players" | "ping" | "name";
 
-export function ServerPicker() {
+export function ServerPicker(props: { initialServers: Q3ResolvedServer[] }) {
     const defaultPlayerName = useMemo(() => createRandomPlayerName(), []);
     const [name, setName] = useLocalStorage("name", defaultPlayerName);
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState<SortKey>("players");
     const hasTrackedSearchUsageRef = useRef(false);
 
-    const serversResponse = useSuspenseQuery<Q3ResolvedServer[]>({
+    const serversResponse = usePollingQuery<Q3ResolvedServer[]>({
         queryFn: fetchServers,
-        queryKey: ['servers'],
-        staleTime: POLL_MS,
-        refetchInterval: POLL_MS,
-        retry: 2,
-        retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
-    })
-    const servers = serversResponse.data ?? [];
+        intervalMs: POLL_MS,
+        initialData: props.initialServers,
+        isPendingInitial: props.initialServers.length === 0,
+    });
+
+    const servers = serversResponse.data;
     const playerName = name;
 
     useEffect(() => {
@@ -83,9 +85,7 @@ export function ServerPicker() {
         return next;
     }, [servers, searchTerm, sortBy]);
 
-    const activeFilterCount = [
-        searchTerm.trim().length > 0
-    ].filter(Boolean).length;
+    const activeFilterCount = [searchTerm.trim().length > 0].filter(Boolean).length;
 
     function clearFilters() {
         trackEvent("server_filters_cleared", {
@@ -120,9 +120,9 @@ export function ServerPicker() {
         setSortBy(value);
     }
 
-    function refreshServerList(source: "empty" | "filtered_empty") {
+    function refreshServerList(source: "empty" | "filtered_empty" | "error") {
         trackEvent("server_list_refreshed", {source});
-        serversResponse.refetch();
+        void serversResponse.refetch();
     }
 
     return (
@@ -133,6 +133,11 @@ export function ServerPicker() {
                     <p className="text-muted-foreground text-sm">
                         Pick a server and jump in immediately. Your player name is reused for every join.
                     </p>
+                    {serversResponse.isError && servers.length > 0 && (
+                        <p className="text-xs text-destructive">
+                            Unable to refresh server list. Showing last known data.
+                        </p>
+                    )}
                 </div>
 
                 <Card className="bg-card/60 border-border/60">
@@ -161,10 +166,7 @@ export function ServerPicker() {
                             </div>
 
                             <div>
-                                <Select
-                                    value={sortBy}
-                                    onValueChange={handleSortChange}
-                                >
+                                <Select value={sortBy} onValueChange={handleSortChange}>
                                     <SelectTrigger aria-label="Sort servers">
                                         <SelectValue placeholder="Sort: most players"/>
                                     </SelectTrigger>
@@ -191,19 +193,35 @@ export function ServerPicker() {
                 </Card>
 
                 <div className="grid gap-4">
-                    {filteredServers.map((server) => {
-                        return (
+                    {serversResponse.isPending
+                        ? ["server-skeleton-1", "server-skeleton-2"].map((id) => <ServerSkeleton key={id}/>)
+                        : filteredServers.map((server) => (
                             <ServerCard
                                 key={server.id}
                                 server={server}
                                 playerName={playerName}
                                 resolvePlayerName={resolvePlayerNameForJoin}
                             />
-                        )
-                    })}
+                        ))}
                 </div>
 
-                {servers.length === 0 && (
+                {serversResponse.isError && servers.length === 0 && !serversResponse.isPending && (
+                    <Card className="bg-destructive/10 border-destructive/50">
+                        <CardContent className="py-10 text-center space-y-3">
+                            <p className="text-destructive">Something went wrong loading the server list.</p>
+                            <div className="flex items-center justify-center gap-2">
+                                <Button variant="outline" onClick={() => refreshServerList("error")}>
+                                    Retry
+                                </Button>
+                                <Button asChild>
+                                    <Link href="/guide">Run your own server</Link>
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {!serversResponse.isPending && !serversResponse.isError && servers.length === 0 && (
                     <Card className="bg-card/50 border-border/50">
                         <CardContent className="py-10 text-center space-y-3">
                             <p className="text-muted-foreground">No servers are live right now.</p>
@@ -219,7 +237,7 @@ export function ServerPicker() {
                     </Card>
                 )}
 
-                {servers.length > 0 && filteredServers.length === 0 && (
+                {!serversResponse.isPending && servers.length > 0 && filteredServers.length === 0 && (
                     <Card className="bg-card/50 border-border/50">
                         <CardContent className="py-10 text-center space-y-3">
                             <p className="text-muted-foreground">No servers match your current filters.</p>
@@ -236,5 +254,5 @@ export function ServerPicker() {
                 )}
             </div>
         </section>
-    )
+    );
 }

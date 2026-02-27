@@ -6,7 +6,6 @@ import {Progress} from "@/components/ui/progress";
 import {makeRafUpdater, type Prog} from "@/lib/fs.ts";
 import {useFullscreenOnF11} from "@/hooks/use-fullscreen.ts";
 import startGame from "@/game";
-import {useSeo} from "@/hooks/use-seo.ts";
 import {trackEvent} from "@/lib/analytics.ts";
 import {useSearchParams} from "next/navigation";
 import {toInt} from "@/lib/utils.ts";
@@ -29,13 +28,6 @@ export default function GamePage() {
     const host = searchParams?.get("host") ?? "";
     const proxyPort = toInt(searchParams?.get("proxyPort") ?? undefined, 0);
     const name = searchParams?.get("name") ?? "Player";
-
-    useSeo({
-        title: `Play on ${name}`,
-        description: `Join ${name} and play Quake III Arena in your browser.`,
-        path: "/game",
-        noindex: true,
-    });
 
     useEffect(() => {
         trackEvent("game_launch_started");

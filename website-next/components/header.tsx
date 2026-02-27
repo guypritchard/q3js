@@ -1,17 +1,19 @@
+"use client";
+
 import Link from "next/link";
 import {Badge} from "@/components/ui/badge.tsx";
-import {useQuery} from "@tanstack/react-query";
 import {fetchServers} from "@/lib/servers.ts";
 import {SiGithub} from "react-icons/si";
 import {trackEvent} from "@/lib/analytics.ts";
+import {usePollingQuery} from "@/hooks/use-polling-query.ts";
+import type {Q3ResolvedServer} from "@/lib/q3.ts";
 
-export function Header() {
-    const statusQuery = useQuery({
-        queryKey: ["servers"],
+export function Header(props: { initialServers: Q3ResolvedServer[] }) {
+    const statusQuery = usePollingQuery({
         queryFn: fetchServers,
-        refetchInterval: 30000,
-        staleTime: 20000,
-        retry: 1,
+        intervalMs: 30000,
+        initialData: props.initialServers,
+        isPendingInitial: false,
     });
 
     const serverCount = statusQuery.data?.length ?? 0;
