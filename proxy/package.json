@@ -7,5 +7,8 @@
     "underscore": "^1.13.7",
     "winston": "^3.18.3",
     "ws": "^8.18.3"
+  },
+  "overrides": {
+    "minimist": "^1.2.8"
   }
 }
