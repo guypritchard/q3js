@@ -11,13 +11,33 @@ export type Prog = {
 
 // Persistent data versioning
 const DATA_VERSION = "v1";
-const VERSION_KEY = "ioq3-data-version";
+const VERSION_FILE = "/baseq3/.ioq3-data-version";
+
+type FSLike = {
+    syncfs: (populate: boolean, callback: (err: unknown) => void) => void;
+    filesystems?: {
+        IDBFS?: unknown;
+    };
+    mkdirTree: (path: string) => void;
+    mount: (type: unknown, opts: Record<string, unknown>, mountpoint: string) => void;
+    readdir: (path: string) => string[];
+    stat: (path: string) => { mode: number };
+    rmdir: (path: string) => void;
+    unlink: (path: string) => void;
+    readFile: (path: string, opts: { encoding: "utf8" }) => string;
+    writeFile: (path: string, data: string) => void;
+};
+
+type IOQ3Module = {
+    FS: FSLike;
+    IDBFS?: unknown;
+};
 
 // Sync helper
-export function syncfs(module: any, populate: boolean) {
+export function syncfs(module: IOQ3Module, populate: boolean) {
     return new Promise<void>((resolve, reject) => {
         try {
-            module.FS.syncfs(populate, (err: any) => (err ? reject(err) : resolve()));
+            module.FS.syncfs(populate, (err: unknown) => (err ? reject(err) : resolve()));
         } catch (e) {
             reject(e);
         }
@@ -25,15 +45,41 @@ export function syncfs(module: any, populate: boolean) {
 }
 
 // Resolve IDBFS across different Emscripten variants
-export function resolveIDBFS(module: any) {
+export function resolveIDBFS(module: Partial<IOQ3Module> | null | undefined) {
     if (module?.FS?.filesystems?.IDBFS) return module.FS.filesystems.IDBFS;
     if (module?.IDBFS) return module.IDBFS;
-    // @ts-ignore
-    if ((globalThis as any).IDBFS) return (globalThis as any).IDBFS;
+    const globalIDBFS = (globalThis as typeof globalThis & { IDBFS?: unknown }).IDBFS;
+    if (globalIDBFS) return globalIDBFS;
     return null;
 }
 
-export async function ensureMounts(module: any): Promise<{ persist: boolean }> {
+function isDirectoryMode(mode: number) {
+    return (mode & 0o170000) === 0o040000;
+}
+
+function clearDirectory(FS: FSLike, dirPath: string) {
+    for (const entry of FS.readdir(dirPath)) {
+        if (entry === "." || entry === "..") continue;
+        const entryPath = `${dirPath}/${entry}`;
+        const stat = FS.stat(entryPath);
+        if (isDirectoryMode(stat.mode)) {
+            clearDirectory(FS, entryPath);
+            FS.rmdir(entryPath);
+            continue;
+        }
+        FS.unlink(entryPath);
+    }
+}
+
+function readDataVersion(FS: FSLike): string | null {
+    try {
+        return FS.readFile(VERSION_FILE, {encoding: "utf8"}).trim();
+    } catch {
+        return null;
+    }
+}
+
+export async function ensureMounts(module: IOQ3Module): Promise<{ persist: boolean }> {
     const {FS} = module;
     FS.mkdirTree("/baseq3");
     FS.mkdirTree("/baseq3/vm");
@@ -45,46 +91,30 @@ export async function ensureMounts(module: any): Promise<{ persist: boolean }> {
     }
 
     try {
-        FS.mount(IDBFS, {}, "/baseq3");
+        FS.mount(IDBFS, {autoPersist: true}, "/baseq3");
     } catch {
         // already mounted
     }
 
-    const current = localStorage.getItem(VERSION_KEY);
-    if (current !== DATA_VERSION) {
+    await syncfs(module, true);
+    const current = readDataVersion(FS);
+    if (current === null) {
         try {
-            await syncfs(module, true);
-            for (const e of FS.readdir("/baseq3")) {
-                if (e === "." || e === "..") continue;
-                const p = `/baseq3/${e}`;
-                try {
-                    const stat = FS.stat(p);
-                    if ((stat.mode & 0o40000) === 0o40000) {
-                        try {
-                            for (const c of FS.readdir(p)) {
-                                if (c === "." || c === "..") continue;
-                                try {
-                                    FS.unlink(`${p}/${c}`);
-                                } catch {
-                                }
-                            }
-                            FS.rmdir(p);
-                        } catch {
-                        }
-                    } else {
-                        FS.unlink(p);
-                    }
-                } catch {
-                }
-            }
+            FS.writeFile(VERSION_FILE, DATA_VERSION);
             await syncfs(module, false);
-            localStorage.setItem(VERSION_KEY, DATA_VERSION);
+        } catch (e) {
+            console.warn("[ioq3] Version migration failed:", e);
+        }
+    } else if (current !== DATA_VERSION) {
+        try {
+            clearDirectory(FS, "/baseq3");
+            FS.writeFile(VERSION_FILE, DATA_VERSION);
+            await syncfs(module, false);
         } catch (e) {
             console.warn("[ioq3] Version reset failed:", e);
         }
     }
 
-    await syncfs(module, true);
     return {persist: true};
 }
 
