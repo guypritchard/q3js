@@ -1,23 +1,62 @@
 import "./globals.css";
-import type {Metadata} from "next";
+import type {Metadata, Viewport} from "next";
 import {AnalyticsTracker} from "@/components/analytics-tracker";
 import {Suspense} from "react";
+import {siteConfig, siteOgImage} from "@/lib/seo";
 
 export const metadata: Metadata = {
-    metadataBase: new URL("https://q3js.com"),
+    metadataBase: new URL(siteConfig.url),
     title: {
-        default: "Q3JS",
-        template: "%s",
+        default: siteConfig.defaultTitle,
+        template: `%s | ${siteConfig.name}`,
     },
-    description: "Play Quake III Arena in your browser",
+    description: siteConfig.description,
+    applicationName: siteConfig.name,
+    keywords: siteConfig.keywords,
+    category: "Gaming",
+    creator: siteConfig.name,
+    publisher: siteConfig.name,
+    formatDetection: {
+        telephone: false,
+        address: false,
+        email: false,
+    },
     manifest: "/manifest.json",
     icons: {
         icon: "/favicon.ico",
         apple: "/apple-touch-icon.png",
     },
-    openGraph: {
-        images: ["/og-cover.jpg"],
+    robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+            "max-video-preview": -1,
+            "max-image-preview": "large",
+            "max-snippet": -1,
+        },
     },
+    openGraph: {
+        type: "website",
+        locale: siteConfig.locale,
+        url: siteConfig.url,
+        siteName: siteConfig.name,
+        title: `${siteConfig.defaultTitle} | ${siteConfig.name}`,
+        description: siteConfig.description,
+        images: [siteOgImage],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: `${siteConfig.defaultTitle} | ${siteConfig.name}`,
+        description: siteConfig.description,
+        images: [siteConfig.ogImage],
+    },
+};
+
+export const viewport: Viewport = {
+    themeColor: "#101010",
+    colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -26,7 +65,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="en-US">
         <body className="antialiased">
         <Suspense fallback={null}>
             <AnalyticsTracker/>

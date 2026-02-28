@@ -5,6 +5,8 @@ import {Suspense} from "react";
 import {getInitialScoreboard, getInitialServers} from "@/lib/initial-data";
 import ServerPickerSkeleton from "@/components/server-picker-skeleton";
 import {Card, CardContent} from "@/components/ui/card";
+import {JsonLd} from "@/components/seo/json-ld";
+import {absoluteUrl, siteConfig} from "@/lib/seo";
 
 async function HomeScoreboardSection() {
     const initialScoreboard = await getInitialScoreboard();
@@ -38,9 +40,42 @@ function ScoreboardPreviewSkeleton() {
     );
 }
 
+const homeStructuredData = [
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: siteConfig.name,
+        url: siteConfig.url,
+        description: siteConfig.description,
+        inLanguage: "en-US",
+        potentialAction: {
+            "@type": "ViewAction",
+            name: "Browse live Quake III Arena servers",
+            target: absoluteUrl("/#server-browser"),
+        },
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name: siteConfig.name,
+        applicationCategory: "GameApplication",
+        operatingSystem: "Web Browser",
+        description: siteConfig.description,
+        url: siteConfig.url,
+        image: absoluteUrl(siteConfig.ogImage),
+        genre: "First-person shooter",
+        offers: {
+            "@type": "Offer",
+            price: "0",
+            priceCurrency: "USD",
+        },
+    },
+];
+
 export default function HomePage() {
     return (
         <main>
+            <JsonLd data={homeStructuredData}/>
             <Hero/>
             <Suspense fallback={<ScoreboardPreviewSkeleton/>}>
                 <HomeScoreboardSection/>

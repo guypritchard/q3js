@@ -2,16 +2,20 @@ import type {Metadata} from "next";
 import {Suspense} from "react";
 import {ScoreboardPageContent} from "@/components/scoreboard-page-content";
 import {Card, CardContent} from "@/components/ui/card";
+import {buildPageMetadata} from "@/lib/seo";
 
-export const metadata: Metadata = {
-    title: "Global Scoreboard | Q3JS",
+export const metadata: Metadata = buildPageMetadata({
+    title: "Global Scoreboard",
     description: "Live global Q3JS scoreboard grouped by player and sorted by total kills.",
-    alternates: {
-        canonical: "/scoreboard",
-    },
-};
-
-export const dynamic = "force-dynamic";
+    path: "/scoreboard",
+    keywords: [
+        "Q3JS scoreboard",
+        "Quake 3 leaderboard",
+        "frag leaderboard",
+        "Q3JS stats",
+        "Quake III player stats",
+    ],
+});
 
 function ScoreboardPageSkeleton() {
     return (

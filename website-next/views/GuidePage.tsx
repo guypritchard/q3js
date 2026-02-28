@@ -1,6 +1,60 @@
+import {JsonLd} from "@/components/seo/json-ld";
+import {absoluteUrl, siteConfig} from "@/lib/seo";
+
+const guideStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "Run Your Own Q3JS Server",
+    description:
+        "Step-by-step guide to run your own Q3JS Quake III server with Docker, required ports, and baseq3 setup instructions.",
+    inLanguage: "en-US",
+    url: absoluteUrl("/guide"),
+    totalTime: "PT10M",
+    supply: [
+        {
+            "@type": "HowToSupply",
+            name: "baseq3 directory with allowed game files",
+        },
+    ],
+    tool: [
+        {
+            "@type": "HowToTool",
+            name: "Docker",
+        },
+    ],
+    step: [
+        {
+            "@type": "HowToStep",
+            name: "Prepare your server directory",
+            text: "Create a directory that includes a baseq3 folder containing your server game data and configs.",
+        },
+        {
+            "@type": "HowToStep",
+            name: "Run the Docker container",
+            text: "Start the lukaklacar/q3js-server image with UDP 27960 and TCP 27961 exposed and mount baseq3 into /server/baseq3.",
+        },
+        {
+            "@type": "HowToStep",
+            name: "Forward required ports",
+            text: "Forward UDP 27960 and port 27961 on your router to make the server reachable from outside your network.",
+        },
+        {
+            "@type": "HowToStep",
+            name: "Verify visibility in Q3JS",
+            text: "Confirm your server appears on the Q3JS home page and accepts player joins.",
+        },
+    ],
+    publisher: {
+        "@type": "Organization",
+        name: siteConfig.name,
+        url: siteConfig.url,
+    },
+};
+
 export default function GuidePage() {
     return (
         <main className="container mx-auto ">
+            <JsonLd data={guideStructuredData}/>
             <div
                 className="min-w-full py-20 space-y-6 [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:tracking-tight [&_h2]:pt-4 [&_h2]:text-2xl [&_h2]:font-semibold [&_p]:leading-7 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:border [&_pre]:border-border/60 [&_pre]:bg-card/60 [&_pre]:p-4 [&_ul]:list-disc [&_ul]:space-y-3 [&_ul]:pl-6"
             >

@@ -8,10 +8,10 @@ export function AppShell(props: {
     initialServers: Q3ResolvedServer[];
 }) {
     return (
-        <main className="bg-background">
+        <div className="bg-background">
             <Header initialServers={props.initialServers}/>
             {props.children}
             <Footer/>
-        </main>
+        </div>
     );
 }

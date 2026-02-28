@@ -1,23 +1,27 @@
 import type {MetadataRoute} from "next";
-
-const SITE_URL = "https://q3js.com";
+import {absoluteUrl} from "@/lib/seo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+    const lastModified = new Date();
+
     return [
         {
-            url: `${SITE_URL}/`,
+            url: absoluteUrl("/"),
             changeFrequency: "daily",
             priority: 1,
+            lastModified,
         },
         {
-            url: `${SITE_URL}/guide`,
+            url: absoluteUrl("/guide"),
             changeFrequency: "weekly",
             priority: 0.8,
+            lastModified,
         },
         {
-            url: `${SITE_URL}/scoreboard`,
-            changeFrequency: "always",
+            url: absoluteUrl("/scoreboard"),
+            changeFrequency: "hourly",
             priority: 0.9,
+            lastModified,
         },
     ];
 }

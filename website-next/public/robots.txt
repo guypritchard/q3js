@@ -2,5 +2,6 @@
 User-agent: *
 Allow: /
 Disallow: /game
+Host: q3js.com
 
 Sitemap: https://q3js.com/sitemap.xml

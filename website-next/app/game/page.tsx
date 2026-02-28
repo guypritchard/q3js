@@ -1,18 +1,23 @@
 import GamePage from "@/views/GamePage";
 import type {Metadata} from "next";
 import {Suspense} from "react";
+import {buildPageMetadata} from "@/lib/seo";
 
-export const metadata: Metadata = {
-    title: "Play Quake III Arena | Q3JS",
+export const metadata: Metadata = buildPageMetadata({
+    title: "Play Quake III Arena",
     description: "Join a Q3JS server and play Quake III Arena in your browser.",
+    path: "/game",
     robots: {
         index: false,
-        follow: true,
+        follow: false,
+        noarchive: true,
+        googleBot: {
+            index: false,
+            follow: false,
+            noimageindex: true,
+        },
     },
-    alternates: {
-        canonical: "/game",
-    },
-};
+});
 
 export default function GameRoute() {
     return (
