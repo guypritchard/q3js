@@ -1,6 +1,9 @@
 import type {MetadataRoute} from "next";
 import {absoluteUrl} from "@/lib/seo";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function sitemap(): MetadataRoute.Sitemap {
     const lastModified = new Date();
 

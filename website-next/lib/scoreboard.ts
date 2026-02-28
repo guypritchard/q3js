@@ -6,7 +6,9 @@ export interface ScoreboardEntry {
 }
 
 export async function fetchScoreboard() {
-    const response = await fetch(`${env.NEXT_PUBLIC_MASTER_SERVER_URL}/api/events/scoreboard`);
+    const response = await fetch(`${env.NEXT_PUBLIC_MASTER_SERVER_URL}/api/events/scoreboard`, {
+        cache: "no-store",
+    });
 
     if (!response.ok) {
         throw new Error(`Failed to load scoreboard (${response.status})`);

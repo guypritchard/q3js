@@ -6,6 +6,10 @@ import {siteConfig, siteOgImage} from "@/lib/seo";
 import {env} from "@/env";
 import {GoogleAnalytics} from "@next/third-parties/google";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
     metadataBase: new URL(siteConfig.url),
     title: {
