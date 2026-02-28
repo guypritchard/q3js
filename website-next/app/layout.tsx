@@ -10,6 +10,11 @@ export const metadata: Metadata = {
         template: "%s",
     },
     description: "Play Quake III Arena in your browser",
+    manifest: "/manifest.json",
+    icons: {
+        icon: "/favicon.ico",
+        apple: "/apple-touch-icon.png",
+    },
     openGraph: {
         images: ["/og-cover.jpg"],
     },
