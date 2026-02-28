@@ -3,6 +3,8 @@ import type {Metadata, Viewport} from "next";
 import {AnalyticsTracker} from "@/components/analytics-tracker";
 import {Suspense} from "react";
 import {siteConfig, siteOgImage} from "@/lib/seo";
+import {env} from "@/env";
+import {GoogleAnalytics} from "@next/third-parties/google";
 
 export const metadata: Metadata = {
     metadataBase: new URL(siteConfig.url),
@@ -64,6 +66,8 @@ export default function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const gaMeasurementId = env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+
     return (
         <html lang="en-US">
         <body className="antialiased">
@@ -72,6 +76,7 @@ export default function RootLayout({
         </Suspense>
         <div className="font-mono">{children}</div>
         </body>
+        <GoogleAnalytics gaId={gaMeasurementId}/>
         </html>
     );
 }

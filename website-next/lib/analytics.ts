@@ -1,16 +1,8 @@
+import {sendGAEvent} from "@next/third-parties/google";
+
 const ACQUISITION_TRACKED_SESSION_KEY = "q3js-acquisition-tracked";
 
 type AnalyticsPrimitive = string | number | boolean;
-
-declare global {
-    interface Window {
-        gtag?: (...args: unknown[]) => void;
-    }
-}
-
-function canTrack() {
-    return typeof window !== "undefined" && typeof window.gtag === "function";
-}
 
 function toEventParams(params: Record<string, unknown>) {
     const normalized: Record<string, AnalyticsPrimitive> = {};
@@ -22,11 +14,6 @@ function toEventParams(params: Record<string, unknown>) {
     }
 
     return normalized;
-}
-
-function getCurrentPath() {
-    if (typeof window === "undefined") return "/";
-    return `${window.location.pathname}${window.location.search}`;
 }
 
 function getExternalReferrerHost() {
@@ -44,16 +31,8 @@ function getExternalReferrerHost() {
 }
 
 export function trackEvent(name: string, params: Record<string, unknown> = {}) {
-    if (!canTrack()) return;
-    window.gtag?.("event", name, toEventParams(params));
-}
-
-export function trackPageView(pagePath?: string) {
-    trackEvent("page_view", {
-        page_path: pagePath ?? getCurrentPath(),
-        page_location: typeof window === "undefined" ? undefined : window.location.href,
-        page_title: typeof document === "undefined" ? undefined : document.title,
-    });
+    if (typeof window === "undefined") return;
+    sendGAEvent("event", name, toEventParams(params));
 }
 
 export function trackAcquisitionTouchpoint() {
