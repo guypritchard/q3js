@@ -73,10 +73,25 @@ public class ServerService {
     }
 
     public List<ServerResponse> getAllServers() {
-        return servers.stream()
-                .map(this::fetchServerDetails)
-                .flatMap(Optional::stream)
-                .toList();
+        List<ServerResponse> result = new ArrayList<>();
+        Iterator<Server> iterator = servers.iterator();
+
+        while (iterator.hasNext()) {
+            Server server = iterator.next();
+            Optional<ServerResponse> details = fetchServerDetails(server);
+            if (details.isPresent()) {
+                result.add(details.get());
+            } else {
+                LOG.warnf(
+                        "Removing server %s:%d after failed details fetch",
+                        server.getHost(),
+                        server.getProxyPort()
+                );
+                iterator.remove();
+            }
+        }
+
+        return result;
     }
 
     public void refreshServer(Server server) {
