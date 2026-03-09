@@ -40,20 +40,37 @@ public class ServerService {
             @ConfigProperty(name = "q3js.server-info.timeout-ms", defaultValue = "3000") int infoTimeoutMs,
             @ConfigProperty(name = "q3js.server-info.scheme", defaultValue = "https") String infoScheme
     ) {
+        this(
+                objectMapper,
+                HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofMillis(infoTimeoutMs))
+                        .followRedirects(HttpClient.Redirect.NORMAL)
+                        .version(HttpClient.Version.HTTP_1_1)
+                        .build(),
+                infoTimeoutMs,
+                infoScheme,
+                defaultServers()
+        );
+    }
+
+    ServerService(
+            ObjectMapper objectMapper,
+            HttpClient httpClient,
+            int infoTimeoutMs,
+            String infoScheme,
+            List<Server> initialServers
+    ) {
         this.objectMapper = objectMapper;
         this.infoTimeoutMs = infoTimeoutMs;
         this.infoScheme = "https".equalsIgnoreCase(infoScheme) ? "https" : "http";
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofMillis(infoTimeoutMs))
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .version(HttpClient.Version.HTTP_1_1)
-                .build();
-        this.servers = Collections.synchronizedList(new ArrayList<>());
-        addDefaultServers();
+        this.httpClient = httpClient;
+        this.servers = Collections.synchronizedList(new ArrayList<>(initialServers));
     }
 
-    private void addDefaultServers() {
-        this.servers.add(Server.builder()
+    private static List<Server> defaultServers() {
+        List<Server> servers = new ArrayList<>();
+
+        servers.add(Server.builder()
                 .proxyPort(443)
                 .host("ffa.q3js.com")
                 .targetPort(27960)
@@ -62,7 +79,7 @@ public class ServerService {
                 .order(1)
                 .build());
 
-        this.servers.add(Server.builder()
+        servers.add(Server.builder()
                 .proxyPort(443)
                 .host("ctf.q3js.com")
                 .targetPort(27960)
@@ -70,6 +87,8 @@ public class ServerService {
                 .lastUpdated(Instant.now().toEpochMilli())
                 .order(2)
                 .build());
+
+        return servers;
     }
 
     public List<ServerResponse> getAllServers() {
@@ -96,19 +115,25 @@ public class ServerService {
     }
 
     public void refreshServer(Server server) {
-        if (isLocalAddress(server.getHost())) {
-            LOG.warnf("Ignoring server with local proxy host: %s", server.getHost());
-            return;
-        }
+        LOG.infof(
+                "Ignoring dynamic server registration for %s:%d; only hardcoded servers are enabled",
+                server.getHost(),
+                server.getProxyPort()
+        );
 
-        // update timestamp before storing
-        server.setLastUpdated(Instant.now().toEpochMilli());
-
-        LOG.infof("Refreshing server: %s", server);
-        synchronized (servers) {
-            servers.remove(server); // remove old instance if exists
-            servers.add(server);
-        }
+//        if (isLocalAddress(server.getHost())) {
+//            LOG.warnf("Ignoring server with local proxy host: %s", server.getHost());
+//            return;
+//        }
+//
+//        // update timestamp before storing
+//        server.setLastUpdated(Instant.now().toEpochMilli());
+//
+//        LOG.infof("Refreshing server: %s", server);
+//        synchronized (servers) {
+//            servers.remove(server); // remove old instance if exists
+//            servers.add(server);
+//        }
     }
 
     @Scheduled(every = "5s")
