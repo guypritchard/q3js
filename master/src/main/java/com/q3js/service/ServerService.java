@@ -17,7 +17,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,7 +48,7 @@ public class ServerService {
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .version(HttpClient.Version.HTTP_1_1)
                 .build();
-        this.servers = new ArrayList<>();
+        this.servers = Collections.synchronizedList(new ArrayList<>());
         addDefaultServers();
     }
 
@@ -73,21 +73,22 @@ public class ServerService {
     }
 
     public List<ServerResponse> getAllServers() {
-        List<ServerResponse> result = new ArrayList<>();
-        Iterator<Server> iterator = servers.iterator();
+        List<Server> snapshot;
+        synchronized (servers) {
+            snapshot = new ArrayList<>(servers);
+        }
 
-        while (iterator.hasNext()) {
-            Server server = iterator.next();
+        List<ServerResponse> result = new ArrayList<>();
+        for (Server server : snapshot) {
             Optional<ServerResponse> details = fetchServerDetails(server);
             if (details.isPresent()) {
                 result.add(details.get());
             } else {
                 LOG.warnf(
-                        "Removing server %s:%d after failed details fetch",
+                        "Ignoring unreachable server %s:%d during listing",
                         server.getHost(),
                         server.getProxyPort()
                 );
-                iterator.remove();
             }
         }
 
@@ -104,8 +105,10 @@ public class ServerService {
         server.setLastUpdated(Instant.now().toEpochMilli());
 
         LOG.infof("Refreshing server: %s", server);
-        servers.remove(server); // remove old instance if exists
-        servers.add(server);
+        synchronized (servers) {
+            servers.remove(server); // remove old instance if exists
+            servers.add(server);
+        }
     }
 
     @Scheduled(every = "5s")
@@ -113,16 +116,17 @@ public class ServerService {
         long now = Instant.now().toEpochMilli();
         long cutoff = now - TIMEOUT_MS;
 
-        Iterator<Server> it = servers.iterator();
-
-        while (it.hasNext()) {
-            Server s = it.next();
-
-            if (s.isPermanent()) continue;
-            if (s.getLastUpdated() < cutoff) {
-                LOG.infof("Removing stale server: %s", s);
-                it.remove();
-            }
+        synchronized (servers) {
+            servers.removeIf(server -> {
+                if (server.isPermanent()) {
+                    return false;
+                }
+                if (server.getLastUpdated() >= cutoff) {
+                    return false;
+                }
+                LOG.infof("Removing stale server: %s", server);
+                return true;
+            });
         }
     }
 
