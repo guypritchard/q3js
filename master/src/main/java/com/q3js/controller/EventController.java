@@ -1,6 +1,7 @@
 package com.q3js.controller;
 
 import com.q3js.service.EventService;
+import com.q3js.service.ScoreboardPeriod;
 import com.q3js.service.dto.CreateEventRequest;
 import com.q3js.service.dto.ScoreboardEntryResponse;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -9,6 +10,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import lombok.RequiredArgsConstructor;
 import org.jboss.logging.Logger;
@@ -32,7 +34,7 @@ public class EventController {
 
     @GET
     @Path("/scoreboard")
-    public List<ScoreboardEntryResponse> getGlobalScoreboard() {
-        return eventService.getGlobalScoreboard();
+    public List<ScoreboardEntryResponse> getGlobalScoreboard(@QueryParam("period") String period) {
+        return eventService.getGlobalScoreboard(ScoreboardPeriod.fromQueryParam(period));
     }
 }

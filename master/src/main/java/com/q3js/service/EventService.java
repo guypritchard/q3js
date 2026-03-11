@@ -6,9 +6,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
+import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static com.q3js.jooq.Tables.EVENTS;
@@ -33,12 +35,18 @@ public class EventService {
         event.store();
     }
 
-    public List<ScoreboardEntryResponse> getGlobalScoreboard() {
+    public List<ScoreboardEntryResponse> getGlobalScoreboard(ScoreboardPeriod period) {
         Field<Integer> kills = DSL.count().as("kills");
+        Condition condition = EVENTS.EVENT_TYPE.equalIgnoreCase("kill");
+        var periodStart = period.startsAt(OffsetDateTime.now());
+
+        if (periodStart.isPresent()) {
+            condition = condition.and(EVENTS.RECEIVED_AT.ge(periodStart.orElseThrow()));
+        }
 
         return dsl.select(EVENTS.KILLER_NAME, kills)
                 .from(EVENTS)
-                .where(EVENTS.EVENT_TYPE.equalIgnoreCase("kill"))
+                .where(condition)
                 .groupBy(EVENTS.KILLER_NAME)
                 .orderBy(kills.desc(), EVENTS.KILLER_NAME.asc())
                 .fetch(record -> ScoreboardEntryResponse.builder()

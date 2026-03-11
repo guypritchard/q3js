@@ -6,7 +6,7 @@ import {buildPageMetadata} from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
     title: "Global Scoreboard",
-    description: "Live global Q3JS scoreboard grouped by player and sorted by total kills.",
+    description: "Live Q3JS scoreboard with daily, weekly, monthly, and all-time kill leaders.",
     path: "/scoreboard",
     keywords: [
         "Q3JS scoreboard",
@@ -24,7 +24,7 @@ function ScoreboardPageSkeleton() {
                 <div className="space-y-2">
                     <h1 className="text-4xl font-bold tracking-tight">Global Scoreboard</h1>
                     <p className="text-sm text-muted-foreground md:text-base">
-                        All-time kills across reported servers, grouped by player name.
+                        Switch between daily, weekly, monthly, and all-time kills across reported servers.
                     </p>
                 </div>
 

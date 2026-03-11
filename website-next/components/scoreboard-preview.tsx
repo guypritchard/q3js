@@ -3,23 +3,32 @@
 import {Card, CardContent} from "@/components/ui/card.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import Link from "next/link";
-import {fetchScoreboard, type ScoreboardEntry} from "@/lib/scoreboard.ts";
-import {useMemo} from "react";
+import {
+    DEFAULT_SCOREBOARD_PERIOD,
+    fetchScoreboard,
+    SCOREBOARD_PERIOD_LABELS,
+    type ScoreboardEntry,
+    type ScoreboardPeriod,
+} from "@/lib/scoreboard.ts";
+import {useMemo, useState} from "react";
 import {stripQ3Colors} from "@/lib/utils.ts";
 import {Q3ColoredText} from "@/components/q3-colored-text.tsx";
 import {trackEvent} from "@/lib/analytics.ts";
 import {usePollingQuery} from "@/hooks/use-polling-query.ts";
+import {ScoreboardPeriodToggle} from "@/components/scoreboard-period-toggle.tsx";
 
 function formatKills(kills: number) {
     return new Intl.NumberFormat().format(kills);
 }
 
 export function ScoreboardPreview(props: { initialScoreboard: ScoreboardEntry[] }) {
+    const [period, setPeriod] = useState<ScoreboardPeriod>(DEFAULT_SCOREBOARD_PERIOD);
     const scoreboardQuery = usePollingQuery<ScoreboardEntry[]>({
-        queryFn: fetchScoreboard,
+        queryFn: () => fetchScoreboard(period),
         intervalMs: 30000,
-        initialData: props.initialScoreboard,
-        isPendingInitial: false,
+        initialData: period === DEFAULT_SCOREBOARD_PERIOD ? props.initialScoreboard : [],
+        isPendingInitial: period !== DEFAULT_SCOREBOARD_PERIOD,
+        queryKey: period,
     });
 
     const topFraggers = useMemo(() => {
@@ -32,26 +41,38 @@ export function ScoreboardPreview(props: { initialScoreboard: ScoreboardEntry[] 
             .slice(0, 5);
     }, [scoreboardQuery.data]);
 
+    function selectPeriod(nextPeriod: ScoreboardPeriod) {
+        if (nextPeriod === period) return;
+
+        trackEvent("scoreboard_period_change", {source: "scoreboard_preview", period: nextPeriod});
+        setPeriod(nextPeriod);
+    }
+
+    const periodLabel = SCOREBOARD_PERIOD_LABELS[period].toLowerCase();
+
     return (
         <section className="container mx-auto px-4 pb-8">
             <div className="mx-auto max-w-5xl">
                 <Card className="border-border/60 bg-card/60">
                     <CardContent className="p-4 md:p-6">
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                             <div>
                                 <h2 className="text-2xl font-bold">Top Fraggers</h2>
                                 <p className="text-xs text-muted-foreground md:text-sm">
-                                    Global all-time kill leaders.
+                                    Global {periodLabel} kill leaders.
                                 </p>
                             </div>
-                            <Button variant="outline" asChild>
-                                <Link
-                                    href="/scoreboard"
-                                    onClick={() => trackEvent("cta_click", {target: "view_scoreboard", source: "scoreboard_preview"})}
-                                >
-                                    View full scoreboard
-                                </Link>
-                            </Button>
+                            <div className="flex flex-col items-start gap-2 md:items-end">
+                                <ScoreboardPeriodToggle period={period} onChange={selectPeriod}/>
+                                <Button variant="outline" asChild>
+                                    <Link
+                                        href="/scoreboard"
+                                        onClick={() => trackEvent("cta_click", {target: "view_scoreboard", source: "scoreboard_preview"})}
+                                    >
+                                        View full scoreboard
+                                    </Link>
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="mt-4 border-t border-border/50">
@@ -69,13 +90,13 @@ export function ScoreboardPreview(props: { initialScoreboard: ScoreboardEntry[] 
 
                             {scoreboardQuery.isError && (
                                 <div className="px-2 py-6 text-sm text-muted-foreground">
-                                    Scoreboard is temporarily unavailable.
+                                    {SCOREBOARD_PERIOD_LABELS[period]} scoreboard is temporarily unavailable.
                                 </div>
                             )}
 
                             {!scoreboardQuery.isPending && !scoreboardQuery.isError && topFraggers.length === 0 && (
                                 <div className="px-2 py-6 text-sm text-muted-foreground">
-                                    No kill events recorded yet.
+                                    No {periodLabel} kill events recorded yet.
                                 </div>
                             )}
 
