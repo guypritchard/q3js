@@ -21,9 +21,9 @@ export function Hero() {
 
                 <Button variant="secondary" asChild>
                     <Link
-                        href="/guide"
+                        href="/scoreboard"
                     >
-                        Run your own server
+                        Global Scoreboard
                     </Link>
                 </Button>
             </div>

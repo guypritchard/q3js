@@ -53,6 +53,19 @@ export function Header(props: { initialServers: Q3ResolvedServer[] }) {
                     className="h-6 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
                 >
                     <Link
+                        href="/guide"
+                        onClick={() => trackEvent("navigation_click", {target: "guide", source: "header"})}
+                    >
+                        <span className="sm:hidden">Guide</span>
+                        <span className="hidden sm:inline">Run your server</span>
+                    </Link>
+                </Badge>
+                <Badge
+                    asChild
+                    variant="outline"
+                    className="h-6 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
+                >
+                    <Link
                         href="/scoreboard"
                         onClick={() => trackEvent("navigation_click", {target: "scoreboard", source: "header"})}
                     >
