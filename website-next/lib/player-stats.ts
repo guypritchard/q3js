@@ -26,6 +26,7 @@ export interface PlayerWeaponBreakdown {
 export interface PlayerStats {
     playerName: string;
     period: ScoreboardPeriod;
+    playtimeSeconds: number;
     rank: number | null;
     kills: number;
     deaths: number;

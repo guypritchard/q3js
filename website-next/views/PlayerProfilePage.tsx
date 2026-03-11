@@ -15,6 +15,17 @@ function formatRatio(value: number | null) {
     return value.toFixed(2);
 }
 
+function formatPlaytime(totalSeconds: number) {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    }
+
+    return `${minutes}m`;
+}
+
 function PlayerListCard(props: {
     title: string;
     emptyLabel: string;
@@ -168,10 +179,10 @@ export default function PlayerProfilePage(props: {
 
                     <Card className="border-border/60 bg-card/60">
                         <CardHeader className="gap-1">
-                            <CardTitle className="text-sm text-muted-foreground">Period</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">Playtime</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">{periodLabel}</div>
+                            <div className="text-3xl font-bold">{formatPlaytime(props.stats.playtimeSeconds)}</div>
                         </CardContent>
                     </Card>
                 </div>

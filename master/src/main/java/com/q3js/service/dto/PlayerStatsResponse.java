@@ -15,6 +15,7 @@ import java.util.List;
 public class PlayerStatsResponse {
     private String playerName;
     private ScoreboardPeriod period;
+    private long playtimeSeconds;
     private Integer rank;
     private int kills;
     private int deaths;

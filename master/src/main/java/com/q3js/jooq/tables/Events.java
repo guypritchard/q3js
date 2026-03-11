@@ -14,9 +14,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.jooq.Check;
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.PlainSQL;
@@ -30,6 +30,7 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -58,7 +59,7 @@ public class Events extends TableImpl<EventsRecord> {
     /**
      * The column <code>events.id</code>.
      */
-    public final TableField<EventsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<EventsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("nextval('events_id_seq1'::regclass)"), SQLDataType.BIGINT)), this, "");
 
     /**
      * The column <code>events.source_ip</code>.
@@ -73,27 +74,27 @@ public class Events extends TableImpl<EventsRecord> {
     /**
      * The column <code>events.killer_client_num</code>.
      */
-    public final TableField<EventsRecord, Integer> KILLER_CLIENT_NUM = createField(DSL.name("killer_client_num"), SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<EventsRecord, Integer> KILLER_CLIENT_NUM = createField(DSL.name("killer_client_num"), SQLDataType.INTEGER, this, "");
 
     /**
      * The column <code>events.killer_name</code>.
      */
-    public final TableField<EventsRecord, String> KILLER_NAME = createField(DSL.name("killer_name"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<EventsRecord, String> KILLER_NAME = createField(DSL.name("killer_name"), SQLDataType.CLOB, this, "");
 
     /**
      * The column <code>events.victim_client_num</code>.
      */
-    public final TableField<EventsRecord, Integer> VICTIM_CLIENT_NUM = createField(DSL.name("victim_client_num"), SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<EventsRecord, Integer> VICTIM_CLIENT_NUM = createField(DSL.name("victim_client_num"), SQLDataType.INTEGER, this, "");
 
     /**
      * The column <code>events.victim_name</code>.
      */
-    public final TableField<EventsRecord, String> VICTIM_NAME = createField(DSL.name("victim_name"), SQLDataType.CLOB.nullable(false), this, "");
+    public final TableField<EventsRecord, String> VICTIM_NAME = createField(DSL.name("victim_name"), SQLDataType.CLOB, this, "");
 
     /**
      * The column <code>events.means_of_death</code>.
      */
-    public final TableField<EventsRecord, Integer> MEANS_OF_DEATH = createField(DSL.name("means_of_death"), SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<EventsRecord, Integer> MEANS_OF_DEATH = createField(DSL.name("means_of_death"), SQLDataType.INTEGER, this, "");
 
     /**
      * The column <code>events.game_time</code>.
@@ -155,13 +156,16 @@ public class Events extends TableImpl<EventsRecord> {
     }
 
     @Override
-    public Identity<EventsRecord, Long> getIdentity() {
-        return (Identity<EventsRecord, Long>) super.getIdentity();
+    public UniqueKey<EventsRecord> getPrimaryKey() {
+        return Keys.EVENTS_PKEY1;
     }
 
     @Override
-    public UniqueKey<EventsRecord> getPrimaryKey() {
-        return Keys.EVENTS_PKEY;
+    public List<Check<EventsRecord>> getChecks() {
+        return Arrays.asList(
+            Internal.createCheck(this, DSL.name("chk_events_event_type"), "((event_type = ANY (ARRAY['kill'::text, 'join'::text, 'leave'::text, 'unknown'::text])))", true),
+            Internal.createCheck(this, DSL.name("chk_events_payload_shape"), "((((event_type = 'kill'::text) AND (killer_client_num IS NOT NULL) AND (killer_name IS NOT NULL) AND (victim_client_num IS NOT NULL) AND (victim_name IS NOT NULL) AND (means_of_death IS NOT NULL)) OR ((event_type = ANY (ARRAY['join'::text, 'leave'::text])) AND (killer_client_num IS NOT NULL) AND (killer_name IS NOT NULL) AND (victim_client_num IS NULL) AND (victim_name IS NULL) AND (means_of_death IS NULL)) OR (event_type = 'unknown'::text)))", true)
+        );
     }
 
     @Override

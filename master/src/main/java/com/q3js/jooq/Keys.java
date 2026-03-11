@@ -24,5 +24,5 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<EventsRecord> EVENTS_PKEY = Internal.createUniqueKey(Events.EVENTS, DSL.name("events_pkey"), new TableField[] { Events.EVENTS.ID }, true);
+    public static final UniqueKey<EventsRecord> EVENTS_PKEY1 = Internal.createUniqueKey(Events.EVENTS, DSL.name("events_pkey1"), new TableField[] { Events.EVENTS.ID }, true);
 }

@@ -13,11 +13,12 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CreateEventRequest {
     private String event;
+    private EventPlayer player;
     private EventPlayer killer;
     private EventPlayer victim;
-    private int meansOfDeath;
-    private int gameTime;
-    private int serverTime;
+    private Integer meansOfDeath;
+    private Integer gameTime;
+    private Integer serverTime;
     private String map;
 
     @AllArgsConstructor
@@ -26,7 +27,7 @@ public class CreateEventRequest {
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class EventPlayer {
-        private int clientNum;
+        private Integer clientNum;
         private String name;
     }
 }

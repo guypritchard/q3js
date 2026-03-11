@@ -1,6 +1,8 @@
 package com.q3js.service;
 
+import com.q3js.service.dto.CreateEventRequest;
 import com.q3js.service.dto.PlayerStatsResponse;
+import com.q3js.service.dto.PlayerWeaponBreakdownResponse;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Result;
@@ -13,9 +15,11 @@ import org.jooq.tools.jdbc.MockResult;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.q3js.jooq.Tables.EVENTS;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -23,12 +27,21 @@ class EventServiceTest {
     @Test
     void getPlayerStatsAggregatesProfileData() {
         DSLContext dsl = DSL.using(new MockConnection(new PlayerStatsMockProvider()), SQLDialect.POSTGRES);
-        EventService eventService = new EventService(dsl);
+        EventService eventService = new TestEventService(
+                dsl,
+                List.of(
+                        PlayerWeaponBreakdownResponse.builder().meansOfDeath(6).weaponName("Rocket Launcher").kills(5).build(),
+                        PlayerWeaponBreakdownResponse.builder().meansOfDeath(10).weaponName("Railgun").kills(4).build(),
+                        PlayerWeaponBreakdownResponse.builder().meansOfDeath(11).weaponName("Lightning Gun").kills(3).build()
+                ),
+                5400
+        );
 
         PlayerStatsResponse response = eventService.getPlayerStats("Ranger", ScoreboardPeriod.ALL_TIME);
 
         assertEquals("Ranger", response.getPlayerName());
         assertEquals(ScoreboardPeriod.ALL_TIME, response.getPeriod());
+        assertEquals(5400, response.getPlaytimeSeconds());
         assertEquals(2, response.getRank());
         assertEquals(12, response.getKills());
         assertEquals(5, response.getDeaths());
@@ -54,12 +67,13 @@ class EventServiceTest {
     @Test
     void getPlayerStatsReturnsNullRankAndPerfectKdWhenPlayerHasNoDeaths() {
         DSLContext dsl = DSL.using(new MockConnection(new EmptyPlayerStatsMockProvider()), SQLDialect.POSTGRES);
-        EventService eventService = new EventService(dsl);
+        EventService eventService = new TestEventService(dsl, List.of());
 
         PlayerStatsResponse response = eventService.getPlayerStats("Sarge", ScoreboardPeriod.DAILY);
 
         assertEquals("Sarge", response.getPlayerName());
         assertEquals(ScoreboardPeriod.DAILY, response.getPeriod());
+        assertEquals(0, response.getPlaytimeSeconds());
         assertNull(response.getRank());
         assertEquals(0, response.getKills());
         assertEquals(0, response.getDeaths());
@@ -69,6 +83,30 @@ class EventServiceTest {
         assertEquals(0, response.getWeaponBreakdown().size());
         assertEquals(0, response.getTopVictims().size());
         assertEquals(0, response.getTopNemeses().size());
+    }
+
+    @Test
+    void ingestEventSupportsActorOnlyEvents() {
+        RecordingInsertMockProvider provider = new RecordingInsertMockProvider();
+        DSLContext dsl = DSL.using(new MockConnection(provider), SQLDialect.POSTGRES);
+        EventService eventService = new EventService(dsl);
+
+        eventService.ingestEvent(CreateEventRequest.builder()
+                .event("join")
+                .player(CreateEventRequest.EventPlayer.builder()
+                        .clientNum(4)
+                        .name("Ranger")
+                        .build())
+                .gameTime(1234)
+                .serverTime(5678)
+                .map("q3dm17")
+                .build());
+
+        assertEquals(1, provider.executeCount.get());
+        assertArrayEquals(
+                new Object[]{"join", 4, "Ranger", null, null, null, 1234, 5678, "q3dm17"},
+                provider.bindings
+        );
     }
 
     private static final class PlayerStatsMockProvider implements MockDataProvider {
@@ -82,9 +120,8 @@ class EventServiceTest {
                 case 1 -> new MockResult[]{new MockResult(1, countResult(5))};
                 case 2 -> new MockResult[]{new MockResult(1, countResult(1))};
                 case 3 -> new MockResult[]{new MockResult(1, favoriteMapResult("q3dm17", 7))};
-                case 4 -> new MockResult[]{new MockResult(4, weaponBreakdownResult())};
-                case 5 -> new MockResult[]{new MockResult(2, versusVictimsResult())};
-                case 6 -> new MockResult[]{new MockResult(2, versusNemesesResult())};
+                case 4 -> new MockResult[]{new MockResult(2, versusVictimsResult())};
+                case 5 -> new MockResult[]{new MockResult(2, versusNemesesResult())};
                 default -> throw new SQLException("Unexpected query call " + callIndex.get());
             };
         }
@@ -111,16 +148,6 @@ class EventServiceTest {
             return result;
         }
 
-        private Result<?> weaponBreakdownResult() {
-            Field<Integer> killsField = DSL.field("kills", Integer.class);
-            var result = dsl.newResult(EVENTS.MEANS_OF_DEATH, killsField);
-            result.add(dsl.newRecord(EVENTS.MEANS_OF_DEATH, killsField).values(6, 4));
-            result.add(dsl.newRecord(EVENTS.MEANS_OF_DEATH, killsField).values(7, 1));
-            result.add(dsl.newRecord(EVENTS.MEANS_OF_DEATH, killsField).values(10, 4));
-            result.add(dsl.newRecord(EVENTS.MEANS_OF_DEATH, killsField).values(11, 3));
-            return result;
-        }
-
         private Result<?> versusNemesesResult() {
             Field<Integer> killsField = DSL.field("kills", Integer.class);
             var result = dsl.newResult(EVENTS.KILLER_NAME, killsField);
@@ -140,9 +167,8 @@ class EventServiceTest {
                 case 0 -> new MockResult[]{new MockResult(1, countResult(0))};
                 case 1 -> new MockResult[]{new MockResult(1, countResult(0))};
                 case 2 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.MAP_NAME, DSL.field("kills", Integer.class)))};
-                case 3 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.MEANS_OF_DEATH, DSL.field("kills", Integer.class)))};
-                case 4 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.VICTIM_NAME, DSL.field("kills", Integer.class)))};
-                case 5 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.KILLER_NAME, DSL.field("kills", Integer.class)))};
+                case 3 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.VICTIM_NAME, DSL.field("kills", Integer.class)))};
+                case 4 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.KILLER_NAME, DSL.field("kills", Integer.class)))};
                 default -> throw new SQLException("Unexpected query call " + callIndex.get());
             };
         }
@@ -156,6 +182,44 @@ class EventServiceTest {
 
         private Result<?> emptyResult(Field<?> first, Field<?> second) {
             return dsl.newResult(first, second);
+        }
+    }
+
+    private static final class RecordingInsertMockProvider implements MockDataProvider {
+        private final DSLContext dsl = DSL.using(SQLDialect.POSTGRES);
+        private Object[] bindings;
+        private final AtomicInteger executeCount = new AtomicInteger();
+
+        @Override
+        public MockResult[] execute(MockExecuteContext context) {
+            bindings = context.bindings();
+            executeCount.incrementAndGet();
+            return new MockResult[]{new MockResult(1, dsl.newResult(EVENTS.fields()))};
+        }
+    }
+
+    private static final class TestEventService extends EventService {
+        private final long playtimeSeconds;
+        private final List<PlayerWeaponBreakdownResponse> weaponBreakdown;
+
+        private TestEventService(DSLContext dsl, List<PlayerWeaponBreakdownResponse> weaponBreakdown) {
+            this(dsl, weaponBreakdown, 0);
+        }
+
+        private TestEventService(DSLContext dsl, List<PlayerWeaponBreakdownResponse> weaponBreakdown, long playtimeSeconds) {
+            super(dsl);
+            this.weaponBreakdown = weaponBreakdown;
+            this.playtimeSeconds = playtimeSeconds;
+        }
+
+        @Override
+        protected List<PlayerWeaponBreakdownResponse> fetchWeaponBreakdown(org.jooq.Condition condition) {
+            return weaponBreakdown;
+        }
+
+        @Override
+        protected long fetchPlaytimeSeconds(String playerName, ScoreboardPeriod period, java.time.OffsetDateTime now) {
+            return playtimeSeconds;
         }
     }
 }

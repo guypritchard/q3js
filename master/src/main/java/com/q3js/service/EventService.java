@@ -22,7 +22,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayDeque;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,15 +40,28 @@ public class EventService {
     @Transactional
     public void ingestEvent(CreateEventRequest createEventRequest) {
         var event = dsl.newRecord(EVENTS);
-        event.setEventType(createEventRequest.getEvent());
+        var eventType = createEventRequest.getEvent();
+
+        event.setEventType(eventType);
         event.setGameTime(createEventRequest.getGameTime());
-        event.setKillerClientNum(createEventRequest.getKiller().getClientNum());
-        event.setKillerName(createEventRequest.getKiller().getName());
-        event.setMeansOfDeath(createEventRequest.getMeansOfDeath());
-        event.setMapName(createEventRequest.getMap());
         event.setServerTime(createEventRequest.getServerTime());
-        event.setVictimClientNum(createEventRequest.getVictim().getClientNum());
-        event.setVictimName(createEventRequest.getVictim().getName());
+        event.setMapName(createEventRequest.getMap());
+
+        if ("join".equalsIgnoreCase(eventType) || "leave".equalsIgnoreCase(eventType)) {
+            var player = createEventRequest.getPlayer();
+            event.setKillerClientNum(player.getClientNum());
+            event.setKillerName(player.getName());
+            event.setVictimClientNum(null);
+            event.setVictimName(null);
+            event.setMeansOfDeath(null);
+        } else {
+            event.setKillerClientNum(createEventRequest.getKiller().getClientNum());
+            event.setKillerName(createEventRequest.getKiller().getName());
+            event.setVictimClientNum(createEventRequest.getVictim().getClientNum());
+            event.setVictimName(createEventRequest.getVictim().getName());
+            event.setMeansOfDeath(createEventRequest.getMeansOfDeath());
+        }
+
         event.store();
     }
 
@@ -124,6 +139,7 @@ public class EventService {
         return PlayerStatsResponse.builder()
                 .playerName(playerName)
                 .period(period)
+                .playtimeSeconds(fetchPlaytimeSeconds(playerName, period, now))
                 .rank(fetchRank(playerName, baseCondition, kills))
                 .kills(kills)
                 .deaths(deaths)
@@ -134,6 +150,60 @@ public class EventService {
                 .topVictims(fetchTopVictims(playerName, killedByPlayer))
                 .topNemeses(fetchTopNemeses(playerName, killedPlayer))
                 .build();
+    }
+
+    protected long fetchPlaytimeSeconds(String playerName, ScoreboardPeriod period, OffsetDateTime now) {
+        var periodStart = period.startsAt(now).orElse(null);
+        Map<String, Deque<OffsetDateTime>> openSessionsBySource = new HashMap<>();
+        long totalSeconds = 0;
+
+        var lifecycleEvents = dsl.select(EVENTS.SOURCE_IP, EVENTS.EVENT_TYPE, EVENTS.RECEIVED_AT)
+                .from(EVENTS)
+                .where(EVENTS.KILLER_NAME.eq(playerName))
+                .and(EVENTS.EVENT_TYPE.in("join", "leave"))
+                .orderBy(EVENTS.RECEIVED_AT.asc())
+                .fetch();
+
+        for (var lifecycleEvent : lifecycleEvents) {
+            String sourceIp = lifecycleEvent.get(EVENTS.SOURCE_IP);
+            String sourceKey = sourceIp != null ? sourceIp : "";
+            Deque<OffsetDateTime> openSessions = openSessionsBySource.computeIfAbsent(sourceKey, ignored -> new ArrayDeque<>());
+            OffsetDateTime receivedAt = lifecycleEvent.get(EVENTS.RECEIVED_AT);
+
+            if ("join".equalsIgnoreCase(lifecycleEvent.get(EVENTS.EVENT_TYPE))) {
+                openSessions.addLast(receivedAt);
+                continue;
+            }
+
+            OffsetDateTime joinedAt = openSessions.pollFirst();
+            if (joinedAt != null) {
+                totalSeconds += overlapSeconds(joinedAt, receivedAt, periodStart, now);
+            }
+        }
+
+        for (Deque<OffsetDateTime> openSessions : openSessionsBySource.values()) {
+            for (OffsetDateTime joinedAt : openSessions) {
+                totalSeconds += overlapSeconds(joinedAt, now, periodStart, now);
+            }
+        }
+
+        return totalSeconds;
+    }
+
+    private long overlapSeconds(
+            OffsetDateTime sessionStart,
+            OffsetDateTime sessionEnd,
+            OffsetDateTime periodStart,
+            OffsetDateTime periodEnd
+    ) {
+        OffsetDateTime overlapStart = periodStart != null && sessionStart.isBefore(periodStart) ? periodStart : sessionStart;
+        OffsetDateTime overlapEnd = sessionEnd.isAfter(periodEnd) ? periodEnd : sessionEnd;
+
+        if (!overlapEnd.isAfter(overlapStart)) {
+            return 0;
+        }
+
+        return java.time.Duration.between(overlapStart, overlapEnd).getSeconds();
     }
 
     private Condition killCondition(ScoreboardPeriod period, OffsetDateTime now) {
@@ -196,16 +266,17 @@ public class EventService {
                         .build());
     }
 
-    private List<PlayerWeaponBreakdownResponse> fetchWeaponBreakdown(Condition condition) {
+    protected List<PlayerWeaponBreakdownResponse> fetchWeaponBreakdown(Condition condition) {
+        Field<Integer> meansOfDeathField = DSL.field("means_of_death", Integer.class);
         Field<Integer> kills = DSL.count().as("kills");
         Map<Integer, Integer> killsByWeapon = new HashMap<>();
 
-        dsl.select(EVENTS.MEANS_OF_DEATH, kills)
+        dsl.select(meansOfDeathField, kills)
                 .from(EVENTS)
                 .where(condition)
-                .groupBy(EVENTS.MEANS_OF_DEATH)
+                .groupBy(meansOfDeathField)
                 .fetch(record -> {
-                    Integer meansOfDeath = record.get(EVENTS.MEANS_OF_DEATH);
+                    Integer meansOfDeath = record.get(meansOfDeathField);
                     if (meansOfDeath == null) {
                         return null;
                     }
