@@ -3,7 +3,6 @@ import {Hero} from "@/components/hero.tsx";
 import {ScoreboardPreview} from "@/components/scoreboard-preview.tsx";
 import {Suspense} from "react";
 import {getInitialScoreboard, getInitialServers} from "@/lib/initial-data";
-import ServerPickerSkeleton from "@/components/server-picker-skeleton";
 import {Card, CardContent} from "@/components/ui/card";
 import {JsonLd} from "@/components/seo/json-ld";
 import {absoluteUrl, siteConfig} from "@/lib/seo";
@@ -13,9 +12,8 @@ async function HomeScoreboardSection() {
     return <ScoreboardPreview initialScoreboard={initialScoreboard} initialPeriod="daily"/>;
 }
 
-async function HomeServerSection() {
-    const initialServers = await getInitialServers();
-    return <ServerPicker initialServers={initialServers}/>;
+function HomeServerSection(props: { initialServers: Awaited<ReturnType<typeof getInitialServers>> }) {
+    return <ServerPicker initialServers={props.initialServers}/>;
 }
 
 function ScoreboardPreviewSkeleton() {
@@ -72,17 +70,31 @@ const homeStructuredData = [
     },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+    const [initialServers, allTimeScoreboard] = await Promise.all([
+        getInitialServers(),
+        getInitialScoreboard("all-time"),
+    ]);
+    const currentPlayerCount = initialServers.reduce((sum, server) => sum + server.players, 0);
+    const totalKillCount = allTimeScoreboard.reduce((sum, entry) => sum + entry.kills, 0);
+    const firstServer = initialServers[0];
+    const quickplayHref = firstServer
+        ? `/game?host=${firstServer.host}&proxyPort=${firstServer.proxyPort}&name=Player`
+        : undefined;
+
     return (
         <main>
             <JsonLd data={homeStructuredData}/>
-            <Hero/>
+            <Hero
+                currentPlayerCount={currentPlayerCount}
+                serverCount={initialServers.length}
+                totalKillCount={totalKillCount}
+                quickplayHref={quickplayHref}
+            />
             <Suspense fallback={<ScoreboardPreviewSkeleton/>}>
                 <HomeScoreboardSection/>
             </Suspense>
-            <Suspense fallback={<ServerPickerSkeleton/>}>
-                <HomeServerSection/>
-            </Suspense>
+            <HomeServerSection initialServers={initialServers}/>
         </main>
     )
 }

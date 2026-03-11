@@ -19,6 +19,10 @@ import ServerSkeleton from "@/components/server-skeleton.tsx";
 const POLL_MS = 5000;
 const subscribe = () => () => {};
 
+function formatCount(count: number, singular: string, plural = `${singular}s`) {
+    return `${count} ${count === 1 ? singular : plural}`;
+}
+
 export function ServerPicker(props: { initialServers: Q3ResolvedServer[] }) {
     const [name, setName] = useLocalStorage("name", "");
     const [searchTerm, setSearchTerm] = useState("");
@@ -61,6 +65,14 @@ export function ServerPicker(props: { initialServers: Q3ResolvedServer[] }) {
         return next;
     }, [servers, searchTerm]);
 
+    const totalPlayerCount = useMemo(
+        () => servers.reduce((sum, server) => sum + server.players, 0),
+        [servers]
+    );
+    const filteredPlayerCount = useMemo(
+        () => filteredServers.reduce((sum, server) => sum + server.players, 0),
+        [filteredServers]
+    );
     const activeFilterCount = [searchTerm.trim().length > 0].filter(Boolean).length;
 
     function clearFilters() {
@@ -132,7 +144,16 @@ export function ServerPicker(props: { initialServers: Q3ResolvedServer[] }) {
 
                         <div className="flex flex-wrap items-center gap-2">
                             <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-                                <span>{filteredServers.length}/{servers.length} servers</span>
+                                <span>
+                                    {activeFilterCount > 0
+                                        ? `${filteredServers.length}/${servers.length} servers`
+                                        : formatCount(servers.length, "server")}
+                                </span>
+                                <span>
+                                    {activeFilterCount > 0
+                                        ? `${filteredPlayerCount}/${totalPlayerCount} players online`
+                                        : `${formatCount(totalPlayerCount, "player")} online`}
+                                </span>
                                 {activeFilterCount > 0 && (
                                     <Button variant="ghost" size="sm" onClick={clearFilters}>
                                         Clear filters
@@ -140,6 +161,7 @@ export function ServerPicker(props: { initialServers: Q3ResolvedServer[] }) {
                                 )}
                             </div>
                         </div>
+
                     </CardContent>
                 </Card>
 
