@@ -4,6 +4,10 @@ import {buildPageMetadata} from "@/lib/seo";
 import {fetchPlayerStats} from "@/lib/player-stats.ts";
 import {stripQ3Colors} from "@/lib/utils.ts";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 type PlayerProfileRouteProps = {
     params: Promise<{ name: string }>;
 };

@@ -35,13 +35,13 @@ class EventServiceTest {
         assertEquals(2.4, response.getKillDeathRatio());
         assertEquals("q3dm17", response.getFavoriteMap().getMapName());
         assertEquals(7, response.getFavoriteMap().getKills());
-        assertEquals(10, response.getFavoriteWeapon().getMeansOfDeath());
-        assertEquals("Railgun", response.getFavoriteWeapon().getWeaponName());
-        assertEquals(4, response.getFavoriteWeapon().getKills());
+        assertEquals(6, response.getFavoriteWeapon().getMeansOfDeath());
+        assertEquals("Rocket Launcher", response.getFavoriteWeapon().getWeaponName());
+        assertEquals(5, response.getFavoriteWeapon().getKills());
         assertEquals(3, response.getWeaponBreakdown().size());
-        assertEquals("Railgun", response.getWeaponBreakdown().getFirst().getWeaponName());
-        assertEquals(4, response.getWeaponBreakdown().getFirst().getKills());
-        assertEquals("Rocket", response.getWeaponBreakdown().get(1).getWeaponName());
+        assertEquals("Rocket Launcher", response.getWeaponBreakdown().getFirst().getWeaponName());
+        assertEquals(5, response.getWeaponBreakdown().getFirst().getKills());
+        assertEquals("Railgun", response.getWeaponBreakdown().get(1).getWeaponName());
         assertEquals(4, response.getWeaponBreakdown().get(1).getKills());
         assertEquals(2, response.getTopVictims().size());
         assertEquals("Slash", response.getTopVictims().getFirst().getPlayerName());
@@ -82,7 +82,7 @@ class EventServiceTest {
                 case 1 -> new MockResult[]{new MockResult(1, countResult(5))};
                 case 2 -> new MockResult[]{new MockResult(1, countResult(1))};
                 case 3 -> new MockResult[]{new MockResult(1, favoriteMapResult("q3dm17", 7))};
-                case 4 -> new MockResult[]{new MockResult(1, favoriteWeaponResult(10, 4))};
+                case 4 -> new MockResult[]{new MockResult(1, favoriteWeaponResult(6, 5))};
                 case 5 -> new MockResult[]{new MockResult(3, weaponBreakdownResult())};
                 case 6 -> new MockResult[]{new MockResult(2, versusVictimsResult())};
                 case 7 -> new MockResult[]{new MockResult(2, versusNemesesResult())};
@@ -106,8 +106,9 @@ class EventServiceTest {
 
         private Result<?> favoriteWeaponResult(int meansOfDeath, int kills) {
             Field<Integer> killsField = DSL.field("kills", Integer.class);
-            var result = dsl.newResult(EVENTS.MEANS_OF_DEATH, killsField);
-            result.add(dsl.newRecord(EVENTS.MEANS_OF_DEATH, killsField).values(meansOfDeath, kills));
+            Field<Integer> meansOfDeathField = DSL.field("means_of_death", Integer.class);
+            var result = dsl.newResult(meansOfDeathField, killsField);
+            result.add(dsl.newRecord(meansOfDeathField, killsField).values(meansOfDeath, kills));
             return result;
         }
 
@@ -121,10 +122,11 @@ class EventServiceTest {
 
         private Result<?> weaponBreakdownResult() {
             Field<Integer> killsField = DSL.field("kills", Integer.class);
-            var result = dsl.newResult(EVENTS.MEANS_OF_DEATH, killsField);
-            result.add(dsl.newRecord(EVENTS.MEANS_OF_DEATH, killsField).values(10, 4));
-            result.add(dsl.newRecord(EVENTS.MEANS_OF_DEATH, killsField).values(6, 4));
-            result.add(dsl.newRecord(EVENTS.MEANS_OF_DEATH, killsField).values(11, 3));
+            Field<Integer> meansOfDeathField = DSL.field("means_of_death", Integer.class);
+            var result = dsl.newResult(meansOfDeathField, killsField);
+            result.add(dsl.newRecord(meansOfDeathField, killsField).values(6, 5));
+            result.add(dsl.newRecord(meansOfDeathField, killsField).values(10, 4));
+            result.add(dsl.newRecord(meansOfDeathField, killsField).values(11, 3));
             return result;
         }
 
