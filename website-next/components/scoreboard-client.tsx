@@ -85,7 +85,7 @@ export function ScoreboardClient(props: {
                                     : `${scoreboard.length} players ranked`}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                                Showing {periodLabel.toLowerCase()} kills across reported servers.
+                                Showing {periodLabel.toLowerCase()} frags across reported servers.
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -133,7 +133,7 @@ export function ScoreboardClient(props: {
 
                 {!scoreboardQuery.isError && !scoreboardQuery.isPending && scoreboard.length === 0 && (
                     <div className="p-10 text-center">
-                        <p className="text-sm text-muted-foreground">No {periodLabel.toLowerCase()} kill events have been recorded yet.</p>
+                        <p className="text-sm text-muted-foreground">No {periodLabel.toLowerCase()} frag events have been recorded yet.</p>
                     </div>
                 )}
 
@@ -144,7 +144,7 @@ export function ScoreboardClient(props: {
                             <tr className="border-b border-border/60 text-muted-foreground">
                                 <th className="px-4 py-3 text-left font-semibold">Rank</th>
                                 <th className="px-4 py-3 text-left font-semibold">Player</th>
-                                <th className="px-4 py-3 text-right font-semibold">Kills</th>
+                                <th className="px-4 py-3 text-right font-semibold">Frags</th>
                             </tr>
                             </thead>
                             <tbody>

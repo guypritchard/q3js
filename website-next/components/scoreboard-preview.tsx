@@ -63,7 +63,7 @@ export function ScoreboardPreview(props: {
                             <div>
                                 <h2 className="text-2xl font-bold">Top Fraggers</h2>
                                 <p className="text-xs text-muted-foreground md:text-sm">
-                                    Global {periodLabel} kill leaders.
+                                    Global {periodLabel} frag leaders.
                                 </p>
                             </div>
                             <div className="flex flex-col items-start gap-2 md:items-end">
@@ -92,7 +92,7 @@ export function ScoreboardPreview(props: {
 
                             {!scoreboardQuery.isPending && !scoreboardQuery.isError && topFraggers.length === 0 && (
                                 <div className="px-2 py-6 text-sm text-muted-foreground">
-                                    No {periodLabel} kill events recorded yet.
+                                    No {periodLabel} frag events recorded yet.
                                 </div>
                             )}
 

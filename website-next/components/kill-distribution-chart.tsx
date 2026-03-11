@@ -73,21 +73,21 @@ export function KillDistributionChart(props: {
 
     return (
         <div className="border-b border-border/60 bg-card px-4 py-5">
-            <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-                    <div className="space-y-1">
-                        <h2 className="text-xl font-semibold tracking-tight">Kill Distribution</h2>
-                        <p className="text-sm text-muted-foreground">
-                            {props.bucketUnit === "hour" ? "Hourly" : "Daily"} kill totals for the {props.periodLabel.toLowerCase()} window.
-                        </p>
-                    </div>
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                        <div className="space-y-1">
+                            <h2 className="text-xl font-semibold tracking-tight">Frag Distribution</h2>
+                            <p className="text-sm text-muted-foreground">
+                                {props.bucketUnit === "hour" ? "Hourly" : "Daily"} frag totals for the {props.periodLabel.toLowerCase()} window.
+                            </p>
+                        </div>
 
                     {activePoint && (
                         <div className="rounded-lg border border-border/60 bg-background/70 px-3 py-2 text-right shadow-sm">
                             <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                                 Selected {props.bucketUnit}
                             </p>
-                            <p className="text-lg font-semibold tabular-nums">{formatKills(activePoint.kills)} kills</p>
+                            <p className="text-lg font-semibold tabular-nums">{formatKills(activePoint.kills)} frags</p>
                             <p className="text-xs text-muted-foreground">
                                 {formatLongDate(activePoint.bucketStart, props.bucketUnit)}
                             </p>
@@ -139,13 +139,13 @@ export function KillDistributionChart(props: {
 
                     {!props.isPending && props.isError && (
                         <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-                            Kill distribution is temporarily unavailable.
+                            Frag distribution is temporarily unavailable.
                         </div>
                     )}
 
                     {!props.isPending && !props.isError && props.data.length === 0 && (
                         <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-                            No {props.bucketUnit === "hour" ? "hourly" : "daily"} kill data has been recorded for this period yet.
+                            No {props.bucketUnit === "hour" ? "hourly" : "daily"} frag data has been recorded for this period yet.
                         </div>
                     )}
 

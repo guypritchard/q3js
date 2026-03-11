@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import {Button} from "@/components/ui/button.tsx";
-import {Skull, Users} from "lucide-react";
+import {Skull, Target, Users} from "lucide-react";
 import {useSyncExternalStore} from "react";
 import {useLocalStorage} from "@/hooks/use-local-storage.ts";
 import {createRandomPlayerName} from "@/lib/player-name-generator.ts";
 import {JoinServerButton} from "@/components/join-server-button.tsx";
 import type {Q3ResolvedServer} from "@/lib/q3.ts";
+import type {ScoreboardEntry} from "@/lib/scoreboard.ts";
+import {Q3ColoredText} from "@/components/q3-colored-text.tsx";
 
 const subscribe = () => () => {};
 
@@ -23,7 +25,8 @@ export function Hero(props: {
     currentPlayerCount: number;
     serverCount: number;
     totalKillCount: number;
-    firstServer: Q3ResolvedServer
+    topDailyPlayer: ScoreboardEntry | null;
+    firstServer?: Q3ResolvedServer;
 }) {
     const [name, setName] = useLocalStorage("name", "");
     const isHydrated = useSyncExternalStore(subscribe, () => true, () => false);
@@ -55,19 +58,25 @@ export function Hero(props: {
                     </p>
 
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                        <JoinServerButton
-                            server={props.firstServer}
-                            playerName={isHydrated ? name : ""}
-                            resolvePlayerName={resolvePlayerName}
-                            ctaLabel="Quick Play"
-                            className="min-w-32"
-                        />
+                        {props.firstServer ? (
+                            <JoinServerButton
+                                server={props.firstServer}
+                                playerName={isHydrated ? name : ""}
+                                resolvePlayerName={resolvePlayerName}
+                                ctaLabel="Quick Play"
+                                className="min-w-32"
+                            />
+                        ) : (
+                            <Button size="lg" className="min-w-32" asChild>
+                                <Link href="#server-browser">Quick Play</Link>
+                            </Button>
+                        )}
                         <Button variant="secondary" size="lg" className="min-w-32" asChild>
                             <Link href="/scoreboard">Scoreboard</Link>
                         </Button>
                     </div>
 
-                    <div className="mt-8 grid gap-3 text-left sm:grid-cols-2">
+                    <div className="mt-8 grid gap-3 text-left md:grid-cols-3">
                         <div className="border border-border/70 bg-card/40 px-4 py-4">
                             <div
                                 className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -85,8 +94,28 @@ export function Hero(props: {
                         <div className="border border-border/70 bg-card/40 px-4 py-4">
                             <div
                                 className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                                <Target className="h-4 w-4 text-primary"/>
+                                Most Frags Today
+                            </div>
+                            <div className="mt-2 text-xl font-bold leading-none text-foreground">
+                                {props.topDailyPlayer ? (
+                                    <Q3ColoredText text={props.topDailyPlayer.playerName}/>
+                                ) : (
+                                    "No frags yet"
+                                )}
+                            </div>
+                            <p className="mt-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                                {props.topDailyPlayer
+                                    ? `${formatNumber(props.topDailyPlayer.kills)} frags today`
+                                    : "Daily scoreboard is empty"}
+                            </p>
+                        </div>
+
+                        <div className="border border-border/70 bg-card/40 px-4 py-4">
+                            <div
+                                className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
                                 <Skull className="h-4 w-4 text-primary"/>
-                                Total Kills Ever
+                                Total Frags Ever
                             </div>
                             <div className="mt-2 text-2xl font-bold leading-none text-foreground">
                                 {formatNumber(props.totalKillCount)}
