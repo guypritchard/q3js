@@ -3,6 +3,7 @@ package com.q3js.controller;
 import com.q3js.service.EventService;
 import com.q3js.service.ScoreboardPeriod;
 import com.q3js.service.dto.CreateEventRequest;
+import com.q3js.service.dto.KillDistributionPointResponse;
 import com.q3js.service.dto.ScoreboardEntryResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.Consumes;
@@ -36,5 +37,11 @@ public class EventController {
     @Path("/scoreboard")
     public List<ScoreboardEntryResponse> getGlobalScoreboard(@QueryParam("period") String period) {
         return eventService.getGlobalScoreboard(ScoreboardPeriod.fromQueryParam(period));
+    }
+
+    @GET
+    @Path("/distribution")
+    public List<KillDistributionPointResponse> getKillDistribution(@QueryParam("period") String period) {
+        return eventService.getKillDistribution(ScoreboardPeriod.fromQueryParam(period));
     }
 }
