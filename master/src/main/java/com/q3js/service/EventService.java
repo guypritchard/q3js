@@ -194,15 +194,16 @@ public class EventService {
     }
 
     private PlayerFavoriteWeaponResponse fetchFavoriteWeapon(Condition condition) {
+        Field<Integer> normalizedMeansOfDeath = normalizedMeansOfDeathField();
         Field<Integer> kills = DSL.count().as("kills");
-        return dsl.select(EVENTS.MEANS_OF_DEATH, kills)
+        return dsl.select(normalizedMeansOfDeath, kills)
                 .from(EVENTS)
                 .where(condition)
-                .groupBy(EVENTS.MEANS_OF_DEATH)
-                .orderBy(kills.desc(), EVENTS.MEANS_OF_DEATH.asc())
+                .groupBy(normalizedMeansOfDeath)
+                .orderBy(kills.desc(), normalizedMeansOfDeath.asc())
                 .limit(1)
                 .fetchOne(record -> {
-                    Integer meansOfDeath = record.get(EVENTS.MEANS_OF_DEATH);
+                    Integer meansOfDeath = record.get(normalizedMeansOfDeath);
                     if (meansOfDeath == null) {
                         return null;
                     }
@@ -216,14 +217,15 @@ public class EventService {
     }
 
     private List<PlayerWeaponBreakdownResponse> fetchWeaponBreakdown(Condition condition) {
+        Field<Integer> normalizedMeansOfDeath = normalizedMeansOfDeathField();
         Field<Integer> kills = DSL.count().as("kills");
-        return dsl.select(EVENTS.MEANS_OF_DEATH, kills)
+        return dsl.select(normalizedMeansOfDeath, kills)
                 .from(EVENTS)
                 .where(condition)
-                .groupBy(EVENTS.MEANS_OF_DEATH)
-                .orderBy(kills.desc(), EVENTS.MEANS_OF_DEATH.asc())
+                .groupBy(normalizedMeansOfDeath)
+                .orderBy(kills.desc(), normalizedMeansOfDeath.asc())
                 .fetch(record -> {
-                    Integer meansOfDeath = record.get(EVENTS.MEANS_OF_DEATH);
+                    Integer meansOfDeath = record.get(normalizedMeansOfDeath);
                     if (meansOfDeath == null) {
                         return null;
                     }
@@ -237,6 +239,16 @@ public class EventService {
                 .stream()
                 .filter(item -> item != null)
                 .toList();
+    }
+
+    private Field<Integer> normalizedMeansOfDeathField() {
+        return DSL
+                .when(EVENTS.MEANS_OF_DEATH.eq(5), DSL.inline(4))
+                .when(EVENTS.MEANS_OF_DEATH.eq(7), DSL.inline(6))
+                .when(EVENTS.MEANS_OF_DEATH.eq(9), DSL.inline(8))
+                .when(EVENTS.MEANS_OF_DEATH.eq(13), DSL.inline(12))
+                .otherwise(EVENTS.MEANS_OF_DEATH)
+                .as("means_of_death");
     }
 
     private List<PlayerVersusStatResponse> fetchTopVictims(String playerName, Condition condition) {
@@ -287,16 +299,16 @@ public class EventService {
             case 1 -> "Shotgun";
             case 2 -> "Gauntlet";
             case 3 -> "Machinegun";
-            case 4 -> "Grenade";
-            case 5 -> "Grenade Splash";
-            case 6 -> "Rocket";
-            case 7 -> "Rocket Splash";
-            case 8 -> "Plasma";
-            case 9 -> "Plasma Splash";
+            case 4 -> "Grenade Launcher";
+            case 5 -> "Grenade Launcher";
+            case 6 -> "Rocket Launcher";
+            case 7 -> "Rocket Launcher";
+            case 8 -> "Plasma Gun";
+            case 9 -> "Plasma Gun";
             case 10 -> "Railgun";
             case 11 -> "Lightning Gun";
-            case 12 -> "BFG";
-            case 13 -> "BFG Splash";
+            case 12 -> "BFG10K";
+            case 13 -> "BFG10K";
             case 14 -> "Water";
             case 15 -> "Slime";
             case 16 -> "Lava";
