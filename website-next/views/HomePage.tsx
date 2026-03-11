@@ -75,12 +75,11 @@ export default async function HomePage() {
         getInitialServers(),
         getInitialScoreboard("all-time"),
     ]);
+
     const currentPlayerCount = initialServers.reduce((sum, server) => sum + server.players, 0);
     const totalKillCount = allTimeScoreboard.reduce((sum, entry) => sum + entry.kills, 0);
     const firstServer = initialServers[0];
-    const quickplayHref = firstServer
-        ? `/game?host=${firstServer.host}&proxyPort=${firstServer.proxyPort}&name=Player`
-        : undefined;
+
 
     return (
         <main>
@@ -89,7 +88,7 @@ export default async function HomePage() {
                 currentPlayerCount={currentPlayerCount}
                 serverCount={initialServers.length}
                 totalKillCount={totalKillCount}
-                quickplayHref={quickplayHref}
+                firstServer={firstServer}
             />
             <Suspense fallback={<ScoreboardPreviewSkeleton/>}>
                 <HomeScoreboardSection/>

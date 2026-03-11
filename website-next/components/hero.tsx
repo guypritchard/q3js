@@ -1,6 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import {Button} from "@/components/ui/button.tsx";
 import {Skull, Users} from "lucide-react";
+import {useSyncExternalStore} from "react";
+import {useLocalStorage} from "@/hooks/use-local-storage.ts";
+import {createRandomPlayerName} from "@/lib/player-name-generator.ts";
+import {JoinServerButton} from "@/components/join-server-button.tsx";
+import type {Q3ResolvedServer} from "@/lib/q3.ts";
+
+const subscribe = () => () => {};
 
 function formatCount(count: number, singular: string, plural = `${singular}s`) {
     return `${count} ${count === 1 ? singular : plural}`;
@@ -14,9 +23,20 @@ export function Hero(props: {
     currentPlayerCount: number;
     serverCount: number;
     totalKillCount: number;
-    quickplayHref?: string;
+    firstServer: Q3ResolvedServer
 }) {
-    const quickplayHref = props.quickplayHref ?? "#server-browser";
+    const [name, setName] = useLocalStorage("name", "");
+    const isHydrated = useSyncExternalStore(subscribe, () => true, () => false);
+
+    function resolvePlayerName() {
+        if (name.trim().length > 0) {
+            return name;
+        }
+
+        const generatedName = createRandomPlayerName();
+        setName(generatedName);
+        return generatedName;
+    }
 
     return (
         <section className="border-b border-border/60 bg-background">
@@ -35,9 +55,13 @@ export function Hero(props: {
                     </p>
 
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                        <Button size="lg" className="min-w-32" asChild>
-                            <Link href={quickplayHref}>Quick Play</Link>
-                        </Button>
+                        <JoinServerButton
+                            server={props.firstServer}
+                            playerName={isHydrated ? name : ""}
+                            resolvePlayerName={resolvePlayerName}
+                            ctaLabel="Quick Play"
+                            className="min-w-32"
+                        />
                         <Button variant="secondary" size="lg" className="min-w-32" asChild>
                             <Link href="/scoreboard">Scoreboard</Link>
                         </Button>
@@ -45,7 +69,8 @@ export function Hero(props: {
 
                     <div className="mt-8 grid gap-3 text-left sm:grid-cols-2">
                         <div className="border border-border/70 bg-card/40 px-4 py-4">
-                            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                            <div
+                                className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
                                 <Users className="h-4 w-4 text-primary"/>
                                 Players Online
                             </div>
@@ -58,7 +83,8 @@ export function Hero(props: {
                         </div>
 
                         <div className="border border-border/70 bg-card/40 px-4 py-4">
-                            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                            <div
+                                className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
                                 <Skull className="h-4 w-4 text-primary"/>
                                 Total Kills Ever
                             </div>

@@ -1,6 +1,12 @@
 import {type Dispatch, type SetStateAction, useCallback, useEffect, useState} from "react";
 
 type UseLocalStorageReturn<T> = [T, Dispatch<SetStateAction<T>>];
+const LOCAL_STORAGE_SYNC_EVENT = "q3js-local-storage-sync";
+
+type LocalStorageSyncDetail = {
+    key: string;
+    value: string | null;
+};
 
 function parseStoredValue<T>(raw: string, initialValue: T): T {
     if (typeof initialValue === "string") {
@@ -48,17 +54,10 @@ export function useLocalStorage<T>(key: string, initialValue: T): UseLocalStorag
         }
 
         try {
-            const storedValue = window.localStorage.getItem(key);
-
-            if (storedValue === null) {
+            if (window.localStorage.getItem(key) === null) {
                 window.localStorage.setItem(key, serializeValue(initialValue));
-                setValue(initialValue);
-                return;
             }
-
-            setValue(parseStoredValue(storedValue, initialValue));
         } catch {
-            setValue(initialValue);
         }
     }, [initialValue, key]);
 
@@ -72,7 +71,16 @@ export function useLocalStorage<T>(key: string, initialValue: T): UseLocalStorag
 
                 if (typeof window !== "undefined") {
                     try {
-                        window.localStorage.setItem(key, serializeValue(resolvedValue));
+                        const serializedValue = serializeValue(resolvedValue);
+                        window.localStorage.setItem(key, serializedValue);
+                        window.setTimeout(() => {
+                            window.dispatchEvent(new CustomEvent<LocalStorageSyncDetail>(LOCAL_STORAGE_SYNC_EVENT, {
+                                detail: {
+                                    key,
+                                    value: serializedValue,
+                                },
+                            }));
+                        }, 0);
                     } catch {
                     }
                 }
@@ -101,9 +109,25 @@ export function useLocalStorage<T>(key: string, initialValue: T): UseLocalStorag
             setValue(parseStoredValue(event.newValue, initialValue));
         };
 
+        const syncSameTabValue = (event: Event) => {
+            const customEvent = event as CustomEvent<LocalStorageSyncDetail>;
+            if (customEvent.detail.key !== key) {
+                return;
+            }
+
+            if (customEvent.detail.value === null) {
+                setValue(initialValue);
+                return;
+            }
+
+            setValue(parseStoredValue(customEvent.detail.value, initialValue));
+        };
+
         window.addEventListener("storage", syncValue);
+        window.addEventListener(LOCAL_STORAGE_SYNC_EVENT, syncSameTabValue);
         return () => {
             window.removeEventListener("storage", syncValue);
+            window.removeEventListener(LOCAL_STORAGE_SYNC_EVENT, syncSameTabValue);
         };
     }, [initialValue, key]);
 

@@ -11,16 +11,19 @@ export function JoinServerButton(props: {
     playerName: string;
     resolvePlayerName?: () => string;
     onJoin?: (server: Q3ResolvedServer) => void;
+    ctaLabel?: string;
+    className?: string;
 }) {
     const normalizedName = props.playerName;
     const gameUrl = `/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(normalizedName)}`;
     const isFull = props.server.players >= props.server.sv_maxclients;
+    const ctaLabel = props.ctaLabel ?? "Join now";
 
     if (isFull) {
         return (
             <Button
                 size="lg"
-                className="lg:w-auto w-full bg-primary text-primary-foreground font-bold"
+                className={`lg:w-auto w-full bg-primary text-primary-foreground font-bold ${props.className ?? ""}`.trim()}
                 disabled
             >
                 Server Full
@@ -32,7 +35,7 @@ export function JoinServerButton(props: {
         <Button
             asChild
             size="lg"
-            className="lg:w-auto w-full bg-primary text-primary-foreground font-bold"
+            className={`lg:w-auto w-full bg-primary text-primary-foreground font-bold ${props.className ?? ""}`.trim()}
         >
             <a
                 href={gameUrl}
@@ -55,7 +58,7 @@ export function JoinServerButton(props: {
                 {isFull
                     ? "Server Full"
                     : <>
-                        <Zap className="h-4 w-4 mr-2"/>Join now
+                        <Zap className="h-4 w-4 mr-2"/>{ctaLabel}
                     </>}
             </a>
         </Button>
