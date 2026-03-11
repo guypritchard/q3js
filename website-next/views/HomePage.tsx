@@ -9,8 +9,8 @@ import {JsonLd} from "@/components/seo/json-ld";
 import {absoluteUrl, siteConfig} from "@/lib/seo";
 
 async function HomeScoreboardSection() {
-    const initialScoreboard = await getInitialScoreboard();
-    return <ScoreboardPreview initialScoreboard={initialScoreboard}/>;
+    const initialScoreboard = await getInitialScoreboard("daily");
+    return <ScoreboardPreview initialScoreboard={initialScoreboard} initialPeriod="daily"/>;
 }
 
 async function HomeServerSection() {

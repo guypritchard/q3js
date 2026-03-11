@@ -21,13 +21,17 @@ function formatKills(kills: number) {
     return new Intl.NumberFormat().format(kills);
 }
 
-export function ScoreboardPreview(props: { initialScoreboard: ScoreboardEntry[] }) {
-    const [period, setPeriod] = useState<ScoreboardPeriod>(DEFAULT_SCOREBOARD_PERIOD);
+export function ScoreboardPreview(props: {
+    initialScoreboard: ScoreboardEntry[];
+    initialPeriod?: ScoreboardPeriod;
+}) {
+    const initialPeriod = props.initialPeriod ?? DEFAULT_SCOREBOARD_PERIOD;
+    const [period, setPeriod] = useState<ScoreboardPeriod>(initialPeriod);
     const scoreboardQuery = usePollingQuery<ScoreboardEntry[]>({
         queryFn: () => fetchScoreboard(period),
         intervalMs: 30000,
-        initialData: period === DEFAULT_SCOREBOARD_PERIOD ? props.initialScoreboard : [],
-        isPendingInitial: period !== DEFAULT_SCOREBOARD_PERIOD,
+        initialData: period === initialPeriod ? props.initialScoreboard : [],
+        isPendingInitial: period !== initialPeriod,
         queryKey: period,
     });
 
@@ -64,14 +68,6 @@ export function ScoreboardPreview(props: { initialScoreboard: ScoreboardEntry[] 
                             </div>
                             <div className="flex flex-col items-start gap-2 md:items-end">
                                 <ScoreboardPeriodToggle period={period} onChange={selectPeriod}/>
-                                <Button variant="outline" asChild>
-                                    <Link
-                                        href="/scoreboard"
-                                        onClick={() => trackEvent("cta_click", {target: "view_scoreboard", source: "scoreboard_preview"})}
-                                    >
-                                        View full scoreboard
-                                    </Link>
-                                </Button>
                             </div>
                         </div>
 
@@ -118,6 +114,17 @@ export function ScoreboardPreview(props: { initialScoreboard: ScoreboardEntry[] 
                                     ))}
                                 </div>
                             )}
+                        </div>
+
+                        <div className="mt-4 flex justify-start border-t border-border/50 pt-4 md:justify-end">
+                            <Button variant="outline" asChild>
+                                <Link
+                                    href="/scoreboard"
+                                    onClick={() => trackEvent("cta_click", {target: "view_scoreboard", source: "scoreboard_preview"})}
+                                >
+                                    View full scoreboard
+                                </Link>
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>
