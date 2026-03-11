@@ -61,7 +61,8 @@ export function ScoreboardPreview(props: {
                     <CardContent className="p-4 md:p-6">
                         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                             <div>
-                                <h2 className="text-2xl font-bold">Top Fraggers</h2>
+                                <h2 className="text-2xl font-bold">Top Fraggers <span
+                                    className="text-sm font-normal text-muted-foreground">(click to see profile)</span></h2>
                                 <p className="text-xs text-muted-foreground md:text-sm">
                                     Global {periodLabel} frag leaders.
                                 </p>
@@ -104,9 +105,12 @@ export function ScoreboardPreview(props: {
                                             className="grid grid-cols-[56px_1fr_100px] items-center gap-3 px-2 py-3 text-sm"
                                         >
                                             <span className="text-muted-foreground">#{index + 1}</span>
-                                            <span className="font-semibold truncate">
+                                            <Link
+                                                href={`/players/${encodeURIComponent(entry.playerName)}`}
+                                                className="font-semibold truncate hover:text-primary transition-colors"
+                                            >
                                                 <Q3ColoredText text={entry.playerName}/>
-                                            </span>
+                                            </Link>
                                             <span className="text-right tabular-nums">
                                                 {formatKills(entry.kills)}
                                             </span>
