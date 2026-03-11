@@ -190,14 +190,13 @@ export function KillDistributionChart(props: {
                                             >
                                                 <div className="relative flex h-48 w-full items-end overflow-hidden rounded-sm border border-border/60 bg-background/65 transition-colors group-hover:border-chart-2/70 group-focus-visible:border-chart-2/70">
                                                     <span
-                                                        className="block w-full transition-[height,opacity,transform] duration-300"
+                                                        className="block h-full w-full transition-opacity duration-150"
                                                         style={{
                                                             backgroundColor: isActive
                                                                 ? "var(--color-chart-2)"
                                                                 : "var(--color-chart-1)",
                                                             height: `${height}%`,
                                                             opacity: isActive ? 1 : 0.58,
-                                                            transform: isActive ? "translateY(0)" : "translateY(2px)",
                                                         }}
                                                     />
                                                 </div>
