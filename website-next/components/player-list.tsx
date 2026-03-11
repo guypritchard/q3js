@@ -1,6 +1,8 @@
+import Link from "next/link";
 import type {User} from "@/lib/q3.ts";
 import {Users} from "lucide-react";
 import {ScrollArea} from "@/components/ui/scroll-area.tsx";
+import {Q3ColoredText} from "@/components/q3-colored-text.tsx";
 
 export function PlayerList(props: { users: User[] }) {
     return <div className="mt-4 border-t border-border/50 pt-4">
@@ -34,7 +36,12 @@ export function PlayerList(props: { users: User[] }) {
                         >
                             <span className="tabular-nums">{u.score}</span>
                             <span className="tabular-nums">{u.ping}</span>
-                            <span className="truncate">{u.name}</span>
+                            <Link
+                                href={`/players/${encodeURIComponent(u.name)}`}
+                                className="truncate hover:text-primary transition-colors"
+                            >
+                                <Q3ColoredText text={u.name}/>
+                            </Link>
                         </div>
                     ))}
                 </ScrollArea>
