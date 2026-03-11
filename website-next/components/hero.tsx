@@ -99,7 +99,12 @@ export function Hero(props: {
                             </div>
                             <div className="mt-2 text-xl font-bold leading-none text-foreground">
                                 {props.topDailyPlayer ? (
-                                    <Q3ColoredText text={props.topDailyPlayer.playerName}/>
+                                    <Link
+                                        href={`/players/${encodeURIComponent(props.topDailyPlayer.playerName)}`}
+                                        className="hover:text-primary transition-colors"
+                                    >
+                                        <Q3ColoredText text={props.topDailyPlayer.playerName}/>
+                                    </Link>
                                 ) : (
                                     "No frags yet"
                                 )}

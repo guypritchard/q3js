@@ -3,6 +3,7 @@
 import {Card, CardContent} from "@/components/ui/card.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {Badge} from "@/components/ui/badge.tsx";
+import Link from "next/link";
 import {
     DEFAULT_SCOREBOARD_PERIOD,
     fetchKillDistribution,
@@ -155,7 +156,12 @@ export function ScoreboardClient(props: {
                                     <tr key={`${entry.playerName}-${rank}`} className="border-b border-border/40 last:border-b-0">
                                         <td className="px-4 py-3">{rankBadge(rank)}</td>
                                         <td className="px-4 py-3 font-semibold">
-                                            <Q3ColoredText text={entry.playerName}/>
+                                            <Link
+                                                href={`/players/${encodeURIComponent(entry.playerName)}`}
+                                                className="inline-flex hover:text-primary transition-colors"
+                                            >
+                                                <Q3ColoredText text={entry.playerName}/>
+                                            </Link>
                                         </td>
                                         <td className="px-4 py-3 text-right tabular-nums">
                                             {formatKills(entry.kills)}

@@ -1,7 +1,12 @@
 package com.q3js.service;
 
-import com.q3js.service.dto.KillDistributionPointResponse;
 import com.q3js.service.dto.CreateEventRequest;
+import com.q3js.service.dto.KillDistributionPointResponse;
+import com.q3js.service.dto.PlayerFavoriteMapResponse;
+import com.q3js.service.dto.PlayerFavoriteWeaponResponse;
+import com.q3js.service.dto.PlayerStatsResponse;
+import com.q3js.service.dto.PlayerVersusStatResponse;
+import com.q3js.service.dto.PlayerWeaponBreakdownResponse;
 import com.q3js.service.dto.ScoreboardEntryResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -9,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.Table;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.DSL;
 
@@ -104,6 +110,29 @@ public class EventService {
                 });
     }
 
+    public PlayerStatsResponse getPlayerStats(String playerName, ScoreboardPeriod period) {
+        OffsetDateTime now = OffsetDateTime.now();
+        Condition baseCondition = killCondition(period, now);
+        Condition killedByPlayer = baseCondition.and(EVENTS.KILLER_NAME.eq(playerName));
+        Condition killedPlayer = baseCondition.and(EVENTS.VICTIM_NAME.eq(playerName));
+        int kills = countEvents(killedByPlayer);
+        int deaths = countEvents(killedPlayer);
+
+        return PlayerStatsResponse.builder()
+                .playerName(playerName)
+                .period(period)
+                .rank(fetchRank(playerName, baseCondition, kills))
+                .kills(kills)
+                .deaths(deaths)
+                .killDeathRatio(calculateKillDeathRatio(kills, deaths))
+                .favoriteMap(fetchFavoriteMap(killedByPlayer))
+                .favoriteWeapon(fetchFavoriteWeapon(killedByPlayer))
+                .weaponBreakdown(fetchWeaponBreakdown(killedByPlayer))
+                .topVictims(fetchTopVictims(playerName, killedByPlayer))
+                .topNemeses(fetchTopNemeses(playerName, killedPlayer))
+                .build();
+    }
+
     private Condition killCondition(ScoreboardPeriod period, OffsetDateTime now) {
         Condition condition = EVENTS.EVENT_TYPE.equalIgnoreCase("kill");
         var periodStart = period.startsAt(now);
@@ -113,5 +142,177 @@ public class EventService {
         }
 
         return condition;
+    }
+
+    private int countEvents(Condition condition) {
+        Integer count = dsl.selectCount()
+                .from(EVENTS)
+                .where(condition)
+                .fetchOne(0, int.class);
+        return count != null ? count : 0;
+    }
+
+    private Integer fetchRank(String playerName, Condition condition, int kills) {
+        if (kills == 0) {
+            return null;
+        }
+
+        Field<Integer> groupedKills = DSL.count().as("kills");
+        Table<?> leaderboard = dsl.select(
+                        EVENTS.KILLER_NAME.as("player_name"),
+                        groupedKills
+                )
+                .from(EVENTS)
+                .where(condition)
+                .groupBy(EVENTS.KILLER_NAME)
+                .asTable("leaderboard");
+        Field<String> leaderboardPlayer = DSL.field(DSL.name("leaderboard", "player_name"), String.class);
+        Field<Integer> leaderboardKills = DSL.field(DSL.name("leaderboard", "kills"), Integer.class);
+        Integer playersAhead = dsl.selectCount()
+                .from(leaderboard)
+                .where(
+                        leaderboardKills.gt(kills)
+                                .or(leaderboardKills.eq(kills).and(leaderboardPlayer.lt(playerName)))
+                )
+                .fetchOne(0, int.class);
+
+        return (playersAhead != null ? playersAhead : 0) + 1;
+    }
+
+    private PlayerFavoriteMapResponse fetchFavoriteMap(Condition condition) {
+        Field<Integer> kills = DSL.count().as("kills");
+        return dsl.select(EVENTS.MAP_NAME, kills)
+                .from(EVENTS)
+                .where(condition)
+                .groupBy(EVENTS.MAP_NAME)
+                .orderBy(kills.desc(), EVENTS.MAP_NAME.asc())
+                .limit(1)
+                .fetchOne(record -> PlayerFavoriteMapResponse.builder()
+                        .mapName(record.get(EVENTS.MAP_NAME))
+                        .kills(valueOrZero(record.get(kills)))
+                        .build());
+    }
+
+    private PlayerFavoriteWeaponResponse fetchFavoriteWeapon(Condition condition) {
+        Field<Integer> kills = DSL.count().as("kills");
+        return dsl.select(EVENTS.MEANS_OF_DEATH, kills)
+                .from(EVENTS)
+                .where(condition)
+                .groupBy(EVENTS.MEANS_OF_DEATH)
+                .orderBy(kills.desc(), EVENTS.MEANS_OF_DEATH.asc())
+                .limit(1)
+                .fetchOne(record -> {
+                    Integer meansOfDeath = record.get(EVENTS.MEANS_OF_DEATH);
+                    if (meansOfDeath == null) {
+                        return null;
+                    }
+
+                    return PlayerFavoriteWeaponResponse.builder()
+                            .meansOfDeath(meansOfDeath)
+                            .weaponName(meansOfDeathName(meansOfDeath))
+                            .kills(valueOrZero(record.get(kills)))
+                            .build();
+                });
+    }
+
+    private List<PlayerWeaponBreakdownResponse> fetchWeaponBreakdown(Condition condition) {
+        Field<Integer> kills = DSL.count().as("kills");
+        return dsl.select(EVENTS.MEANS_OF_DEATH, kills)
+                .from(EVENTS)
+                .where(condition)
+                .groupBy(EVENTS.MEANS_OF_DEATH)
+                .orderBy(kills.desc(), EVENTS.MEANS_OF_DEATH.asc())
+                .fetch(record -> {
+                    Integer meansOfDeath = record.get(EVENTS.MEANS_OF_DEATH);
+                    if (meansOfDeath == null) {
+                        return null;
+                    }
+
+                    return PlayerWeaponBreakdownResponse.builder()
+                            .meansOfDeath(meansOfDeath)
+                            .weaponName(meansOfDeathName(meansOfDeath))
+                            .kills(valueOrZero(record.get(kills)))
+                            .build();
+                })
+                .stream()
+                .filter(item -> item != null)
+                .toList();
+    }
+
+    private List<PlayerVersusStatResponse> fetchTopVictims(String playerName, Condition condition) {
+        Field<Integer> kills = DSL.count().as("kills");
+        return dsl.select(EVENTS.VICTIM_NAME, kills)
+                .from(EVENTS)
+                .where(condition.and(EVENTS.VICTIM_NAME.ne(playerName)))
+                .groupBy(EVENTS.VICTIM_NAME)
+                .orderBy(kills.desc(), EVENTS.VICTIM_NAME.asc())
+                .limit(5)
+                .fetch(record -> PlayerVersusStatResponse.builder()
+                        .playerName(record.get(EVENTS.VICTIM_NAME))
+                        .kills(valueOrZero(record.get(kills)))
+                        .build());
+    }
+
+    private List<PlayerVersusStatResponse> fetchTopNemeses(String playerName, Condition condition) {
+        Field<Integer> kills = DSL.count().as("kills");
+        return dsl.select(EVENTS.KILLER_NAME, kills)
+                .from(EVENTS)
+                .where(condition.and(EVENTS.KILLER_NAME.ne(playerName)))
+                .groupBy(EVENTS.KILLER_NAME)
+                .orderBy(kills.desc(), EVENTS.KILLER_NAME.asc())
+                .limit(5)
+                .fetch(record -> PlayerVersusStatResponse.builder()
+                        .playerName(record.get(EVENTS.KILLER_NAME))
+                        .kills(valueOrZero(record.get(kills)))
+                        .build());
+    }
+
+    private Double calculateKillDeathRatio(int kills, int deaths) {
+        if (kills == 0 && deaths == 0) {
+            return 0.0;
+        }
+        if (deaths == 0) {
+            return null;
+        }
+
+        return Math.round(((double) kills / deaths) * 100.0) / 100.0;
+    }
+
+    private int valueOrZero(Integer value) {
+        return value != null ? value : 0;
+    }
+
+    private String meansOfDeathName(int meansOfDeath) {
+        return switch (meansOfDeath) {
+            case 1 -> "Shotgun";
+            case 2 -> "Gauntlet";
+            case 3 -> "Machinegun";
+            case 4 -> "Grenade";
+            case 5 -> "Grenade Splash";
+            case 6 -> "Rocket";
+            case 7 -> "Rocket Splash";
+            case 8 -> "Plasma";
+            case 9 -> "Plasma Splash";
+            case 10 -> "Railgun";
+            case 11 -> "Lightning Gun";
+            case 12 -> "BFG";
+            case 13 -> "BFG Splash";
+            case 14 -> "Water";
+            case 15 -> "Slime";
+            case 16 -> "Lava";
+            case 17 -> "Crush";
+            case 18 -> "Telefrag";
+            case 19 -> "Falling";
+            case 20 -> "Suicide";
+            case 21 -> "Target Laser";
+            case 22 -> "Trigger Hurt";
+            case 23 -> "Nailgun";
+            case 24 -> "Chaingun";
+            case 25 -> "Proximity Mine";
+            case 26 -> "Kamikaze";
+            case 27 -> "Juiced";
+            case 28 -> "Grapple";
+            default -> "Unknown (" + meansOfDeath + ")";
+        };
     }
 }
