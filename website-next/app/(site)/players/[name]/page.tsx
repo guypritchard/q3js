@@ -8,9 +8,17 @@ type PlayerProfileRouteProps = {
     params: Promise<{ name: string }>;
 };
 
+function decodePlayerName(value: string) {
+    try {
+        return decodeURIComponent(value);
+    } catch {
+        return value;
+    }
+}
+
 export async function generateMetadata(props: PlayerProfileRouteProps): Promise<Metadata> {
     const params = await props.params;
-    const playerName = params.name;
+    const playerName = decodePlayerName(params.name);
     const plainName = stripQ3Colors(playerName);
 
     return buildPageMetadata({
@@ -28,7 +36,7 @@ export async function generateMetadata(props: PlayerProfileRouteProps): Promise<
 
 export default async function PlayerProfileRoute(props: PlayerProfileRouteProps) {
     const params = await props.params;
-    const playerName = params.name;
+    const playerName = decodePlayerName(params.name);
     const stats = await fetchPlayerStats(playerName);
 
     return <PlayerProfilePage playerName={playerName} period="all-time" stats={stats}/>;
