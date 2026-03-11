@@ -1,5 +1,5 @@
 import {ScoreboardClient} from "@/components/scoreboard-client";
-import type {ScoreboardEntry} from "@/lib/scoreboard";
+import type {KillDistributionPoint, ScoreboardEntry} from "@/lib/scoreboard";
 import {JsonLd} from "@/components/seo/json-ld";
 import {absoluteUrl, siteConfig} from "@/lib/seo";
 
@@ -17,7 +17,10 @@ const scoreboardStructuredData = {
     inLanguage: "en-US",
 };
 
-export default function ScoreboardPage(props: { initialScoreboard: ScoreboardEntry[] }) {
+export default function ScoreboardPage(props: {
+    initialKillDistribution: KillDistributionPoint[];
+    initialScoreboard: ScoreboardEntry[];
+}) {
     return (
         <main className="container mx-auto px-4 py-12 md:py-16">
             <JsonLd data={scoreboardStructuredData}/>
@@ -29,7 +32,10 @@ export default function ScoreboardPage(props: { initialScoreboard: ScoreboardEnt
                     </p>
                 </div>
 
-                <ScoreboardClient initialScoreboard={props.initialScoreboard}/>
+                <ScoreboardClient
+                    initialKillDistribution={props.initialKillDistribution}
+                    initialScoreboard={props.initialScoreboard}
+                />
             </section>
         </main>
     );

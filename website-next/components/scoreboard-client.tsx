@@ -5,7 +5,9 @@ import {Button} from "@/components/ui/button.tsx";
 import {Badge} from "@/components/ui/badge.tsx";
 import {
     DEFAULT_SCOREBOARD_PERIOD,
+    fetchKillDistribution,
     fetchScoreboard,
+    type KillDistributionPoint,
     SCOREBOARD_PERIOD_LABELS,
     type ScoreboardEntry,
     type ScoreboardPeriod,
@@ -16,6 +18,7 @@ import {Q3ColoredText} from "@/components/q3-colored-text.tsx";
 import {trackEvent} from "@/lib/analytics.ts";
 import {usePollingQuery} from "@/hooks/use-polling-query.ts";
 import {ScoreboardPeriodToggle} from "@/components/scoreboard-period-toggle.tsx";
+import {KillDistributionChart} from "@/components/kill-distribution-chart.tsx";
 
 function rankBadge(rank: number) {
     if (rank === 1) return <Badge className="min-w-10 justify-center bg-primary text-primary-foreground">#1</Badge>;
@@ -28,14 +31,24 @@ function formatKills(kills: number) {
     return new Intl.NumberFormat().format(kills);
 }
 
-export function ScoreboardClient(props: { initialScoreboard: ScoreboardEntry[] }) {
+export function ScoreboardClient(props: {
+    initialKillDistribution: KillDistributionPoint[];
+    initialScoreboard: ScoreboardEntry[];
+}) {
     const [period, setPeriod] = useState<ScoreboardPeriod>(DEFAULT_SCOREBOARD_PERIOD);
     const scoreboardQuery = usePollingQuery<ScoreboardEntry[]>({
         queryFn: () => fetchScoreboard(period),
         intervalMs: 30000,
         initialData: period === DEFAULT_SCOREBOARD_PERIOD ? props.initialScoreboard : [],
         isPendingInitial: period !== DEFAULT_SCOREBOARD_PERIOD,
-        queryKey: period,
+        queryKey: `scoreboard:${period}`,
+    });
+    const distributionQuery = usePollingQuery<KillDistributionPoint[]>({
+        queryFn: () => fetchKillDistribution(period),
+        intervalMs: 30000,
+        initialData: period === DEFAULT_SCOREBOARD_PERIOD ? props.initialKillDistribution : [],
+        isPendingInitial: period !== DEFAULT_SCOREBOARD_PERIOD,
+        queryKey: `distribution:${period}`,
     });
 
     const scoreboard = useMemo(() => {
@@ -48,7 +61,7 @@ export function ScoreboardClient(props: { initialScoreboard: ScoreboardEntry[] }
 
     function refreshScoreboard(source: "refresh_button" | "error_retry") {
         trackEvent("scoreboard_refresh_click", {source, period});
-        void scoreboardQuery.refetch();
+        void Promise.all([scoreboardQuery.refetch(), distributionQuery.refetch()]);
     }
 
     function selectPeriod(nextPeriod: ScoreboardPeriod) {
@@ -88,6 +101,14 @@ export function ScoreboardClient(props: { initialScoreboard: ScoreboardEntry[] }
                         </div>
                     </div>
                 </div>
+
+                <KillDistributionChart
+                    bucketUnit={period === "daily" ? "hour" : "day"}
+                    data={distributionQuery.data ?? []}
+                    isError={distributionQuery.isError}
+                    isPending={distributionQuery.isPending}
+                    periodLabel={periodLabel}
+                />
 
                 {scoreboardQuery.isError && (
                     <div className="p-6 text-center space-y-3">

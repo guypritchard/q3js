@@ -1,7 +1,8 @@
 import ScoreboardPage from "@/views/ScoreboardPage";
-import {getInitialScoreboard} from "@/lib/initial-data";
+import {getInitialKillDistribution, getInitialScoreboard} from "@/lib/initial-data";
 
 export async function ScoreboardPageContent() {
     const initialScoreboard = await getInitialScoreboard();
-    return <ScoreboardPage initialScoreboard={initialScoreboard}/>;
+    const initialKillDistribution = await getInitialKillDistribution();
+    return <ScoreboardPage initialScoreboard={initialScoreboard} initialKillDistribution={initialKillDistribution}/>;
 }

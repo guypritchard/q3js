@@ -16,6 +16,11 @@ export interface ScoreboardEntry {
     kills: number;
 }
 
+export interface KillDistributionPoint {
+    bucketStart: string;
+    kills: number;
+}
+
 export async function fetchScoreboard(period: ScoreboardPeriod = DEFAULT_SCOREBOARD_PERIOD) {
     const url = new URL("/api/events/scoreboard", env.NEXT_PUBLIC_MASTER_SERVER_URL);
     url.searchParams.set("period", period);
@@ -29,4 +34,19 @@ export async function fetchScoreboard(period: ScoreboardPeriod = DEFAULT_SCOREBO
     }
 
     return response.json() as Promise<ScoreboardEntry[]>;
+}
+
+export async function fetchKillDistribution(period: ScoreboardPeriod = DEFAULT_SCOREBOARD_PERIOD) {
+    const url = new URL("/api/events/distribution", env.NEXT_PUBLIC_MASTER_SERVER_URL);
+    url.searchParams.set("period", period);
+
+    const response = await fetch(url, {
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to load kill distribution (${response.status})`);
+    }
+
+    return response.json() as Promise<KillDistributionPoint[]>;
 }
