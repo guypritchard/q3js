@@ -82,10 +82,9 @@ class EventServiceTest {
                 case 1 -> new MockResult[]{new MockResult(1, countResult(5))};
                 case 2 -> new MockResult[]{new MockResult(1, countResult(1))};
                 case 3 -> new MockResult[]{new MockResult(1, favoriteMapResult("q3dm17", 7))};
-                case 4 -> new MockResult[]{new MockResult(1, favoriteWeaponResult(6, 5))};
-                case 5 -> new MockResult[]{new MockResult(3, weaponBreakdownResult())};
-                case 6 -> new MockResult[]{new MockResult(2, versusVictimsResult())};
-                case 7 -> new MockResult[]{new MockResult(2, versusNemesesResult())};
+                case 4 -> new MockResult[]{new MockResult(4, weaponBreakdownResult())};
+                case 5 -> new MockResult[]{new MockResult(2, versusVictimsResult())};
+                case 6 -> new MockResult[]{new MockResult(2, versusNemesesResult())};
                 default -> throw new SQLException("Unexpected query call " + callIndex.get());
             };
         }
@@ -104,14 +103,6 @@ class EventServiceTest {
             return result;
         }
 
-        private Result<?> favoriteWeaponResult(int meansOfDeath, int kills) {
-            Field<Integer> killsField = DSL.field("kills", Integer.class);
-            Field<Integer> meansOfDeathField = DSL.field("means_of_death", Integer.class);
-            var result = dsl.newResult(meansOfDeathField, killsField);
-            result.add(dsl.newRecord(meansOfDeathField, killsField).values(meansOfDeath, kills));
-            return result;
-        }
-
         private Result<?> versusVictimsResult() {
             Field<Integer> killsField = DSL.field("kills", Integer.class);
             var result = dsl.newResult(EVENTS.VICTIM_NAME, killsField);
@@ -122,11 +113,11 @@ class EventServiceTest {
 
         private Result<?> weaponBreakdownResult() {
             Field<Integer> killsField = DSL.field("kills", Integer.class);
-            Field<Integer> meansOfDeathField = DSL.field("means_of_death", Integer.class);
-            var result = dsl.newResult(meansOfDeathField, killsField);
-            result.add(dsl.newRecord(meansOfDeathField, killsField).values(6, 5));
-            result.add(dsl.newRecord(meansOfDeathField, killsField).values(10, 4));
-            result.add(dsl.newRecord(meansOfDeathField, killsField).values(11, 3));
+            var result = dsl.newResult(EVENTS.MEANS_OF_DEATH, killsField);
+            result.add(dsl.newRecord(EVENTS.MEANS_OF_DEATH, killsField).values(6, 4));
+            result.add(dsl.newRecord(EVENTS.MEANS_OF_DEATH, killsField).values(7, 1));
+            result.add(dsl.newRecord(EVENTS.MEANS_OF_DEATH, killsField).values(10, 4));
+            result.add(dsl.newRecord(EVENTS.MEANS_OF_DEATH, killsField).values(11, 3));
             return result;
         }
 
@@ -150,9 +141,8 @@ class EventServiceTest {
                 case 1 -> new MockResult[]{new MockResult(1, countResult(0))};
                 case 2 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.MAP_NAME, DSL.field("kills", Integer.class)))};
                 case 3 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.MEANS_OF_DEATH, DSL.field("kills", Integer.class)))};
-                case 4 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.MEANS_OF_DEATH, DSL.field("kills", Integer.class)))};
-                case 5 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.VICTIM_NAME, DSL.field("kills", Integer.class)))};
-                case 6 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.KILLER_NAME, DSL.field("kills", Integer.class)))};
+                case 4 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.VICTIM_NAME, DSL.field("kills", Integer.class)))};
+                case 5 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.KILLER_NAME, DSL.field("kills", Integer.class)))};
                 default -> throw new SQLException("Unexpected query call " + callIndex.get());
             };
         }

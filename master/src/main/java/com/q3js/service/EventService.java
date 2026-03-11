@@ -22,6 +22,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -117,6 +119,7 @@ public class EventService {
         Condition killedPlayer = baseCondition.and(EVENTS.VICTIM_NAME.eq(playerName));
         int kills = countEvents(killedByPlayer);
         int deaths = countEvents(killedPlayer);
+        List<PlayerWeaponBreakdownResponse> weaponBreakdown = fetchWeaponBreakdown(killedByPlayer);
 
         return PlayerStatsResponse.builder()
                 .playerName(playerName)
@@ -126,8 +129,8 @@ public class EventService {
                 .deaths(deaths)
                 .killDeathRatio(calculateKillDeathRatio(kills, deaths))
                 .favoriteMap(fetchFavoriteMap(killedByPlayer))
-                .favoriteWeapon(fetchFavoriteWeapon(killedByPlayer))
-                .weaponBreakdown(fetchWeaponBreakdown(killedByPlayer))
+                .favoriteWeapon(toFavoriteWeapon(weaponBreakdown))
+                .weaponBreakdown(weaponBreakdown)
                 .topVictims(fetchTopVictims(playerName, killedByPlayer))
                 .topNemeses(fetchTopNemeses(playerName, killedPlayer))
                 .build();
@@ -193,62 +196,61 @@ public class EventService {
                         .build());
     }
 
-    private PlayerFavoriteWeaponResponse fetchFavoriteWeapon(Condition condition) {
-        Field<Integer> normalizedMeansOfDeath = normalizedMeansOfDeathField();
-        Field<Integer> kills = DSL.count().as("kills");
-        return dsl.select(normalizedMeansOfDeath, kills)
-                .from(EVENTS)
-                .where(condition)
-                .groupBy(normalizedMeansOfDeath)
-                .orderBy(kills.desc(), normalizedMeansOfDeath.asc())
-                .limit(1)
-                .fetchOne(record -> {
-                    Integer meansOfDeath = record.get(normalizedMeansOfDeath);
-                    if (meansOfDeath == null) {
-                        return null;
-                    }
-
-                    return PlayerFavoriteWeaponResponse.builder()
-                            .meansOfDeath(meansOfDeath)
-                            .weaponName(meansOfDeathName(meansOfDeath))
-                            .kills(valueOrZero(record.get(kills)))
-                            .build();
-                });
-    }
-
     private List<PlayerWeaponBreakdownResponse> fetchWeaponBreakdown(Condition condition) {
-        Field<Integer> normalizedMeansOfDeath = normalizedMeansOfDeathField();
         Field<Integer> kills = DSL.count().as("kills");
-        return dsl.select(normalizedMeansOfDeath, kills)
+        Map<Integer, Integer> killsByWeapon = new HashMap<>();
+
+        dsl.select(EVENTS.MEANS_OF_DEATH, kills)
                 .from(EVENTS)
                 .where(condition)
-                .groupBy(normalizedMeansOfDeath)
-                .orderBy(kills.desc(), normalizedMeansOfDeath.asc())
+                .groupBy(EVENTS.MEANS_OF_DEATH)
                 .fetch(record -> {
-                    Integer meansOfDeath = record.get(normalizedMeansOfDeath);
+                    Integer meansOfDeath = record.get(EVENTS.MEANS_OF_DEATH);
                     if (meansOfDeath == null) {
                         return null;
                     }
 
-                    return PlayerWeaponBreakdownResponse.builder()
-                            .meansOfDeath(meansOfDeath)
-                            .weaponName(meansOfDeathName(meansOfDeath))
-                            .kills(valueOrZero(record.get(kills)))
-                            .build();
-                })
+                    int normalizedMeansOfDeath = normalizeMeansOfDeath(meansOfDeath);
+                    killsByWeapon.merge(normalizedMeansOfDeath, valueOrZero(record.get(kills)), Integer::sum);
+                    return null;
+                });
+
+        return killsByWeapon.entrySet()
                 .stream()
-                .filter(item -> item != null)
+                .sorted(
+                        Comparator.<Map.Entry<Integer, Integer>>comparingInt(Map.Entry::getValue)
+                                .reversed()
+                                .thenComparingInt(Map.Entry::getKey)
+                )
+                .map(entry -> PlayerWeaponBreakdownResponse.builder()
+                        .meansOfDeath(entry.getKey())
+                        .weaponName(meansOfDeathName(entry.getKey()))
+                        .kills(entry.getValue())
+                        .build())
                 .toList();
     }
 
-    private Field<Integer> normalizedMeansOfDeathField() {
-        return DSL
-                .when(EVENTS.MEANS_OF_DEATH.eq(5), DSL.inline(4))
-                .when(EVENTS.MEANS_OF_DEATH.eq(7), DSL.inline(6))
-                .when(EVENTS.MEANS_OF_DEATH.eq(9), DSL.inline(8))
-                .when(EVENTS.MEANS_OF_DEATH.eq(13), DSL.inline(12))
-                .otherwise(EVENTS.MEANS_OF_DEATH)
-                .as("means_of_death");
+    private PlayerFavoriteWeaponResponse toFavoriteWeapon(List<PlayerWeaponBreakdownResponse> weaponBreakdown) {
+        PlayerWeaponBreakdownResponse favoriteWeapon = weaponBreakdown.isEmpty() ? null : weaponBreakdown.getFirst();
+        if (favoriteWeapon == null) {
+            return null;
+        }
+
+        return PlayerFavoriteWeaponResponse.builder()
+                .meansOfDeath(favoriteWeapon.getMeansOfDeath())
+                .weaponName(favoriteWeapon.getWeaponName())
+                .kills(favoriteWeapon.getKills())
+                .build();
+    }
+
+    private int normalizeMeansOfDeath(int meansOfDeath) {
+        return switch (meansOfDeath) {
+            case 5 -> 4;
+            case 7 -> 6;
+            case 9 -> 8;
+            case 13 -> 12;
+            default -> meansOfDeath;
+        };
     }
 
     private List<PlayerVersusStatResponse> fetchTopVictims(String playerName, Condition condition) {
