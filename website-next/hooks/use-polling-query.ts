@@ -33,6 +33,11 @@ export function usePollingQuery<T>({
     const mountedRef = useRef(false);
     const requestIdRef = useRef(0);
     const queryKeyRef = useRef(queryKey);
+    const queryFnRef = useRef(queryFn);
+
+    useEffect(() => {
+        queryFnRef.current = queryFn;
+    }, [queryFn]);
 
     useEffect(() => {
         if (queryKeyRef.current === queryKey) return;
@@ -54,7 +59,7 @@ export function usePollingQuery<T>({
         const requestId = ++requestIdRef.current;
 
         try {
-            const nextData = await queryFn();
+            const nextData = await queryFnRef.current();
             if (!mountedRef.current || requestId !== requestIdRef.current) return;
             setData(nextData);
             setIsError(false);
@@ -69,7 +74,7 @@ export function usePollingQuery<T>({
             setIsPending(false);
             setIsFetching(false);
         }
-    }, [queryFn]);
+    }, []);
 
     useEffect(() => {
         mountedRef.current = true;
@@ -83,7 +88,7 @@ export function usePollingQuery<T>({
             mountedRef.current = false;
             window.clearInterval(timer);
         };
-    }, [intervalMs, refetch]);
+    }, [intervalMs, queryKey, refetch]);
 
     return {
         data,
