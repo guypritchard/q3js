@@ -1,9 +1,7 @@
 "use client";
 
-import type {Q3ResolvedServer} from "@/lib/q3.ts";
 import {Button} from "@/components/ui/button.tsx";
 import {Dice6Icon, Zap} from "lucide-react";
-import {trackEvent} from "@/lib/analytics.ts";
 import {
     Dialog,
     DialogContent,
@@ -18,9 +16,10 @@ import {Label} from "@/components/ui/label.tsx";
 import {useLocalStorage} from "@/hooks/use-local-storage.ts";
 import {createRandomPlayerName} from "@/lib/player-name-generator.ts";
 import Link from "next/link";
+import {ServerResponse} from "@/lib/client";
 
 export function JoinServerButton(props: {
-    server: Q3ResolvedServer;
+    server: ServerResponse;
     ctaLabel?: string;
     className?: string;
 }) {
@@ -96,16 +95,6 @@ export function JoinServerButton(props: {
                         prefetch={false}
                         className="w-full"
                         href={gameUrl}
-                        onClick={() => {
-                            trackEvent("join_server_click", {
-                                server_region: props.server.location ?? "Unknown",
-                                map_name: props.server.mapname.toLowerCase(),
-                                game_type: props.server.g_gametype,
-                                player_count: props.server.players,
-                                max_players: props.server.sv_maxclients,
-                                password_protected: props.server.g_needpass === 1,
-                            });
-                        }}
                         aria-label={`Join ${props.server.sv_hostname}`}
                     >
                         <Button className="w-full" size="lg">
