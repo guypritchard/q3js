@@ -9,6 +9,20 @@ import startGame from "@/game";
 import {useSearchParams} from "next/navigation";
 import {toInt} from "@/lib/utils.ts";
 
+const STAGE_LABELS: Record<Prog["stage"], string> = {
+    initializing: "Initializing",
+    downloading: "Downloading assets",
+    launching: "Launching",
+    ready: "Ready",
+};
+
+const STAGE_TIPS: Record<Prog["stage"], string> = {
+    initializing: "Tip: Press F11 to toggle fullscreen.",
+    downloading: "Tip: Assets are cached after first load.",
+    launching: "Tip: If sound is muted, click the page once.",
+    ready: "Tip: If sound is muted, click the page once.",
+};
+
 export default function GamePage() {
     useFullscreenOnF11();
 
@@ -38,19 +52,16 @@ export default function GamePage() {
         })
     }, [host, name, proxyPort, rafUpdate]);
 
-    const stageLabel = prog.stage === "initializing"
-        ? "Initializing"
-        : prog.stage === "downloading"
-            ? "Downloading assets"
-            : prog.stage === "launching"
-                ? "Launching"
-                : "Ready";
-
-    const tip = prog.stage === "initializing"
-        ? "Tip: Press F11 to toggle fullscreen."
-        : prog.stage === "downloading"
-            ? "Tip: Assets are cached after first load."
-            : "Tip: If sound is muted, click the page once.";
+    const stageLabel = STAGE_LABELS[prog.stage];
+    const tip = STAGE_TIPS[prog.stage];
+    const currentLabel = prog.current
+        ? {
+            downloading: `Downloading: ${prog.current}`,
+            initializing: prog.current,
+            launching: prog.current,
+            ready: prog.current,
+        }[prog.stage]
+        : "Preparing downloads";
 
     return (
         <main className="relative w-full h-full min-h-screen">
@@ -63,11 +74,7 @@ export default function GamePage() {
                         {stageLabel}
                     </div>
                     <div className="text-xs text-muted-foreground mb-2 font-mono">
-                        {prog.current
-                            ? prog.stage === "downloading"
-                                ? `Downloading: ${prog.current}`
-                                : prog.current
-                            : "Preparing downloads"}
+                        {currentLabel}
                     </div>
                     <Progress value={prog.pct} className="h-2 bg-secondary"/>
                     <div className="text-xs text-muted-foreground mt-2 font-mono">

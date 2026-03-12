@@ -6,18 +6,38 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
+const PING_COLOR_BY_RANGE = {
+    high: "text-muted-foreground",
+    low: "text-primary",
+    medium: "text-accent",
+    unknown: "text-muted-foreground",
+} as const;
+
+function getPingRange(ping: number | undefined) {
+    if (!ping) return "unknown";
+    if (ping < 50) return "low";
+    if (ping < 100) return "medium";
+    return "high";
+}
+
 export function getPingColor(ping: number | undefined) {
-    return !ping ? "text-muted-foreground" : ping < 50 ? "text-primary" : ping < 100 ? "text-accent" : "text-muted-foreground"
+    return PING_COLOR_BY_RANGE[getPingRange(ping)]
+}
+
+function getGameLimitType(s: ServerResponse) {
+    if (s.g_gametype === 4 && (s.capturelimit ?? 0) > 0) return "capture";
+    if (s.fraglimit > 0) return "frag";
+    if (s.timelimit > 0) return "time";
+    return "none";
 }
 
 export function getGameLimits(s: ServerResponse) {
-    return s.g_gametype === 4 && (s.capturelimit ?? 0) > 0
-        ? `${s.capturelimit} caps`
-        : s.fraglimit > 0
-            ? `${s.fraglimit} frags`
-            : s.timelimit > 0
-                ? `${s.timelimit}min`
-                : "No limit";
+    return {
+        capture: `${s.capturelimit} caps`,
+        frag: `${s.fraglimit} frags`,
+        time: `${s.timelimit}min`,
+        none: "No limit",
+    }[getGameLimitType(s)];
 }
 
 export function getPercentage(p: number, m: number) {
@@ -38,4 +58,3 @@ export function toInt(s?: string, d = 0): number {
 export function getWsProtocol() {
     return location.protocol === "https:" ? "wss:" : "ws:";
 }
-

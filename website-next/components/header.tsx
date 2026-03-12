@@ -6,6 +6,27 @@ import {SiGithub} from "react-icons/si";
 import {useQuery} from "@tanstack/react-query";
 import {getAllServersOptions} from "@/lib/client/@tanstack/react-query.gen.ts";
 
+const HEADER_STATUS_STYLES = {
+    offline: {
+        badgeClassName: "border-destructive/40 text-destructive",
+        dotClassName: "bg-destructive",
+    },
+    online: {
+        badgeClassName: "border-primary/30 text-primary",
+        dotClassName: "bg-primary animate-pulse",
+    },
+    pending: {
+        badgeClassName: "border-primary/30 text-primary",
+        dotClassName: "bg-primary animate-pulse",
+    },
+} as const;
+
+function getHeaderStatus(isOffline: boolean, isPending: boolean) {
+    if (isOffline) return "offline";
+    if (isPending) return "pending";
+    return "online";
+}
+
 export function Header() {
 
     const serversResponse = useQuery({
@@ -16,7 +37,13 @@ export function Header() {
 
     const serverCount = servers?.length ?? 0;
     const isOffline = serversResponse.isError;
-    const statusLabel = isOffline ? "Master offline" : serversResponse.isPending ? "Checking..." : `${serverCount} servers live`;
+    const status = getHeaderStatus(isOffline, serversResponse.isPending);
+    const statusLabel = {
+        offline: "Master offline",
+        pending: "Checking...",
+        online: `${serverCount} servers live`,
+    }[status];
+    const statusStyles = HEADER_STATUS_STYLES[status];
 
     return <header className="border-b border-border/50 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -30,19 +57,9 @@ export function Header() {
             <div className="flex gap-2 items-center">
                 <Badge
                     variant="outline"
-                    className={`h-6 flex gap-1.5 ${
-                        isOffline
-                            ? "border-destructive/40 text-destructive"
-                            : "border-primary/30 text-primary"
-                    }`}
+                    className={`h-6 flex gap-1.5 ${statusStyles.badgeClassName}`}
                 >
-                    <span
-                        className={`h-2 w-2 rounded-full ${
-                            isOffline
-                                ? "bg-destructive"
-                                : "bg-primary animate-pulse"
-                        }`}
-                    />
+                    <span className={`h-2 w-2 rounded-full ${statusStyles.dotClassName}`}/>
                     {statusLabel}
                 </Badge>
                 <Badge

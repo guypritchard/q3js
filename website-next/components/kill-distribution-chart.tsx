@@ -10,6 +10,30 @@ function formatKills(kills: number) {
 
 type BucketUnit = "day" | "hour";
 
+const BUCKET_LABELS: Record<BucketUnit, string> = {
+    day: "Daily",
+    hour: "Hourly",
+};
+
+const BUCKET_TRACKED_UNITS: Record<BucketUnit, string> = {
+    day: "days",
+    hour: "hours",
+};
+
+const BUCKET_EMPTY_UNITS: Record<BucketUnit, string> = {
+    day: "daily",
+    hour: "hourly",
+};
+
+const CHART_DENSITY_RULES = [
+    {className: "gap-px", labelStep: 21, minColumnWidthRem: 0.5, minCount: 121},
+    {className: "gap-1", labelStep: 14, minColumnWidthRem: 0.65, minCount: 91},
+    {className: "gap-1", labelStep: 7, minColumnWidthRem: 0.85, minCount: 46},
+    {className: "gap-1", labelStep: 3, minColumnWidthRem: 1.25, minCount: 21},
+    {className: "gap-2", labelStep: 2, minColumnWidthRem: 2.75, minCount: 11},
+    {className: "gap-2", labelStep: 1, minColumnWidthRem: 2.75, minCount: 0},
+] as const;
+
 function toUtcDate(bucketStart: string, bucketUnit: BucketUnit) {
     return new Date(bucketUnit === "hour" ? bucketStart : `${bucketStart}T00:00:00Z`);
 }
@@ -45,8 +69,8 @@ export function KillDistributionChart(props: {
 }) {
     const [hoveredBucketStart, setHoveredBucketStart] = useState<string | null>(null);
     const bucketCount = props.data.length;
-    const labelStep = bucketCount > 120 ? 21 : bucketCount > 90 ? 14 : bucketCount > 45 ? 7 : bucketCount > 20 ? 3 : bucketCount > 10 ? 2 : 1;
-    const minColumnWidthRem = bucketCount > 120 ? 0.5 : bucketCount > 90 ? 0.65 : bucketCount > 45 ? 0.85 : bucketCount > 20 ? 1.25 : 2.75;
+    const densityRule = CHART_DENSITY_RULES.find((rule) => bucketCount >= rule.minCount)!;
+    const {className: chartGapClassName, labelStep, minColumnWidthRem} = densityRule;
     const chartMinWidth = bucketCount > 14 ? `${bucketCount * minColumnWidthRem}rem` : undefined;
 
     const summary = useMemo(() => {
@@ -78,7 +102,7 @@ export function KillDistributionChart(props: {
                         <div className="space-y-1">
                             <h2 className="text-xl font-semibold tracking-tight">Frag Distribution</h2>
                             <p className="text-sm text-muted-foreground">
-                                {props.bucketUnit === "hour" ? "Hourly" : "Daily"} frag totals for the {props.periodLabel.toLowerCase()} window.
+                                {BUCKET_LABELS[props.bucketUnit]} frag totals for the {props.periodLabel.toLowerCase()} window.
                             </p>
                         </div>
 
@@ -113,12 +137,12 @@ export function KillDistributionChart(props: {
                     </div>
                     <div className="rounded-lg border border-border/60 bg-background/60 px-3 py-2">
                         <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                            {props.bucketUnit === "hour" ? "Hourly" : "Daily"} average
+                            {BUCKET_LABELS[props.bucketUnit]} average
                         </p>
                         <p className="text-2xl font-semibold tabular-nums">{formatKills(summary.averageKills)}</p>
                         <p className="text-xs text-muted-foreground">
                             {props.data.length > 0
-                                ? `${props.data.length} tracked ${props.bucketUnit === "hour" ? "hours" : "days"}`
+                                ? `${props.data.length} tracked ${BUCKET_TRACKED_UNITS[props.bucketUnit]}`
                                 : "Waiting for events"}
                         </p>
                     </div>
@@ -145,7 +169,7 @@ export function KillDistributionChart(props: {
 
                     {!props.isPending && !props.isError && props.data.length === 0 && (
                         <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-                            No {props.bucketUnit === "hour" ? "hourly" : "daily"} frag data has been recorded for this period yet.
+                            No {BUCKET_EMPTY_UNITS[props.bucketUnit]} frag data has been recorded for this period yet.
                         </div>
                     )}
 
@@ -170,7 +194,7 @@ export function KillDistributionChart(props: {
                                 <div
                                     className={cn(
                                         "relative grid h-64 w-full items-end pt-3",
-                                        bucketCount > 45 ? "gap-px" : bucketCount > 20 ? "gap-1" : "gap-2"
+                                        chartGapClassName
                                     )}
                                     style={{gridTemplateColumns: `repeat(${props.data.length}, minmax(0, 1fr))`}}
                                 >
