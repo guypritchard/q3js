@@ -7,7 +7,7 @@ const scoreboardStructuredData = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: "Global Scoreboard",
-    description: "Live Q3JS scoreboard with daily, weekly, monthly, and all-time frag leaders.",
+    description: "Live Q3JS scoreboard with last 24 hours, weekly, monthly, and all-time frag leaders.",
     url: absoluteUrl("/scoreboard"),
     isPartOf: {
         "@type": "WebSite",
@@ -28,7 +28,7 @@ export default function ScoreboardPage(props: {
                 <div className="space-y-2">
                     <h1 className="text-4xl font-bold tracking-tight">Global Scoreboard</h1>
                     <p className="text-sm text-muted-foreground md:text-base">
-                        Switch between daily, weekly, monthly, and all-time frags across reported servers.
+                        Switch between last 24 hours, weekly, monthly, and all-time frags across reported servers.
                     </p>
                 </div>
 

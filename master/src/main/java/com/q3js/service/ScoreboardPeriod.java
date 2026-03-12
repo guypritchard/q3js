@@ -20,7 +20,7 @@ public enum ScoreboardPeriod {
         LocalDate utcDate = now.withOffsetSameInstant(ZoneOffset.UTC).toLocalDate();
 
         return switch (this) {
-            case DAILY -> Optional.of(utcDate.atStartOfDay().atOffset(ZoneOffset.UTC));
+            case DAILY -> Optional.of(now.minusHours(24).withOffsetSameInstant(ZoneOffset.UTC));
             case WEEKLY -> Optional.of(
                     utcDate
                             .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))

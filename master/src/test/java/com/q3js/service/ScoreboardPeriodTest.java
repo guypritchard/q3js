@@ -35,7 +35,7 @@ class ScoreboardPeriodTest {
         OffsetDateTime now = OffsetDateTime.of(2026, 3, 11, 15, 42, 0, 0, ZoneOffset.ofHours(1));
 
         assertEquals(
-                OffsetDateTime.of(2026, 3, 11, 0, 0, 0, 0, ZoneOffset.UTC),
+                OffsetDateTime.of(2026, 3, 10, 14, 42, 0, 0, ZoneOffset.UTC),
                 ScoreboardPeriod.DAILY.startsAt(now).orElseThrow()
         );
         assertEquals(

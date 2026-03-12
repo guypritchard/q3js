@@ -6,7 +6,7 @@ import {buildPageMetadata} from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
     title: "Global Scoreboard",
-    description: "Live Q3JS scoreboard with daily, weekly, monthly, and all-time frag leaders.",
+    description: "Live Q3JS scoreboard with last 24 hours, weekly, monthly, and all-time frag leaders.",
     path: "/scoreboard",
     keywords: [
         "Q3JS scoreboard",
@@ -24,7 +24,7 @@ function ScoreboardPageSkeleton() {
                 <div className="space-y-2">
                     <h1 className="text-4xl font-bold tracking-tight">Global Scoreboard</h1>
                     <p className="text-sm text-muted-foreground md:text-base">
-                        Switch between daily, weekly, monthly, and all-time frags across reported servers.
+                        Switch between last 24 hours, weekly, monthly, and all-time frags across reported servers.
                     </p>
                 </div>
 

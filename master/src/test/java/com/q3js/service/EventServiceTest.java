@@ -14,6 +14,8 @@ import org.jooq.tools.jdbc.MockExecuteContext;
 import org.jooq.tools.jdbc.MockResult;
 import org.junit.jupiter.api.Test;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -109,6 +111,29 @@ class EventServiceTest {
         );
     }
 
+    @Test
+    void getKillDistributionUsesRollingHourlyBucketsForDailyPeriod() {
+        OffsetDateTime now = OffsetDateTime.of(2026, 3, 11, 15, 42, 0, 0, ZoneOffset.ofHours(1));
+        OffsetDateTime dayStart = now.minusHours(24).withOffsetSameInstant(ZoneOffset.UTC);
+        DSLContext dsl = DSL.using(new MockConnection(new DailyDistributionMockProvider(
+                dayStart.plusMinutes(5),
+                dayStart.plusHours(1).plusMinutes(1),
+                dayStart.plusHours(1).plusMinutes(45),
+                now.withOffsetSameInstant(ZoneOffset.UTC).minusMinutes(1)
+        )), SQLDialect.POSTGRES);
+        EventService eventService = new FixedNowEventService(dsl, now);
+
+        var response = eventService.getKillDistribution(ScoreboardPeriod.DAILY);
+
+        assertEquals(24, response.size());
+        assertEquals(dayStart.toString(), response.getFirst().getBucketStart());
+        assertEquals(1, response.getFirst().getKills());
+        assertEquals(dayStart.plusHours(1).toString(), response.get(1).getBucketStart());
+        assertEquals(2, response.get(1).getKills());
+        assertEquals(1, response.getLast().getKills());
+        assertEquals(4, response.stream().mapToInt(point -> point.getKills() != null ? point.getKills() : 0).sum());
+    }
+
     private static final class PlayerStatsMockProvider implements MockDataProvider {
         private final DSLContext dsl = DSL.using(SQLDialect.POSTGRES);
         private final AtomicInteger callIndex = new AtomicInteger();
@@ -198,6 +223,26 @@ class EventServiceTest {
         }
     }
 
+    private static final class DailyDistributionMockProvider implements MockDataProvider {
+        private final DSLContext dsl = DSL.using(SQLDialect.POSTGRES);
+        private final OffsetDateTime[] receivedAtValues;
+
+        private DailyDistributionMockProvider(OffsetDateTime... receivedAtValues) {
+            this.receivedAtValues = receivedAtValues;
+        }
+
+        @Override
+        public MockResult[] execute(MockExecuteContext context) {
+            var result = dsl.newResult(EVENTS.RECEIVED_AT);
+
+            for (OffsetDateTime receivedAtValue : receivedAtValues) {
+                result.add(dsl.newRecord(EVENTS.RECEIVED_AT).values(receivedAtValue));
+            }
+
+            return new MockResult[]{new MockResult(receivedAtValues.length, result)};
+        }
+    }
+
     private static final class TestEventService extends EventService {
         private final long playtimeSeconds;
         private final List<PlayerWeaponBreakdownResponse> weaponBreakdown;
@@ -220,6 +265,20 @@ class EventServiceTest {
         @Override
         protected long fetchPlaytimeSeconds(String playerName, ScoreboardPeriod period, java.time.OffsetDateTime now) {
             return playtimeSeconds;
+        }
+    }
+
+    private static final class FixedNowEventService extends EventService {
+        private final OffsetDateTime now;
+
+        private FixedNowEventService(DSLContext dsl, OffsetDateTime now) {
+            super(dsl);
+            this.now = now;
+        }
+
+        @Override
+        protected OffsetDateTime currentTime() {
+            return now;
         }
     }
 }

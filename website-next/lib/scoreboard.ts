@@ -5,7 +5,7 @@ export type ScoreboardPeriod = (typeof SCOREBOARD_PERIODS)[number];
 export const DEFAULT_SCOREBOARD_PERIOD: ScoreboardPeriod = "all-time";
 
 export const SCOREBOARD_PERIOD_LABELS: Record<ScoreboardPeriod, string> = {
-    daily: "Daily",
+    daily: "Last 24 Hours",
     weekly: "Weekly",
     monthly: "Monthly",
     "all-time": "All Time",

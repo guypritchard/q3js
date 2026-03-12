@@ -95,7 +95,7 @@ export function Hero(props: {
                             <div
                                 className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
                                 <Target className="h-4 w-4 text-primary"/>
-                                Most Frags Today
+                                Most Frags Last 24 Hours
                             </div>
                             <div className="mt-2 text-xl font-bold leading-none text-foreground">
                                 {props.topDailyPlayer ? (
@@ -111,8 +111,8 @@ export function Hero(props: {
                             </div>
                             <p className="mt-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">
                                 {props.topDailyPlayer
-                                    ? `${formatNumber(props.topDailyPlayer.kills)} frags today`
-                                    : "Daily scoreboard is empty"}
+                                    ? `${formatNumber(props.topDailyPlayer.kills)} frags in the last 24 hours`
+                                    : "Last 24 hours scoreboard is empty"}
                             </p>
                         </div>
 

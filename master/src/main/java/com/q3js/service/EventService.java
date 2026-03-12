@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
@@ -66,7 +67,7 @@ public class EventService {
     }
 
     public List<ScoreboardEntryResponse> getGlobalScoreboard(ScoreboardPeriod period) {
-        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime now = currentTime();
         Field<Integer> kills = DSL.count().as("kills");
         Condition condition = killCondition(period, now);
 
@@ -82,28 +83,38 @@ public class EventService {
     }
 
     public List<KillDistributionPointResponse> getKillDistribution(ScoreboardPeriod period) {
-        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime now = currentTime();
         Field<Integer> kills = DSL.count().as("kills");
 
         if (period == ScoreboardPeriod.DAILY) {
             OffsetDateTime dayStart = period.startsAt(now).orElseThrow();
-            Field<LocalDateTime> hour = DSL
-                    .field("date_trunc('hour', timezone('UTC', {0}))", SQLDataType.LOCALDATETIME, EVENTS.RECEIVED_AT)
-                    .as("bucket");
+            int[] killsByHour = new int[24];
 
-            Map<LocalDateTime, Integer> killsByHour = dsl.select(hour, kills)
+            dsl.select(EVENTS.RECEIVED_AT)
                     .from(EVENTS)
                     .where(killCondition(period, now))
-                    .groupBy(hour)
-                    .orderBy(hour.asc())
-                    .fetchMap(hour, kills);
+                    .orderBy(EVENTS.RECEIVED_AT.asc())
+                    .fetch(EVENTS.RECEIVED_AT)
+                    .forEach(receivedAt -> {
+                        if (receivedAt == null) {
+                            return;
+                        }
+
+                        int bucketIndex = !receivedAt.isBefore(now)
+                                ? 23
+                                : (int) ChronoUnit.HOURS.between(dayStart, receivedAt);
+
+                        if (bucketIndex >= 0 && bucketIndex < killsByHour.length) {
+                            killsByHour[bucketIndex]++;
+                        }
+                    });
 
             return IntStream.range(0, 24)
                     .mapToObj(index -> {
                         OffsetDateTime bucketStart = dayStart.plusHours(index);
                         return KillDistributionPointResponse.builder()
                                 .bucketStart(bucketStart.toString())
-                                .kills(killsByHour.getOrDefault(bucketStart.toLocalDateTime(), 0))
+                                .kills(killsByHour[index])
                                 .build();
                     })
                     .toList();
@@ -128,7 +139,7 @@ public class EventService {
     }
 
     public PlayerStatsResponse getPlayerStats(String playerName, ScoreboardPeriod period) {
-        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime now = currentTime();
         Condition baseCondition = killCondition(period, now);
         Condition killedByPlayer = baseCondition.and(EVENTS.KILLER_NAME.eq(playerName));
         Condition killedPlayer = baseCondition.and(EVENTS.VICTIM_NAME.eq(playerName));
@@ -150,6 +161,10 @@ public class EventService {
                 .topVictims(fetchTopVictims(playerName, killedByPlayer))
                 .topNemeses(fetchTopNemeses(playerName, killedPlayer))
                 .build();
+    }
+
+    protected OffsetDateTime currentTime() {
+        return OffsetDateTime.now();
     }
 
     protected long fetchPlaytimeSeconds(String playerName, ScoreboardPeriod period, OffsetDateTime now) {
