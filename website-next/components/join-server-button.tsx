@@ -93,6 +93,7 @@ export function JoinServerButton(props: {
 
                 <DialogFooter className="mt-4">
                     <Link
+                        prefetch={false}
                         className="w-full"
                         href={gameUrl}
                         onClick={() => {
