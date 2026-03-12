@@ -6,13 +6,6 @@ import {JsonLd} from "@/components/seo/json-ld";
 import {absoluteUrl, siteConfig} from "@/lib/seo";
 import {stripQ3Colors} from "@/lib/utils.ts";
 
-function HomeScoreboardSection(props: { initialScoreboard: Awaited<ReturnType<typeof getInitialScoreboard>> }) {
-    return <ScoreboardPreview initialScoreboard={props.initialScoreboard} initialPeriod="daily"/>;
-}
-
-function HomeServerSection(props: { initialServers: Awaited<ReturnType<typeof getInitialServers>> }) {
-    return <ServerPicker initialServers={props.initialServers}/>;
-}
 
 const homeStructuredData = [
     {
@@ -61,7 +54,6 @@ export default async function HomePage() {
         return stripQ3Colors(a.playerName).localeCompare(stripQ3Colors(b.playerName));
     })[0] ?? null;
 
-
     return (
         <main>
             <JsonLd data={homeStructuredData}/>
@@ -72,8 +64,8 @@ export default async function HomePage() {
                 topDailyPlayer={topDailyPlayer}
                 firstServer={firstServer}
             />
-            <HomeScoreboardSection initialScoreboard={dailyScoreboard}/>
-            <HomeServerSection initialServers={initialServers}/>
+            <ScoreboardPreview initialPeriod="daily" initialScoreboard={dailyScoreboard}/>
+            <ServerPicker initialServers={initialServers}/>
         </main>
     )
 }
