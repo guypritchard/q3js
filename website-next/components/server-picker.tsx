@@ -118,18 +118,6 @@ export function ServerPicker(props: { initialServers: Q3ResolvedServer[] }) {
 
                 <Card className="bg-card/60 border-border/60">
                     <CardContent className="p-4 space-y-4">
-                        <div>
-                            <label htmlFor="player-name" className="mb-2 block text-sm font-semibold">
-                                Player name
-                            </label>
-                            <Input
-                                id="player-name"
-                                placeholder="Player name"
-                                value={isHydrated ? name : ""}
-                                onChange={(event) => handleNameChange(event.target.value)}
-                            />
-                        </div>
-
                         <div className="grid gap-3">
                             <div className="relative">
                                 <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2"/>

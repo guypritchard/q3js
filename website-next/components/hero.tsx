@@ -1,17 +1,11 @@
-"use client";
-
 import Link from "next/link";
 import {Button} from "@/components/ui/button.tsx";
 import {Skull, Target, Users} from "lucide-react";
-import {useSyncExternalStore} from "react";
-import {useLocalStorage} from "@/hooks/use-local-storage.ts";
-import {createRandomPlayerName} from "@/lib/player-name-generator.ts";
 import {JoinServerButton} from "@/components/join-server-button.tsx";
 import type {Q3ResolvedServer} from "@/lib/q3.ts";
 import type {ScoreboardEntry} from "@/lib/scoreboard.ts";
 import {Q3ColoredText} from "@/components/q3-colored-text.tsx";
 
-const subscribe = () => () => {};
 
 function formatCount(count: number, singular: string, plural = `${singular}s`) {
     return `${count} ${count === 1 ? singular : plural}`;
@@ -28,19 +22,6 @@ export function Hero(props: {
     topDailyPlayer: ScoreboardEntry | null;
     firstServer?: Q3ResolvedServer;
 }) {
-    const [name, setName] = useLocalStorage("name", "");
-    const isHydrated = useSyncExternalStore(subscribe, () => true, () => false);
-
-    function resolvePlayerName() {
-        if (name.trim().length > 0) {
-            return name;
-        }
-
-        const generatedName = createRandomPlayerName();
-        setName(generatedName);
-        return generatedName;
-    }
-
     return (
         <section className="border-b border-border/60 bg-background">
             <div className="container mx-auto px-4 py-14 md:py-18">
@@ -59,13 +40,7 @@ export function Hero(props: {
 
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                         {props.firstServer ? (
-                            <JoinServerButton
-                                server={props.firstServer}
-                                playerName={isHydrated ? name : ""}
-                                resolvePlayerName={resolvePlayerName}
-                                ctaLabel="Quick Play"
-                                className="min-w-32"
-                            />
+                            <JoinServerButton server={props.firstServer}/>
                         ) : (
                             <Button size="lg" className="min-w-32" asChild>
                                 <Link href="#server-browser">Quick Play</Link>

@@ -56,12 +56,7 @@ export function ServerCard(props: {
                                 </div>
                             </div>
 
-                            <JoinServerButton
-                                server={info}
-                                playerName={props.playerName}
-                                resolvePlayerName={props.resolvePlayerName}
-                                onJoin={props.onJoin}
-                            />
+                            <JoinServerButton server={info}/>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-4 text-sm">
