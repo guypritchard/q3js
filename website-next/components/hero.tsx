@@ -39,7 +39,7 @@ export function Hero(props: {
 
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                         {props.firstServer ? (
-                            <JoinServerButton server={props.firstServer}/>
+                            <JoinServerButton server={props.firstServer} ctaLabel={"Quick Play"}/>
                         ) : (
                             <Button size="lg" className="min-w-32" asChild>
                                 <Link href="#server-browser">Quick Play</Link>
