@@ -74,24 +74,6 @@ export const getKillDistributionOptions = (options?: Options<GetKillDistribution
     queryKey: getKillDistributionQueryKey(options)
 });
 
-export const getPlayerStatsQueryKey = (options: Options<GetPlayerStatsData>) => createQueryKey('getPlayerStats', options);
-
-/**
- * Get Player Stats
- */
-export const getPlayerStatsOptions = (options: Options<GetPlayerStatsData>) => queryOptions<GetPlayerStatsResponse, DefaultError, GetPlayerStatsResponse, ReturnType<typeof getPlayerStatsQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getPlayerStats({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getPlayerStatsQueryKey(options)
-});
-
 export const getGlobalScoreboardQueryKey = (options?: Options<GetGlobalScoreboardData>) => createQueryKey('getGlobalScoreboard', options);
 
 /**
@@ -126,6 +108,24 @@ export const getAllPlayersOptions = (options?: Options<GetAllPlayersData>) => qu
         return data;
     },
     queryKey: getAllPlayersQueryKey(options)
+});
+
+export const getPlayerStatsQueryKey = (options: Options<GetPlayerStatsData>) => createQueryKey('getPlayerStats', options);
+
+/**
+ * Get Player Stats
+ */
+export const getPlayerStatsOptions = (options: Options<GetPlayerStatsData>) => queryOptions<GetPlayerStatsResponse, DefaultError, GetPlayerStatsResponse, ReturnType<typeof getPlayerStatsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getPlayerStats({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getPlayerStatsQueryKey(options)
 });
 
 export const getAllServersQueryKey = (options?: Options<GetAllServersData>) => createQueryKey('getAllServers', options);

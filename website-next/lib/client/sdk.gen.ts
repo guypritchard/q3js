@@ -37,15 +37,6 @@ export const ingestEvent = <ThrowOnError extends boolean = false>(options: Optio
 export const getKillDistribution = <ThrowOnError extends boolean = false>(options?: Options<GetKillDistributionData, ThrowOnError>) => (options?.client ?? client).get<GetKillDistributionResponses, unknown, ThrowOnError>({ url: '/api/events/distribution', ...options });
 
 /**
- * Get Player Stats
- */
-export const getPlayerStats = <ThrowOnError extends boolean = false>(options: Options<GetPlayerStatsData, ThrowOnError>) => (options.client ?? client).get<GetPlayerStatsResponses, unknown, ThrowOnError>({
-    responseTransformer: getPlayerStatsResponseTransformer,
-    url: '/api/events/players/{playerName}',
-    ...options
-});
-
-/**
  * Get Global Scoreboard
  */
 export const getGlobalScoreboard = <ThrowOnError extends boolean = false>(options?: Options<GetGlobalScoreboardData, ThrowOnError>) => (options?.client ?? client).get<GetGlobalScoreboardResponses, unknown, ThrowOnError>({ url: '/api/events/scoreboard', ...options });
@@ -54,6 +45,15 @@ export const getGlobalScoreboard = <ThrowOnError extends boolean = false>(option
  * Get All Players
  */
 export const getAllPlayers = <ThrowOnError extends boolean = false>(options?: Options<GetAllPlayersData, ThrowOnError>) => (options?.client ?? client).get<GetAllPlayersResponses, unknown, ThrowOnError>({ url: '/api/players', ...options });
+
+/**
+ * Get Player Stats
+ */
+export const getPlayerStats = <ThrowOnError extends boolean = false>(options: Options<GetPlayerStatsData, ThrowOnError>) => (options.client ?? client).get<GetPlayerStatsResponses, unknown, ThrowOnError>({
+    responseTransformer: getPlayerStatsResponseTransformer,
+    url: '/api/players/{playerName}',
+    ...options
+});
 
 /**
  * Get All Servers

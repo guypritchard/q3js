@@ -26,6 +26,14 @@ function formatPlaytime(totalSeconds:  number) {
     return `${minutes}m`;
 }
 
+function formatKillsPerMinute(kills: number, playtimeSeconds: number) {
+    if (playtimeSeconds <= 0) {
+        return "0.00";
+    }
+
+    return ((kills * 60) / playtimeSeconds).toFixed(2);
+}
+
 function formatLastOnline(value: string | null | undefined) {
     if (!value) {
         return "Unknown";
@@ -120,6 +128,7 @@ export default function PlayerProfilePage(props: {
     const plainName = stripQ3Colors(props.playerName);
     const periodLabel = SCOREBOARD_PERIOD_LABELS[props.period];
     const playerProfileUrl = absoluteUrl(`/players/${encodeURIComponent(props.playerName)}`);
+    const playtimeSeconds = Number(props.stats.playtimeSeconds);
     const playerStructuredData = {
         "@type": "Person",
         name: plainName,
@@ -171,7 +180,7 @@ export default function PlayerProfilePage(props: {
                     </Button>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <div className="grid gap-4 md:grid-cols-3">
                     <Card className="border-border/60 bg-card/60">
                         <CardHeader className="gap-1">
                             <CardTitle className="text-sm text-muted-foreground">Rank</CardTitle>
@@ -185,7 +194,7 @@ export default function PlayerProfilePage(props: {
 
                     <Card className="border-border/60 bg-card/60">
                         <CardHeader className="gap-1">
-                            <CardTitle className="text-sm text-muted-foreground">Kills / Deaths</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">K/D</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold">{props.stats.kills} / {props.stats.deaths}</div>
@@ -206,11 +215,22 @@ export default function PlayerProfilePage(props: {
                             <CardTitle className="text-sm text-muted-foreground">Playtime</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-3xl font-bold">{formatPlaytime(Number(props.stats.playtimeSeconds))}</div>
+                            <div className="text-3xl font-bold">{formatPlaytime(playtimeSeconds)}</div>
                         </CardContent>
                     </Card>
 
-                    <Card className="border-border/60 bg-card/60 md:col-span-2 xl:col-span-1">
+                    <Card className="border-border/60 bg-card/60">
+                        <CardHeader className="gap-1">
+                            <CardTitle className="text-sm text-muted-foreground">Kills Per Minute</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-3xl font-bold">
+                                {formatKillsPerMinute(props.stats.kills, playtimeSeconds)}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-border/60 bg-card/60">
                         <CardHeader className="gap-1">
                             <CardTitle className="text-sm text-muted-foreground">Last Online</CardTitle>
                         </CardHeader>

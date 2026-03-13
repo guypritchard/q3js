@@ -50,7 +50,7 @@ export type PlayerStatsResponse = {
     playerName: string;
     period: ScoreboardPeriod;
     playtimeSeconds: bigint;
-    lastOnline: string | null;
+    lastOnline?: string | null;
     rank: number | null;
     kills: number;
     deaths: number;
@@ -169,27 +169,6 @@ export type GetKillDistributionResponses = {
 
 export type GetKillDistributionResponse = GetKillDistributionResponses[keyof GetKillDistributionResponses];
 
-export type GetPlayerStatsData = {
-    body?: never;
-    path: {
-        playerName: string;
-    };
-    query?: {
-        period?: string;
-        timeZone?: string;
-    };
-    url: '/api/events/players/{playerName}';
-};
-
-export type GetPlayerStatsResponses = {
-    /**
-     * OK
-     */
-    200: PlayerStatsResponse;
-};
-
-export type GetPlayerStatsResponse = GetPlayerStatsResponses[keyof GetPlayerStatsResponses];
-
 export type GetGlobalScoreboardData = {
     body?: never;
     path?: never;
@@ -224,6 +203,27 @@ export type GetAllPlayersResponses = {
 };
 
 export type GetAllPlayersResponse = GetAllPlayersResponses[keyof GetAllPlayersResponses];
+
+export type GetPlayerStatsData = {
+    body?: never;
+    path: {
+        playerName: string;
+    };
+    query?: {
+        period?: string;
+        timeZone?: string;
+    };
+    url: '/api/players/{playerName}';
+};
+
+export type GetPlayerStatsResponses = {
+    /**
+     * OK
+     */
+    200: PlayerStatsResponse;
+};
+
+export type GetPlayerStatsResponse = GetPlayerStatsResponses[keyof GetPlayerStatsResponses];
 
 export type GetAllServersData = {
     body?: never;
