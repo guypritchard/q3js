@@ -1,6 +1,7 @@
 package com.q3js.service;
 
 import com.q3js.service.dto.CreateEventRequest;
+import com.q3js.service.dto.PlayerResponse;
 import com.q3js.service.dto.PlayerStatsResponse;
 import com.q3js.service.dto.PlayerWeaponBreakdownResponse;
 import org.jooq.DSLContext;
@@ -26,6 +27,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 class EventServiceTest {
+    @Test
+    void getAllPlayersReturnsDistinctSortedNamesFromLifecycleAndKillEvents() {
+        DSLContext dsl = DSL.using(new MockConnection(new AllPlayersMockProvider()), SQLDialect.POSTGRES);
+        EventService eventService = new EventService(dsl);
+
+        List<PlayerResponse> response = eventService.getAllPlayers();
+
+        assertEquals(
+                List.of(
+                        PlayerResponse.builder().playerName("Anarki").build(),
+                        PlayerResponse.builder().playerName("Ranger").build(),
+                        PlayerResponse.builder().playerName("Slash").build(),
+                        PlayerResponse.builder().playerName("Visor").build()
+                ),
+                response
+        );
+    }
+
     @Test
     void getPlayerStatsAggregatesProfileData() {
         DSLContext dsl = DSL.using(new MockConnection(new PlayerStatsMockProvider()), SQLDialect.POSTGRES);
@@ -220,6 +239,22 @@ class EventServiceTest {
             bindings = context.bindings();
             executeCount.incrementAndGet();
             return new MockResult[]{new MockResult(1, dsl.newResult(EVENTS.fields()))};
+        }
+    }
+
+    private static final class AllPlayersMockProvider implements MockDataProvider {
+        private final DSLContext dsl = DSL.using(SQLDialect.POSTGRES);
+
+        @Override
+        public MockResult[] execute(MockExecuteContext context) {
+            Field<String> playerName = DSL.field(DSL.name("players", "player_name"), String.class);
+            var result = dsl.newResult(playerName);
+            result.add(dsl.newRecord(playerName).values("Anarki"));
+            result.add(dsl.newRecord(playerName).values("Ranger"));
+            result.add(dsl.newRecord(playerName).values("Slash"));
+            result.add(dsl.newRecord(playerName).values("Visor"));
+
+            return new MockResult[]{new MockResult(result.size(), result)};
         }
     }
 

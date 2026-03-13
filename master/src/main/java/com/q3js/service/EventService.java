@@ -3,6 +3,7 @@ package com.q3js.service;
 import com.q3js.service.dto.CreateEventRequest;
 import com.q3js.service.dto.KillDistributionPointResponse;
 import com.q3js.service.dto.PlayerFavoriteMapResponse;
+import com.q3js.service.dto.PlayerResponse;
 import com.q3js.service.dto.PlayerFavoriteWeaponResponse;
 import com.q3js.service.dto.PlayerStatsResponse;
 import com.q3js.service.dto.PlayerVersusStatResponse;
@@ -64,6 +65,27 @@ public class EventService {
         }
 
         event.store();
+    }
+
+    public List<PlayerResponse> getAllPlayers() {
+        Field<String> playerName = DSL.field(DSL.name("players", "player_name"), String.class);
+        Table<?> players = dsl.select(EVENTS.KILLER_NAME.as("player_name"))
+                .from(EVENTS)
+                .where(EVENTS.KILLER_NAME.isNotNull())
+                .union(
+                        dsl.select(EVENTS.VICTIM_NAME.as("player_name"))
+                                .from(EVENTS)
+                                .where(EVENTS.VICTIM_NAME.isNotNull())
+                )
+                .asTable("players");
+
+        return dsl.select(playerName)
+                .from(players)
+                .where(DSL.trim(playerName).ne(""))
+                .orderBy(playerName.asc())
+                .fetch(name -> PlayerResponse.builder()
+                        .playerName(name.get(playerName))
+                        .build());
     }
 
     public List<ScoreboardEntryResponse> getGlobalScoreboard(ScoreboardPeriod period) {

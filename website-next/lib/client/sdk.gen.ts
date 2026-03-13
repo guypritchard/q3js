@@ -3,7 +3,7 @@
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
 import { getPlayerStatsResponseTransformer } from './transformers.gen';
-import type { GetAllServersData, GetAllServersResponses, GetGlobalScoreboardData, GetGlobalScoreboardResponses, GetKillDistributionData, GetKillDistributionResponses, GetPlayerStatsData, GetPlayerStatsResponses, IngestEventData, IngestEventErrors, IngestEventResponses, RefreshServerData, RefreshServerErrors, RefreshServerResponses } from './types.gen';
+import type { GetAllPlayersData, GetAllPlayersResponses, GetAllServersData, GetAllServersResponses, GetGlobalScoreboardData, GetGlobalScoreboardResponses, GetKillDistributionData, GetKillDistributionResponses, GetPlayerStatsData, GetPlayerStatsResponses, IngestEventData, IngestEventErrors, IngestEventResponses, RefreshServerData, RefreshServerErrors, RefreshServerResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -49,6 +49,11 @@ export const getPlayerStats = <ThrowOnError extends boolean = false>(options: Op
  * Get Global Scoreboard
  */
 export const getGlobalScoreboard = <ThrowOnError extends boolean = false>(options?: Options<GetGlobalScoreboardData, ThrowOnError>) => (options?.client ?? client).get<GetGlobalScoreboardResponses, unknown, ThrowOnError>({ url: '/api/events/scoreboard', ...options });
+
+/**
+ * Get All Players
+ */
+export const getAllPlayers = <ThrowOnError extends boolean = false>(options?: Options<GetAllPlayersData, ThrowOnError>) => (options?.client ?? client).get<GetAllPlayersResponses, unknown, ThrowOnError>({ url: '/api/players', ...options });
 
 /**
  * Get All Servers

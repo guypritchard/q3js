@@ -1,12 +1,11 @@
 import type {MetadataRoute} from "next";
 import {absoluteUrl} from "@/lib/seo";
+import {getAllPlayers} from "@/lib/client";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default function sitemap(): MetadataRoute.Sitemap {
-    const lastModified = new Date();
-
+function getStaticEntries(lastModified: Date): MetadataRoute.Sitemap {
     return [
         {
             url: absoluteUrl("/"),
@@ -27,4 +26,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
             lastModified,
         },
     ];
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+    const lastModified = new Date();
+    const staticEntries = getStaticEntries(lastModified);
+
+    try {
+        const {data: players} = await getAllPlayers({
+            throwOnError: true,
+        });
+
+        const playerEntries: MetadataRoute.Sitemap = players.map((player) => ({
+            url: absoluteUrl(`/players/${encodeURIComponent(player.playerName)}`),
+            changeFrequency: "daily",
+            priority: 0.7,
+            lastModified,
+        }));
+
+        return [...staticEntries, ...playerEntries];
+    } catch {
+        return staticEntries;
+    }
 }

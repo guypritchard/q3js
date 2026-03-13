@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { getAllServers, getGlobalScoreboard, getKillDistribution, getPlayerStats, ingestEvent, type Options, refreshServer } from '../sdk.gen';
-import type { GetAllServersData, GetAllServersResponse, GetGlobalScoreboardData, GetGlobalScoreboardResponse, GetKillDistributionData, GetKillDistributionResponse, GetPlayerStatsData, GetPlayerStatsResponse, IngestEventData, RefreshServerData, RefreshServerResponse } from '../types.gen';
+import { getAllPlayers, getAllServers, getGlobalScoreboard, getKillDistribution, getPlayerStats, ingestEvent, type Options, refreshServer } from '../sdk.gen';
+import type { GetAllPlayersData, GetAllPlayersResponse, GetAllServersData, GetAllServersResponse, GetGlobalScoreboardData, GetGlobalScoreboardResponse, GetKillDistributionData, GetKillDistributionResponse, GetPlayerStatsData, GetPlayerStatsResponse, IngestEventData, RefreshServerData, RefreshServerResponse } from '../types.gen';
 
 /**
  * Ingest Event
@@ -108,6 +108,24 @@ export const getGlobalScoreboardOptions = (options?: Options<GetGlobalScoreboard
         return data;
     },
     queryKey: getGlobalScoreboardQueryKey(options)
+});
+
+export const getAllPlayersQueryKey = (options?: Options<GetAllPlayersData>) => createQueryKey('getAllPlayers', options);
+
+/**
+ * Get All Players
+ */
+export const getAllPlayersOptions = (options?: Options<GetAllPlayersData>) => queryOptions<GetAllPlayersResponse, DefaultError, GetAllPlayersResponse, ReturnType<typeof getAllPlayersQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getAllPlayers({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getAllPlayersQueryKey(options)
 });
 
 export const getAllServersQueryKey = (options?: Options<GetAllServersData>) => createQueryKey('getAllServers', options);

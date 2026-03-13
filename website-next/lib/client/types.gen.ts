@@ -42,6 +42,10 @@ export type PlayerFavoriteWeaponResponse = {
     kills: number;
 };
 
+export type PlayerResponse = {
+    playerName: string;
+};
+
 export type PlayerStatsResponse = {
     playerName: string;
     period: ScoreboardPeriod;
@@ -200,6 +204,22 @@ export type GetGlobalScoreboardResponses = {
 };
 
 export type GetGlobalScoreboardResponse = GetGlobalScoreboardResponses[keyof GetGlobalScoreboardResponses];
+
+export type GetAllPlayersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/players';
+};
+
+export type GetAllPlayersResponses = {
+    /**
+     * OK
+     */
+    200: Array<PlayerResponse>;
+};
+
+export type GetAllPlayersResponse = GetAllPlayersResponses[keyof GetAllPlayersResponses];
 
 export type GetAllServersData = {
     body?: never;
