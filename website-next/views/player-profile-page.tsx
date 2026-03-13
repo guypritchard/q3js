@@ -1,4 +1,5 @@
 import Link from "next/link";
+import {formatDistanceToNow} from "date-fns";
 import {Badge} from "@/components/ui/badge.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
@@ -23,6 +24,20 @@ function formatPlaytime(totalSeconds:  number) {
     }
 
     return `${minutes}m`;
+}
+
+function formatLastOnline(value: string | null | undefined) {
+    if (!value) {
+        return "Unknown";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "Unknown";
+    }
+
+    return formatDistanceToNow(date, {addSuffix: true});
 }
 
 function PlayerListCard(props: {
@@ -156,7 +171,7 @@ export default function PlayerProfilePage(props: {
                     </Button>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                     <Card className="border-border/60 bg-card/60">
                         <CardHeader className="gap-1">
                             <CardTitle className="text-sm text-muted-foreground">Rank</CardTitle>
@@ -192,6 +207,17 @@ export default function PlayerProfilePage(props: {
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold">{formatPlaytime(Number(props.stats.playtimeSeconds))}</div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-border/60 bg-card/60 md:col-span-2 xl:col-span-1">
+                        <CardHeader className="gap-1">
+                            <CardTitle className="text-sm text-muted-foreground">Last Online</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-xl font-bold leading-tight">
+                                {formatLastOnline(props.stats.lastOnline)}
+                            </div>
                         </CardContent>
                     </Card>
                 </div>

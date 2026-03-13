@@ -176,6 +176,7 @@ public class EventService {
                 .playerName(playerName)
                 .period(period)
                 .playtimeSeconds(fetchPlaytimeSeconds(playerName, period, now, timeZone))
+                .lastOnline(fetchLastOnline(playerName))
                 .rank(fetchRank(playerName, baseCondition, kills))
                 .kills(kills)
                 .deaths(deaths)
@@ -228,6 +229,14 @@ public class EventService {
         }
 
         return totalSeconds;
+    }
+
+    private String fetchLastOnline(String playerName) {
+        OffsetDateTime lastOnline = dsl.select(DSL.max(EVENTS.RECEIVED_AT).as("last_online"))
+                .from(EVENTS)
+                .where(EVENTS.KILLER_NAME.eq(playerName).or(EVENTS.VICTIM_NAME.eq(playerName)))
+                .fetchOne(0, OffsetDateTime.class);
+        return lastOnline != null ? lastOnline.toString() : null;
     }
 
     private long overlapSeconds(

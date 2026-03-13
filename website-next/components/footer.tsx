@@ -1,3 +1,6 @@
+import Link from "next/link";
+import {SiGithub} from "react-icons/si";
+
 export function Footer() {
     return <footer className="border-t border-border/50 mt-16">
 
@@ -23,6 +26,24 @@ export function Footer() {
                 className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
                 <p className="font-mono">Built with ❤️ by <span className="text-red-500">L</span><span
                     className="text-green-500">K</span></p>
+                <div className="flex items-center gap-4">
+                    <Link
+                        href="/guide"
+                        className="transition-colors hover:text-foreground"
+                    >
+                        Run your server
+                    </Link>
+                    <a
+                        href="https://github.com/lklacar/q3js"
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label="View Q3JS on GitHub"
+                        className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+                    >
+                        <SiGithub className="h-4 w-4"/>
+                        <span>GitHub</span>
+                    </a>
+                </div>
             </div>
         </div>
     </footer>;

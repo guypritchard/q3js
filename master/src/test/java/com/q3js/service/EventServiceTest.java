@@ -65,6 +65,7 @@ class EventServiceTest {
         assertEquals("Ranger", response.getPlayerName());
         assertEquals(ScoreboardPeriod.ALL_TIME, response.getPeriod());
         assertEquals(5400, response.getPlaytimeSeconds());
+        assertEquals("2026-03-10T14:15Z", response.getLastOnline());
         assertEquals(2, response.getRank());
         assertEquals(12, response.getKills());
         assertEquals(5, response.getDeaths());
@@ -97,6 +98,7 @@ class EventServiceTest {
         assertEquals("Sarge", response.getPlayerName());
         assertEquals(ScoreboardPeriod.DAILY, response.getPeriod());
         assertEquals(0, response.getPlaytimeSeconds());
+        assertNull(response.getLastOnline());
         assertNull(response.getRank());
         assertEquals(0, response.getKills());
         assertEquals(0, response.getDeaths());
@@ -182,10 +184,11 @@ class EventServiceTest {
             return switch (callIndex.getAndIncrement()) {
                 case 0 -> new MockResult[]{new MockResult(1, countResult(12))};
                 case 1 -> new MockResult[]{new MockResult(1, countResult(5))};
-                case 2 -> new MockResult[]{new MockResult(1, countResult(1))};
-                case 3 -> new MockResult[]{new MockResult(1, favoriteMapResult("q3dm17", 7))};
-                case 4 -> new MockResult[]{new MockResult(2, versusVictimsResult())};
-                case 5 -> new MockResult[]{new MockResult(2, versusNemesesResult())};
+                case 2 -> new MockResult[]{new MockResult(1, lastOnlineResult(OffsetDateTime.parse("2026-03-10T14:15:00Z")))};
+                case 3 -> new MockResult[]{new MockResult(1, countResult(1))};
+                case 4 -> new MockResult[]{new MockResult(1, favoriteMapResult("q3dm17", 7))};
+                case 5 -> new MockResult[]{new MockResult(2, versusVictimsResult())};
+                case 6 -> new MockResult[]{new MockResult(2, versusNemesesResult())};
                 default -> throw new SQLException("Unexpected query call " + callIndex.get());
             };
         }
@@ -201,6 +204,13 @@ class EventServiceTest {
             Field<Integer> killsField = DSL.field("kills", Integer.class);
             var result = dsl.newResult(EVENTS.MAP_NAME, killsField);
             result.add(dsl.newRecord(EVENTS.MAP_NAME, killsField).values(mapName, kills));
+            return result;
+        }
+
+        private Result<?> lastOnlineResult(OffsetDateTime lastOnline) {
+            Field<OffsetDateTime> lastOnlineField = DSL.field("last_online", OffsetDateTime.class);
+            var result = dsl.newResult(lastOnlineField);
+            result.add(dsl.newRecord(lastOnlineField).values(lastOnline));
             return result;
         }
 
@@ -230,9 +240,10 @@ class EventServiceTest {
             return switch (callIndex.getAndIncrement()) {
                 case 0 -> new MockResult[]{new MockResult(1, countResult(0))};
                 case 1 -> new MockResult[]{new MockResult(1, countResult(0))};
-                case 2 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.MAP_NAME, DSL.field("kills", Integer.class)))};
-                case 3 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.VICTIM_NAME, DSL.field("kills", Integer.class)))};
-                case 4 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.KILLER_NAME, DSL.field("kills", Integer.class)))};
+                case 2 -> new MockResult[]{new MockResult(0, emptyLastOnlineResult())};
+                case 3 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.MAP_NAME, DSL.field("kills", Integer.class)))};
+                case 4 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.VICTIM_NAME, DSL.field("kills", Integer.class)))};
+                case 5 -> new MockResult[]{new MockResult(0, emptyResult(EVENTS.KILLER_NAME, DSL.field("kills", Integer.class)))};
                 default -> throw new SQLException("Unexpected query call " + callIndex.get());
             };
         }
@@ -246,6 +257,10 @@ class EventServiceTest {
 
         private Result<?> emptyResult(Field<?> first, Field<?> second) {
             return dsl.newResult(first, second);
+        }
+
+        private Result<?> emptyLastOnlineResult() {
+            return dsl.newResult(DSL.field("last_online", OffsetDateTime.class));
         }
     }
 

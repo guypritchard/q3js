@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import {Badge} from "@/components/ui/badge.tsx";
-import {SiGithub} from "react-icons/si";
 import {useQuery} from "@tanstack/react-query";
 import {getAllServersOptions} from "@/lib/client/@tanstack/react-query.gen.ts";
+import {useLocalStorage} from "@/hooks/use-local-storage.ts";
+import {createRandomPlayerName} from "@/lib/player-name-generator.ts";
 
 const HEADER_STATUS_STYLES = {
     offline: {
@@ -28,12 +29,20 @@ function getHeaderStatus(isOffline: boolean, isPending: boolean) {
 }
 
 export function Header() {
+    const [name] = useLocalStorage(
+        "name",
+        createRandomPlayerName()
+    );
 
     const serversResponse = useQuery({
         ...getAllServersOptions()
-    })
+    });
 
     const servers = serversResponse.data;
+    const normalizedName = name.trim();
+    const profileHref = normalizedName.length > 0
+        ? `/players/${encodeURIComponent(normalizedName)}`
+        : null;
 
     const serverCount = servers?.length ?? 0;
     const isOffline = serversResponse.isError;
@@ -67,35 +76,23 @@ export function Header() {
                     variant="outline"
                     className="h-6 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
                 >
-                    <Link href="/guide">
-                        <span className="sm:hidden">Guide</span>
-                        <span className="hidden sm:inline">Run your server</span>
-                    </Link>
-                </Badge>
-                <Badge
-                    asChild
-                    variant="outline"
-                    className="h-6 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
-                >
                     <Link href="/scoreboard">
                         <span className="sm:hidden">Scores</span>
                         <span className="hidden sm:inline">Global Scoreboard</span>
                     </Link>
                 </Badge>
                 <Badge
-                    asChild
+                    asChild={profileHref !== null}
                     variant="outline"
-                    className="h-6 gap-1.5 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
+                    className="h-6 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
                 >
-                    <a
-                        href="https://github.com/lklacar/q3js"
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label="View Q3JS on GitHub"
-                    >
-                        <SiGithub className="w-3.5 h-3.5"/>
-                        <span className="hidden md:inline">GitHub</span>
-                    </a>
+                    {profileHref !== null ? (
+                        <Link href={profileHref}>
+                            My Profile
+                        </Link>
+                    ) : (
+                        <span>My Profile</span>
+                    )}
                 </Badge>
                 <Badge
                     asChild

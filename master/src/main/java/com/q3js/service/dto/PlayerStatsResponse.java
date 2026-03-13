@@ -25,6 +25,9 @@ public class PlayerStatsResponse {
     @NotNull
     private long playtimeSeconds;
 
+    @Schema(nullable = true)
+    private String lastOnline;
+
     @NotNull
     @Schema(nullable = true)
     private Integer rank;

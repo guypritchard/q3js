@@ -50,6 +50,7 @@ export type PlayerStatsResponse = {
     playerName: string;
     period: ScoreboardPeriod;
     playtimeSeconds: bigint;
+    lastOnline: string | null;
     rank: number | null;
     kills: number;
     deaths: number;
