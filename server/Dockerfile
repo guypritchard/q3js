@@ -27,6 +27,7 @@ RUN chmod +x build.sh && ./build.sh
 FROM node:20-trixie AS runner
 
 ENV RCON_PASSWORD="changeme"
+ENV FS_GAME=""
 
 RUN apt-get update && apt-get install -y \
     libcurl4 \
@@ -49,4 +50,4 @@ EXPOSE 27961
 EXPOSE 27960/udp
 
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["+set", "dedicated", "2", "+set", "sv_pure", "1", "+set", "sv_allowDownload", "1", "+set", "net_ip", "0.0.0.0", "+set", "sv_dlrate", "0", "+set", "com_hunkMegs", "256", "+set", "fs_game", "q3js", "+exec", "q3js-defaults.cfg", "+exec", "autoexec.cfg"]
+CMD ["+set", "dedicated", "2", "+set", "sv_pure", "1", "+set", "sv_allowDownload", "1", "+set", "net_ip", "0.0.0.0", "+set", "sv_dlrate", "0", "+set", "com_hunkMegs", "256", "+exec", "q3js-defaults.cfg", "+exec", "autoexec.cfg"]

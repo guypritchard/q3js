@@ -26,6 +26,24 @@ const config = {
             {src: "baseq3/vm/ui.qvm", dst: "/baseq3/vm"},
         ],
     },
+    cpma: {
+        files: [
+            {src: "cpma/z-cpma-pak153.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm3a.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm15.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm22.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm24.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm26_cpmctf4.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm27.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm29.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm4.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm5.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm7.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm11a.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm14.pk3", dst: "/cpma"},
+        ],
+    }
+
 } as const;
 
 export default async function startGame({host, proxyPort, name, rafUpdate}: Params) {
