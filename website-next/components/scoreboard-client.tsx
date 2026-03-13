@@ -14,6 +14,7 @@ import {ScoreboardPeriodToggle} from "@/components/scoreboard-period-toggle.tsx"
 import {KillDistributionChart} from "@/components/kill-distribution-chart.tsx";
 import {KillDistributionPointResponse, ScoreboardEntryResponse, ScoreboardPeriod} from "@/lib/client";
 import {useRouter} from "next/navigation";
+import {formatCompactLastOnline} from "@/lib/last-online";
 
 function rankBadge(rank: number) {
     if (rank === 1) return <Badge className="min-w-10 justify-center bg-primary text-primary-foreground">#1</Badge>;
@@ -115,13 +116,18 @@ export function ScoreboardClient(props: {
                                     <tr key={`${entry.playerName}-${rank}`}
                                         className="border-b border-border/40 last:border-b-0">
                                         <td className="px-4 py-3">{rankBadge(rank)}</td>
-                                        <td className="px-4 py-3 font-semibold">
-                                            <Link
-                                                href={`/players/${encodeURIComponent(entry.playerName)}`}
-                                                className="inline-flex hover:text-primary transition-colors"
-                                            >
-                                                <Q3ColoredText text={entry.playerName}/>
-                                            </Link>
+                                        <td className="px-4 py-3">
+                                            <div className="min-w-0">
+                                                <Link
+                                                    href={`/players/${encodeURIComponent(entry.playerName)}`}
+                                                    className="inline-flex max-w-full truncate font-semibold hover:text-primary transition-colors"
+                                                >
+                                                    <Q3ColoredText text={entry.playerName}/>
+                                                </Link>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Last online {formatCompactLastOnline(entry.lastOnline)}
+                                                </p>
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3 text-right tabular-nums">
                                             {formatKills(entry.kills)}

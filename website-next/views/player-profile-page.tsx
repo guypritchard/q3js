@@ -1,5 +1,4 @@
 import Link from "next/link";
-import {formatDistanceToNow} from "date-fns";
 import {Badge} from "@/components/ui/badge.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
@@ -9,6 +8,7 @@ import {absoluteUrl, siteConfig} from "@/lib/seo";
 import {stripQ3Colors} from "@/lib/utils.ts";
 import {SCOREBOARD_PERIOD_LABELS} from "@/lib/scoreboard.ts";
 import {PlayerStatsResponse, ScoreboardPeriod} from "@/lib/client";
+import {formatRelativeLastOnline} from "@/lib/last-online";
 
 function formatRatio(value: number | null) {
     if (value === null) return "Perfect";
@@ -35,17 +35,7 @@ function formatKillsPerMinute(kills: number, playtimeSeconds: number) {
 }
 
 function formatLastOnline(value: string | null | undefined) {
-    if (!value) {
-        return "Unknown";
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return "Unknown";
-    }
-
-    return formatDistanceToNow(date, {addSuffix: true});
+    return formatRelativeLastOnline(value);
 }
 
 function PlayerListCard(props: {

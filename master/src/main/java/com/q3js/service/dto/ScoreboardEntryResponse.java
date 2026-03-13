@@ -17,4 +17,6 @@ public class ScoreboardEntryResponse {
 
     @NotNull
     private Integer kills;
+
+    private String lastOnline;
 }

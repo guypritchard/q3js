@@ -76,6 +76,7 @@ export type PlayerWeaponBreakdownResponse = {
 export type ScoreboardEntryResponse = {
     playerName: string;
     kills: number;
+    lastOnline?: string;
 };
 
 export const ScoreboardPeriod = {

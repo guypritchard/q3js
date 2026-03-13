@@ -92,15 +92,29 @@ public class EventService {
         OffsetDateTime now = currentTime();
         Field<Integer> kills = DSL.count().as("kills");
         Condition condition = killCondition(period, now, timeZone);
-
-        return dsl.select(EVENTS.KILLER_NAME, kills)
+        Table<?> scoreboard = dsl.select(
+                        EVENTS.KILLER_NAME.as("player_name"),
+                        kills
+                )
                 .from(EVENTS)
                 .where(condition)
                 .groupBy(EVENTS.KILLER_NAME)
-                .orderBy(kills.desc(), EVENTS.KILLER_NAME.asc())
+                .asTable("scoreboard");
+        Table<?> lastOnlineByPlayer = lastOnlineByPlayerTable();
+        Field<String> scoreboardPlayer = DSL.field(DSL.name("scoreboard", "player_name"), String.class);
+        Field<Integer> scoreboardKills = DSL.field(DSL.name("scoreboard", "kills"), Integer.class);
+        Field<String> lastOnlinePlayer = DSL.field(DSL.name("last_online_by_player", "player_name"), String.class);
+        Field<OffsetDateTime> lastOnline = DSL.field(DSL.name("last_online_by_player", "last_online"), OffsetDateTime.class);
+
+        return dsl.select(scoreboardPlayer, scoreboardKills, lastOnline)
+                .from(scoreboard)
+                .leftJoin(lastOnlineByPlayer)
+                .on(scoreboardPlayer.eq(lastOnlinePlayer))
+                .orderBy(scoreboardKills.desc(), scoreboardPlayer.asc())
                 .fetch(record -> ScoreboardEntryResponse.builder()
-                        .playerName(record.get(EVENTS.KILLER_NAME))
-                        .kills(record.get(kills))
+                        .playerName(record.get(scoreboardPlayer))
+                        .kills(record.get(scoreboardKills))
+                        .lastOnline(record.get(lastOnline) != null ? record.get(lastOnline).toString() : null)
                         .build());
     }
 
@@ -237,6 +251,34 @@ public class EventService {
                 .where(EVENTS.KILLER_NAME.eq(playerName).or(EVENTS.VICTIM_NAME.eq(playerName)))
                 .fetchOne(0, OffsetDateTime.class);
         return lastOnline != null ? lastOnline.toString() : null;
+    }
+
+    private Table<?> lastOnlineByPlayerTable() {
+        Table<?> playerActivity = dsl.select(
+                        EVENTS.KILLER_NAME.as("player_name"),
+                        EVENTS.RECEIVED_AT.as("received_at")
+                )
+                .from(EVENTS)
+                .where(EVENTS.KILLER_NAME.isNotNull())
+                .unionAll(
+                        dsl.select(
+                                        EVENTS.VICTIM_NAME.as("player_name"),
+                                        EVENTS.RECEIVED_AT.as("received_at")
+                                )
+                                .from(EVENTS)
+                                .where(EVENTS.VICTIM_NAME.isNotNull())
+                )
+                .asTable("player_activity");
+        Field<String> playerName = DSL.field(DSL.name("player_activity", "player_name"), String.class);
+        Field<OffsetDateTime> receivedAt = DSL.field(DSL.name("player_activity", "received_at"), OffsetDateTime.class);
+
+        return dsl.select(
+                        playerName,
+                        DSL.max(receivedAt).as("last_online")
+                )
+                .from(playerActivity)
+                .groupBy(playerName)
+                .asTable("last_online_by_player");
     }
 
     private long overlapSeconds(

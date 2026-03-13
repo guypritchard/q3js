@@ -11,6 +11,7 @@ import {Q3ColoredText} from "@/components/q3-colored-text.tsx";
 import {ScoreboardPeriodToggle} from "@/components/scoreboard-period-toggle.tsx";
 import {ScoreboardEntryResponse, ScoreboardPeriod} from "@/lib/client";
 import {sortScoreboardEntries} from "@/lib/scoreboard";
+import {formatCompactLastOnline} from "@/lib/last-online";
 
 function formatKills(kills: number) {
     return new Intl.NumberFormat().format(kills);
@@ -70,12 +71,17 @@ export function ScoreboardPreview(props: {
                                             className="grid grid-cols-[56px_1fr_100px] items-center gap-3 px-2 py-3 text-sm"
                                         >
                                             <span className="text-muted-foreground">#{index + 1}</span>
-                                            <Link
-                                                href={`/players/${encodeURIComponent(entry.playerName)}`}
-                                                className="font-semibold truncate hover:text-primary transition-colors"
-                                            >
-                                                <Q3ColoredText text={entry.playerName}/>
-                                            </Link>
+                                            <div className="min-w-0">
+                                                <Link
+                                                    href={`/players/${encodeURIComponent(entry.playerName)}`}
+                                                    className="block truncate font-semibold hover:text-primary transition-colors"
+                                                >
+                                                    <Q3ColoredText text={entry.playerName}/>
+                                                </Link>
+                                                <p className="truncate text-xs text-muted-foreground">
+                                                    Last online {formatCompactLastOnline(entry.lastOnline)}
+                                                </p>
+                                            </div>
                                             <span className="text-right tabular-nums">
                                                 {formatKills(entry.kills)}
                                             </span>
