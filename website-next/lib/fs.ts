@@ -21,14 +21,14 @@ type FSLike = {
     mkdirTree: (path: string) => void;
     mount: (type: unknown, opts: Record<string, unknown>, mountpoint: string) => void;
     readdir: (path: string) => string[];
-    stat: (path: string) => { mode: number };
+    stat: (path: string) => { mode: number; size?: number };
     rmdir: (path: string) => void;
     unlink: (path: string) => void;
     readFile: (path: string, opts: { encoding: "utf8" }) => string;
-    writeFile: (path: string, data: string) => void;
+    writeFile: (path: string, data: string | ArrayBuffer | ArrayBufferView) => void;
 };
 
-type IOQ3Module = {
+export type IOQ3Module = {
     FS: FSLike;
     IDBFS?: unknown;
 };
@@ -79,9 +79,22 @@ function readDataVersion(FS: FSLike): string | null {
     }
 }
 
-export async function ensureMounts(module: IOQ3Module): Promise<{ persist: boolean }> {
+function normalizeMountDirs(gameDirs: string[]) {
+    return Array.from(
+        new Set(
+            gameDirs
+                .map((dir) => dir.trim())
+                .filter(Boolean)
+        )
+    );
+}
+
+export async function ensureMounts(module: IOQ3Module, gameDirs: string[] = ["baseq3"]): Promise<{ persist: boolean }> {
     const {FS} = module;
-    FS.mkdirTree("/baseq3");
+    const mountDirs = normalizeMountDirs(["baseq3", ...gameDirs]);
+    for (const dir of mountDirs) {
+        FS.mkdirTree(`/${dir}`);
+    }
     FS.mkdirTree("/baseq3/vm");
 
     const IDBFS = resolveIDBFS(module);
@@ -90,10 +103,12 @@ export async function ensureMounts(module: IOQ3Module): Promise<{ persist: boole
         return {persist: false};
     }
 
-    try {
-        FS.mount(IDBFS, {autoPersist: true}, "/baseq3");
-    } catch {
-        // already mounted
+    for (const dir of mountDirs) {
+        try {
+            FS.mount(IDBFS, {autoPersist: true}, `/${dir}`);
+        } catch {
+            // already mounted
+        }
     }
 
     await syncfs(module, true);
@@ -107,7 +122,9 @@ export async function ensureMounts(module: IOQ3Module): Promise<{ persist: boole
         }
     } else if (current !== DATA_VERSION) {
         try {
-            clearDirectory(FS, "/baseq3");
+            for (const dir of mountDirs) {
+                clearDirectory(FS, `/${dir}`);
+            }
             FS.writeFile(VERSION_FILE, DATA_VERSION);
             await syncfs(module, false);
         } catch (e) {

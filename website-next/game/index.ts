@@ -1,17 +1,23 @@
 import {getWsProtocol} from "@/lib/utils.ts";
-import {ensureMounts, estimateTotalBytes, fetchIntoUint8, type Prog, syncfs} from "@/lib/fs.ts";
+import {ensureMounts, estimateTotalBytes, fetchIntoUint8, type IOQ3Module, type Prog, syncfs} from "@/lib/fs.ts";
 
 type Params = {
     host: string;
     proxyPort: number;
     name: string;
     rafUpdate: (prog: Prog) => void;
+    fsGame: string
 }
 
+type FileEntry = {
+    src: string;
+    dst: string;
+};
 
 const config = {
     baseq3: {
         files: [
+            {src: "baseq3/q3key", dst: "/baseq3"},
             {src: "baseq3/pak0.pk3", dst: "/baseq3"},
             {src: "baseq3/pak1.pk3", dst: "/baseq3"},
             {src: "baseq3/pak2.pk3", dst: "/baseq3"},
@@ -28,42 +34,117 @@ const config = {
     },
     cpma: {
         files: [
+
+            // core pak + maps (already had)
             {src: "cpma/z-cpma-pak153.pk3", dst: "/cpma"},
-            {src: "cpma/map_cpm3a.pk3", dst: "/cpma"},
+
+            {src: "cpma/map_cpm10.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm11a.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm11.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm12.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm13.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm14.pk3", dst: "/cpma"},
             {src: "cpma/map_cpm15.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm16.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm17.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm18.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm18r.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm19.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm1a.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm20.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm21.pk3", dst: "/cpma"},
             {src: "cpma/map_cpm22.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm23.pk3", dst: "/cpma"},
             {src: "cpma/map_cpm24.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm25.pk3", dst: "/cpma"},
             {src: "cpma/map_cpm26_cpmctf4.pk3", dst: "/cpma"},
             {src: "cpma/map_cpm27.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm28.pk3", dst: "/cpma"},
             {src: "cpma/map_cpm29.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm2.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm3a.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm3.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm4a.pk3", dst: "/cpma"},
             {src: "cpma/map_cpm4.pk3", dst: "/cpma"},
             {src: "cpma/map_cpm5.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm6.pk3", dst: "/cpma"},
             {src: "cpma/map_cpm7.pk3", dst: "/cpma"},
-            {src: "cpma/map_cpm11a.pk3", dst: "/cpma"},
-            {src: "cpma/map_cpm14.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm8.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpm9.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpma3.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpmctf1.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpmctf2.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpmctf3.pk3", dst: "/cpma"},
+            {src: "cpma/map_cpmctf5.pk3", dst: "/cpma"},
+
+            // misc root files
+            {src: "cpma/changelog.txt", dst: "/cpma"},
+            {src: "cpma/description.txt", dst: "/cpma"},
+            {src: "cpma/readme.txt", dst: "/cpma"},
+            {src: "cpma/openlibm_license.md", dst: "/cpma"},
+            {src: "cpma/cpma.ico", dst: "/cpma"},
+            {src: "cpma/cpma-trans.ico", dst: "/cpma"},
+
+            // classes
+            {src: "cpma/classes/fighter.cfg", dst: "/cpma/classes"},
+            {src: "cpma/classes/scout.cfg", dst: "/cpma/classes"},
+            {src: "cpma/classes/sniper.cfg", dst: "/cpma/classes"},
+            {src: "cpma/classes/tank.cfg", dst: "/cpma/classes"},
+
+            // hud
+            {src: "cpma/hud/arqon.cfg", dst: "/cpma/hud"},
+            {src: "cpma/hud/hud1.cfg", dst: "/cpma/hud"},
+            {src: "cpma/hud/hud2.cfg", dst: "/cpma/hud"},
+            {src: "cpma/hud/hud3.cfg", dst: "/cpma/hud"},
+            {src: "cpma/hud/hud4.cfg", dst: "/cpma/hud"},
+            {src: "cpma/hud/hud5.cfg", dst: "/cpma/hud"},
+            {src: "cpma/hud/hud6.cfg", dst: "/cpma/hud"},
+            {src: "cpma/hud/hud7.cfg", dst: "/cpma/hud"},
+
+            // stats
+            {src: "cpma/stats/basics/arrdown.gif", dst: "/cpma/stats/basics"},
+            {src: "cpma/stats/basics/arrup.gif", dst: "/cpma/stats/basics"},
+            {src: "cpma/stats/basics/stats141.css", dst: "/cpma/stats/basics"},
+            {src: "cpma/stats/basics/stats141.xsl", dst: "/cpma/stats/basics"},
+
+            // viewcam
+            {src: "cpma/viewcam/cpm3a.cfg", dst: "/cpma/viewcam"},
+            {src: "cpma/viewcam/cpm3.cfg", dst: "/cpma/viewcam"},
+            {src: "cpma/viewcam/q3dm12.cfg", dst: "/cpma/viewcam"},
         ],
     }
 
-} as const;
+} as const satisfies Record<string, { files: readonly FileEntry[] }>;
 
-export default async function startGame({host, proxyPort, name, rafUpdate}: Params) {
+type SupportedGameDir = keyof typeof config;
+type RuntimeModule = IOQ3Module & {
+    addRunDependency: (id: string) => void;
+    removeRunDependency: (id: string) => void;
+};
+
+function isSupportedGameDir(gameDir: string): gameDir is SupportedGameDir {
+    return gameDir in config;
+}
+
+export default async function startGame({host, proxyPort, name, rafUpdate, fsGame}: Params) {
     const importIoquake3 = new Function("return import('/ioquake3.js')");
     const ioquake3Module = await (importIoquake3() as Promise<{ default: (moduleArg?: unknown) => unknown }>);
     const ioquake3 = ioquake3Module.default;
 
-    const com_basegame = "baseq3" as const;
-    const fs_basegame = "baseq3" as const;
-    const fs_game = "baseq3" as const;
+    const com_basegame = fsGame;
+    const fs_basegame = fsGame;
+    const fs_game = fsGame;
 
     let generatedArguments = `
           +set sv_pure 0
           +set net_enabled 1
           +set r_mode -2
-          +set com_basegame "${com_basegame}"
-          +set fs_basegame "${fs_basegame}"
           +set cl_allowDownload 1
           +set con_scale 2
           +set fs_game "${fs_game}"
+          +set com_introplayed 1
+          +set ui_cdkeychecked 1
+          +set cl_firststart 0
         `;
     generatedArguments += ` +connect ${host}:${proxyPort} `;
     generatedArguments += ` +set name "${name.replace(/"/g, "'")}" `;
@@ -88,7 +169,7 @@ export default async function startGame({host, proxyPort, name, rafUpdate}: Para
             if (path.endsWith(".wasm")) return "/ioquake3.wasm";
         },
         preRun: [
-            async (module: any) => {
+            async (module: RuntimeModule) => {
                 module.addRunDependency("setup-ioq3-filesystem");
                 try {
                     rafUpdate({
@@ -98,13 +179,13 @@ export default async function startGame({host, proxyPort, name, rafUpdate}: Para
                         current: "Preparing local storage",
                         stage: "initializing"
                     });
-                    const {persist} = await ensureMounts(module);
-
-                    const gameDirs = Array.from(new Set([com_basegame, fs_basegame, fs_game]));
-                    const allFileEntries = gameDirs.flatMap((g) => (config as any)[g].files);
+                    const mountDirs = Array.from(new Set([com_basegame, fs_basegame, fs_game, "baseq3"]));
+                    const {persist} = await ensureMounts(module, mountDirs);
+                    const configuredGameDirs = mountDirs.filter(isSupportedGameDir);
+                    const allFileEntries = configuredGameDirs.flatMap<FileEntry>((g) => config[g].files);
                     const uniqueFileEntries = Array.from(
                         new Map(
-                            allFileEntries.map((f: { src: string; dst: string }) => {
+                            allFileEntries.map((f: FileEntry) => {
                                 const assetName = f.src.split("/").pop() as string;
                                 const dstPath = `${f.dst}/${assetName}`;
                                 return [dstPath, f] as const;
@@ -112,18 +193,18 @@ export default async function startGame({host, proxyPort, name, rafUpdate}: Para
                         ).values()
                     );
 
-                    const pendingEntries = uniqueFileEntries.filter((f: { src: string; dst: string }) => {
+                    const pendingEntries = uniqueFileEntries.filter((f: FileEntry) => {
                         const assetName = f.src.split("/").pop() as string;
                         const dstPath = `${f.dst}/${assetName}`;
                         try {
                             const st = module.FS.stat(dstPath);
-                            return !(st && st.size > 0);
+                            return !st || (st.size ?? 0) <= 0;
                         } catch {
                             return true;
                         }
                     });
 
-                    const pendingUrls = pendingEntries.map((f: { src: string }) => new URL(f.src, dataURL));
+                    const pendingUrls = pendingEntries.map((f: FileEntry) => new URL(f.src, dataURL));
                     const totalBytes = await estimateTotalBytes(pendingUrls);
                     let receivedBytes = 0;
                     const downloadStart = Date.now();

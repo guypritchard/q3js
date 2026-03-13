@@ -39,6 +39,7 @@ export default function GamePage() {
     const host = searchParams?.get("host") ?? "";
     const proxyPort = toInt(searchParams?.get("proxyPort") ?? undefined, 0);
     const name = searchParams?.get("name") ?? "Player";
+    const fsGame = searchParams?.get("fs_game") ?? "baseq3";
 
     useEffect(() => {
         if (!host || !proxyPort) {
@@ -48,7 +49,8 @@ export default function GamePage() {
             name,
             host,
             proxyPort,
-            rafUpdate
+            rafUpdate,
+            fsGame
         })
     }, [host, name, proxyPort, rafUpdate]);
 
