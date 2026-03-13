@@ -104,18 +104,27 @@ export default function PlayerProfilePage(props: {
 }) {
     const plainName = stripQ3Colors(props.playerName);
     const periodLabel = SCOREBOARD_PERIOD_LABELS[props.period];
+    const playerProfileUrl = absoluteUrl(`/players/${encodeURIComponent(props.playerName)}`);
+    const playerStructuredData = {
+        "@type": "Person",
+        name: plainName,
+        url: playerProfileUrl,
+        description: `${periodLabel} Q3JS stats for ${plainName}.`,
+        mainEntityOfPage: playerProfileUrl,
+    };
     const profileStructuredData = {
         "@context": "https://schema.org",
         "@type": "ProfilePage",
         name: `${plainName} player profile`,
         description: `${periodLabel} Q3JS profile for ${plainName}, including kills, deaths, favorite map, and rivals.`,
-        url: absoluteUrl(`/players/${encodeURIComponent(props.playerName)}`),
+        url: playerProfileUrl,
         isPartOf: {
             "@type": "WebSite",
             name: siteConfig.name,
             url: siteConfig.url,
         },
         inLanguage: "en-US",
+        mainEntity: playerStructuredData,
     };
 
     return (
