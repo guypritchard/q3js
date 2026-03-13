@@ -6,6 +6,7 @@ import {
     ServerResponse
 } from "@/lib/client";
 import {getAllServers} from '@/lib/client/sdk.gen';
+import {getRequestTimeZone} from "@/lib/request-time-zone";
 
 export async function getInitialServers(): Promise<ServerResponse[]> {
     const {data} = await getAllServers({
@@ -15,9 +16,11 @@ export async function getInitialServers(): Promise<ServerResponse[]> {
 }
 
 export async function getInitialScoreboard(period: ScoreboardPeriod = "DAILY"): Promise<ScoreboardEntryResponse[]> {
+    const timeZone = await getRequestTimeZone();
     const {data} = await getGlobalScoreboard({
         query: {
-            period
+            period,
+            timeZone,
         },
         throwOnError: true
     })
@@ -27,8 +30,19 @@ export async function getInitialScoreboard(period: ScoreboardPeriod = "DAILY"): 
 export async function getInitialScoreboards(
     periods: readonly ScoreboardPeriod[],
 ): Promise<Record<ScoreboardPeriod, ScoreboardEntryResponse[]>> {
+    const timeZone = await getRequestTimeZone();
     const entries = await Promise.all(
-        periods.map(async (period) => [period, await getInitialScoreboard(period)] as const),
+        periods.map(async (period) => {
+            const {data} = await getGlobalScoreboard({
+                query: {
+                    period,
+                    timeZone,
+                },
+                throwOnError: true,
+            });
+
+            return [period, data] as const;
+        }),
     );
 
     return Object.fromEntries(entries) as Record<ScoreboardPeriod, ScoreboardEntryResponse[]>;
@@ -37,8 +51,19 @@ export async function getInitialScoreboards(
 export async function getInitialKillDistributions(
     periods: readonly ScoreboardPeriod[],
 ): Promise<Record<ScoreboardPeriod, KillDistributionPointResponse[]>> {
+    const timeZone = await getRequestTimeZone();
     const entries = await Promise.all(
-        periods.map(async (period) => [period, await getInitialKillDistribution(period)] as const),
+        periods.map(async (period) => {
+            const {data} = await getKillDistribution({
+                query: {
+                    period,
+                    timeZone,
+                },
+                throwOnError: true,
+            });
+
+            return [period, data] as const;
+        }),
     );
 
     return Object.fromEntries(entries) as Record<ScoreboardPeriod, KillDistributionPointResponse[]>;
@@ -47,9 +72,11 @@ export async function getInitialKillDistributions(
 export async function getInitialKillDistribution(
     period: ScoreboardPeriod = "DAILY"
 ): Promise<KillDistributionPointResponse[]> {
+    const timeZone = await getRequestTimeZone();
     const {data} = await getKillDistribution({
         query: {
             period,
+            timeZone,
         },
         throwOnError: true
     })

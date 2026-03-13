@@ -154,6 +154,7 @@ export type GetKillDistributionData = {
     path?: never;
     query?: {
         period?: string;
+        timeZone?: string;
     };
     url: '/api/events/distribution';
 };
@@ -174,6 +175,7 @@ export type GetPlayerStatsData = {
     };
     query?: {
         period?: string;
+        timeZone?: string;
     };
     url: '/api/events/players/{playerName}';
 };
@@ -192,6 +194,7 @@ export type GetGlobalScoreboardData = {
     path?: never;
     query?: {
         period?: string;
+        timeZone?: string;
     };
     url: '/api/events/scoreboard';
 };

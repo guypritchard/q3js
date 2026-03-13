@@ -1,6 +1,7 @@
 package com.q3js.controller;
 
 import com.q3js.service.EventService;
+import com.q3js.service.RequestedTimeZone;
 import com.q3js.service.ScoreboardPeriod;
 import com.q3js.service.dto.CreateEventRequest;
 import com.q3js.service.dto.KillDistributionPointResponse;
@@ -18,6 +19,7 @@ import jakarta.ws.rs.core.MediaType;
 import lombok.RequiredArgsConstructor;
 import org.jboss.logging.Logger;
 
+import java.time.ZoneId;
 import java.util.List;
 
 @ApplicationScoped
@@ -37,22 +39,32 @@ public class EventController {
 
     @GET
     @Path("/scoreboard")
-    public List<ScoreboardEntryResponse> getGlobalScoreboard(@QueryParam("period") String period) {
-        return eventService.getGlobalScoreboard(ScoreboardPeriod.fromQueryParam(period));
+    public List<ScoreboardEntryResponse> getGlobalScoreboard(
+            @QueryParam("period") String period,
+            @QueryParam("timeZone") String timeZone
+    ) {
+        ZoneId requestedTimeZone = RequestedTimeZone.fromQueryParam(timeZone);
+        return eventService.getGlobalScoreboard(ScoreboardPeriod.fromQueryParam(period), requestedTimeZone);
     }
 
     @GET
     @Path("/distribution")
-    public List<KillDistributionPointResponse> getKillDistribution(@QueryParam("period") String period) {
-        return eventService.getKillDistribution(ScoreboardPeriod.fromQueryParam(period));
+    public List<KillDistributionPointResponse> getKillDistribution(
+            @QueryParam("period") String period,
+            @QueryParam("timeZone") String timeZone
+    ) {
+        ZoneId requestedTimeZone = RequestedTimeZone.fromQueryParam(timeZone);
+        return eventService.getKillDistribution(ScoreboardPeriod.fromQueryParam(period), requestedTimeZone);
     }
 
     @GET
     @Path("/players/{playerName}")
     public PlayerStatsResponse getPlayerStats(
             @PathParam("playerName") String playerName,
-            @QueryParam("period") String period
+            @QueryParam("period") String period,
+            @QueryParam("timeZone") String timeZone
     ) {
-        return eventService.getPlayerStats(playerName, ScoreboardPeriod.fromQueryParam(period));
+        ZoneId requestedTimeZone = RequestedTimeZone.fromQueryParam(timeZone);
+        return eventService.getPlayerStats(playerName, ScoreboardPeriod.fromQueryParam(period), requestedTimeZone);
     }
 }

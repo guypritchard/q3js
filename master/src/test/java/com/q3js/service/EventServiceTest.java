@@ -15,7 +15,9 @@ import org.jooq.tools.jdbc.MockExecuteContext;
 import org.jooq.tools.jdbc.MockResult;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.sql.SQLException;
 import java.util.List;
@@ -58,7 +60,7 @@ class EventServiceTest {
                 5400
         );
 
-        PlayerStatsResponse response = eventService.getPlayerStats("Ranger", ScoreboardPeriod.ALL_TIME);
+        PlayerStatsResponse response = eventService.getPlayerStats("Ranger", ScoreboardPeriod.ALL_TIME, RequestedTimeZone.DEFAULT);
 
         assertEquals("Ranger", response.getPlayerName());
         assertEquals(ScoreboardPeriod.ALL_TIME, response.getPeriod());
@@ -90,7 +92,7 @@ class EventServiceTest {
         DSLContext dsl = DSL.using(new MockConnection(new EmptyPlayerStatsMockProvider()), SQLDialect.POSTGRES);
         EventService eventService = new TestEventService(dsl, List.of());
 
-        PlayerStatsResponse response = eventService.getPlayerStats("Sarge", ScoreboardPeriod.DAILY);
+        PlayerStatsResponse response = eventService.getPlayerStats("Sarge", ScoreboardPeriod.DAILY, RequestedTimeZone.DEFAULT);
 
         assertEquals("Sarge", response.getPlayerName());
         assertEquals(ScoreboardPeriod.DAILY, response.getPeriod());
@@ -133,16 +135,17 @@ class EventServiceTest {
     @Test
     void getKillDistributionUsesRollingHourlyBucketsForDailyPeriod() {
         OffsetDateTime now = OffsetDateTime.of(2026, 3, 11, 15, 42, 0, 0, ZoneOffset.ofHours(1));
-        OffsetDateTime dayStart = now.minusHours(24).withOffsetSameInstant(ZoneOffset.UTC);
+        ZoneId timeZone = ZoneId.of("Asia/Tokyo");
+        OffsetDateTime dayStart = ScoreboardPeriod.DAILY.startsAt(now, timeZone).orElseThrow();
         DSLContext dsl = DSL.using(new MockConnection(new DailyDistributionMockProvider(
-                dayStart.plusMinutes(5),
-                dayStart.plusHours(1).plusMinutes(1),
-                dayStart.plusHours(1).plusMinutes(45),
-                now.withOffsetSameInstant(ZoneOffset.UTC).minusMinutes(1)
+                dayStart.plusMinutes(5).withOffsetSameInstant(ZoneOffset.UTC),
+                dayStart.plusHours(1).plusMinutes(1).withOffsetSameInstant(ZoneOffset.UTC),
+                dayStart.plusHours(1).plusMinutes(45).withOffsetSameInstant(ZoneOffset.UTC),
+                now.minusMinutes(1).withOffsetSameInstant(ZoneOffset.UTC)
         )), SQLDialect.POSTGRES);
         EventService eventService = new FixedNowEventService(dsl, now);
 
-        var response = eventService.getKillDistribution(ScoreboardPeriod.DAILY);
+        var response = eventService.getKillDistribution(ScoreboardPeriod.DAILY, timeZone);
 
         assertEquals(24, response.size());
         assertEquals(dayStart.toString(), response.getFirst().getBucketStart());
@@ -151,6 +154,23 @@ class EventServiceTest {
         assertEquals(2, response.get(1).getKills());
         assertEquals(1, response.getLast().getKills());
         assertEquals(4, response.stream().mapToInt(point -> point.getKills() != null ? point.getKills() : 0).sum());
+    }
+
+    @Test
+    void getKillDistributionReturnsLocalMidnightBucketsForCalendarPeriods() {
+        DSLContext dsl = DSL.using(new MockConnection(new CalendarDistributionMockProvider()), SQLDialect.POSTGRES);
+        EventService eventService = new FixedNowEventService(
+                dsl,
+                OffsetDateTime.of(2026, 3, 11, 15, 42, 0, 0, ZoneOffset.UTC)
+        );
+
+        var response = eventService.getKillDistribution(ScoreboardPeriod.WEEKLY, ZoneId.of("America/New_York"));
+
+        assertEquals(2, response.size());
+        assertEquals("2026-03-09T00:00-04:00", response.getFirst().getBucketStart());
+        assertEquals(3, response.getFirst().getKills());
+        assertEquals("2026-03-10T00:00-04:00", response.get(1).getBucketStart());
+        assertEquals(5, response.get(1).getKills());
     }
 
     private static final class PlayerStatsMockProvider implements MockDataProvider {
@@ -278,6 +298,20 @@ class EventServiceTest {
         }
     }
 
+    private static final class CalendarDistributionMockProvider implements MockDataProvider {
+        private final DSLContext dsl = DSL.using(SQLDialect.POSTGRES);
+
+        @Override
+        public MockResult[] execute(MockExecuteContext context) {
+            Field<LocalDate> bucketField = DSL.field("bucket", LocalDate.class);
+            Field<Integer> killsField = DSL.field("kills", Integer.class);
+            var result = dsl.newResult(bucketField, killsField);
+            result.add(dsl.newRecord(bucketField, killsField).values(LocalDate.of(2026, 3, 9), 3));
+            result.add(dsl.newRecord(bucketField, killsField).values(LocalDate.of(2026, 3, 10), 5));
+            return new MockResult[]{new MockResult(result.size(), result)};
+        }
+    }
+
     private static final class TestEventService extends EventService {
         private final long playtimeSeconds;
         private final List<PlayerWeaponBreakdownResponse> weaponBreakdown;
@@ -298,7 +332,7 @@ class EventServiceTest {
         }
 
         @Override
-        protected long fetchPlaytimeSeconds(String playerName, ScoreboardPeriod period, java.time.OffsetDateTime now) {
+        protected long fetchPlaytimeSeconds(String playerName, ScoreboardPeriod period, java.time.OffsetDateTime now, ZoneId timeZone) {
             return playtimeSeconds;
         }
     }

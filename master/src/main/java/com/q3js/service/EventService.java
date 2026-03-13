@@ -20,9 +20,9 @@ import org.jooq.impl.SQLDataType;
 import org.jooq.impl.DSL;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayDeque;
 import java.util.Comparator;
@@ -88,10 +88,10 @@ public class EventService {
                         .build());
     }
 
-    public List<ScoreboardEntryResponse> getGlobalScoreboard(ScoreboardPeriod period) {
+    public List<ScoreboardEntryResponse> getGlobalScoreboard(ScoreboardPeriod period, ZoneId timeZone) {
         OffsetDateTime now = currentTime();
         Field<Integer> kills = DSL.count().as("kills");
-        Condition condition = killCondition(period, now);
+        Condition condition = killCondition(period, now, timeZone);
 
         return dsl.select(EVENTS.KILLER_NAME, kills)
                 .from(EVENTS)
@@ -104,17 +104,19 @@ public class EventService {
                         .build());
     }
 
-    public List<KillDistributionPointResponse> getKillDistribution(ScoreboardPeriod period) {
+    public List<KillDistributionPointResponse> getKillDistribution(ScoreboardPeriod period, ZoneId timeZone) {
         OffsetDateTime now = currentTime();
         Field<Integer> kills = DSL.count().as("kills");
 
         if (period == ScoreboardPeriod.DAILY) {
-            OffsetDateTime dayStart = period.startsAt(now).orElseThrow();
+            OffsetDateTime dayStart = period.startsAt(now, timeZone).orElseThrow();
+            ZonedDateTime zonedNow = now.atZoneSameInstant(timeZone);
+            ZonedDateTime zonedDayStart = dayStart.atZoneSameInstant(timeZone);
             int[] killsByHour = new int[24];
 
             dsl.select(EVENTS.RECEIVED_AT)
                     .from(EVENTS)
-                    .where(killCondition(period, now))
+                    .where(killCondition(period, now, timeZone))
                     .orderBy(EVENTS.RECEIVED_AT.asc())
                     .fetch(EVENTS.RECEIVED_AT)
                     .forEach(receivedAt -> {
@@ -122,9 +124,10 @@ public class EventService {
                             return;
                         }
 
-                        int bucketIndex = !receivedAt.isBefore(now)
+                        ZonedDateTime zonedReceivedAt = receivedAt.atZoneSameInstant(timeZone);
+                        int bucketIndex = !zonedReceivedAt.isBefore(zonedNow)
                                 ? 23
-                                : (int) ChronoUnit.HOURS.between(dayStart, receivedAt);
+                                : (int) ChronoUnit.HOURS.between(zonedDayStart, zonedReceivedAt);
 
                         if (bucketIndex >= 0 && bucketIndex < killsByHour.length) {
                             killsByHour[bucketIndex]++;
@@ -133,7 +136,7 @@ public class EventService {
 
             return IntStream.range(0, 24)
                     .mapToObj(index -> {
-                        OffsetDateTime bucketStart = dayStart.plusHours(index);
+                        OffsetDateTime bucketStart = zonedDayStart.plusHours(index).toOffsetDateTime();
                         return KillDistributionPointResponse.builder()
                                 .bucketStart(bucketStart.toString())
                                 .kills(killsByHour[index])
@@ -143,26 +146,26 @@ public class EventService {
         }
 
         Field<LocalDate> day = DSL
-                .field("timezone('UTC', {0})::date", SQLDataType.LOCALDATE, EVENTS.RECEIVED_AT)
+                .field("timezone({0}, {1})::date", SQLDataType.LOCALDATE, DSL.inline(timeZone.getId()), EVENTS.RECEIVED_AT)
                 .as("bucket");
 
         return dsl.select(day, kills)
                 .from(EVENTS)
-                .where(killCondition(period, now))
+                .where(killCondition(period, now, timeZone))
                 .groupBy(day)
                 .orderBy(day.asc())
                 .fetch(record -> {
                     LocalDate bucket = record.get(day);
                     return KillDistributionPointResponse.builder()
-                            .bucketStart(bucket != null ? bucket.toString() : null)
+                            .bucketStart(bucket != null ? bucket.atStartOfDay(timeZone).toOffsetDateTime().toString() : null)
                             .kills(record.get(kills))
                             .build();
                 });
     }
 
-    public PlayerStatsResponse getPlayerStats(String playerName, ScoreboardPeriod period) {
+    public PlayerStatsResponse getPlayerStats(String playerName, ScoreboardPeriod period, ZoneId timeZone) {
         OffsetDateTime now = currentTime();
-        Condition baseCondition = killCondition(period, now);
+        Condition baseCondition = killCondition(period, now, timeZone);
         Condition killedByPlayer = baseCondition.and(EVENTS.KILLER_NAME.eq(playerName));
         Condition killedPlayer = baseCondition.and(EVENTS.VICTIM_NAME.eq(playerName));
         int kills = countEvents(killedByPlayer);
@@ -172,7 +175,7 @@ public class EventService {
         return PlayerStatsResponse.builder()
                 .playerName(playerName)
                 .period(period)
-                .playtimeSeconds(fetchPlaytimeSeconds(playerName, period, now))
+                .playtimeSeconds(fetchPlaytimeSeconds(playerName, period, now, timeZone))
                 .rank(fetchRank(playerName, baseCondition, kills))
                 .kills(kills)
                 .deaths(deaths)
@@ -189,8 +192,8 @@ public class EventService {
         return OffsetDateTime.now();
     }
 
-    protected long fetchPlaytimeSeconds(String playerName, ScoreboardPeriod period, OffsetDateTime now) {
-        var periodStart = period.startsAt(now).orElse(null);
+    protected long fetchPlaytimeSeconds(String playerName, ScoreboardPeriod period, OffsetDateTime now, ZoneId timeZone) {
+        var periodStart = period.startsAt(now, timeZone).orElse(null);
         Map<String, Deque<OffsetDateTime>> openSessionsBySource = new HashMap<>();
         long totalSeconds = 0;
 
@@ -243,9 +246,9 @@ public class EventService {
         return java.time.Duration.between(overlapStart, overlapEnd).getSeconds();
     }
 
-    private Condition killCondition(ScoreboardPeriod period, OffsetDateTime now) {
+    private Condition killCondition(ScoreboardPeriod period, OffsetDateTime now, ZoneId timeZone) {
         Condition condition = EVENTS.EVENT_TYPE.equalIgnoreCase("kill");
-        var periodStart = period.startsAt(now);
+        var periodStart = period.startsAt(now, timeZone);
 
         if (periodStart.isPresent()) {
             condition = condition.and(EVENTS.RECEIVED_AT.ge(periodStart.orElseThrow()));

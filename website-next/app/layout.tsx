@@ -4,6 +4,7 @@ import {siteConfig, siteOgImage} from "@/lib/seo";
 import {env} from "@/env";
 import {GoogleAnalytics} from "@next/third-parties/google";
 import QueryClientProviderWrapper from "@/lib/query-client-provider-wrapper.tsx";
+import {TimeZoneSync} from "@/components/time-zone-sync";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -75,6 +76,7 @@ export default function RootLayout({
         <html lang="en-US">
         <body className="antialiased">
         <QueryClientProviderWrapper>
+            <TimeZoneSync/>
             <div className="font-mono">{children}</div>
         </QueryClientProviderWrapper>
         </body>

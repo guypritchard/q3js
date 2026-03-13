@@ -5,6 +5,7 @@ import jakarta.ws.rs.BadRequestException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Locale;
@@ -16,25 +17,29 @@ public enum ScoreboardPeriod {
     MONTHLY,
     ALL_TIME;
 
-    public Optional<OffsetDateTime> startsAt(OffsetDateTime now) {
-        LocalDate utcDate = now.withOffsetSameInstant(ZoneOffset.UTC).toLocalDate();
+    public Optional<OffsetDateTime> startsAt(OffsetDateTime now, ZoneId zoneId) {
+        LocalDate localDate = now.atZoneSameInstant(zoneId).toLocalDate();
 
         return switch (this) {
-            case DAILY -> Optional.of(now.minusHours(24).withOffsetSameInstant(ZoneOffset.UTC));
+            case DAILY -> Optional.of(now.atZoneSameInstant(zoneId).minusHours(24).toOffsetDateTime());
             case WEEKLY -> Optional.of(
-                    utcDate
+                    localDate
                             .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-                            .atStartOfDay()
-                            .atOffset(ZoneOffset.UTC)
+                            .atStartOfDay(zoneId)
+                            .toOffsetDateTime()
             );
             case MONTHLY -> Optional.of(
-                    utcDate
+                    localDate
                             .withDayOfMonth(1)
-                            .atStartOfDay()
-                            .atOffset(ZoneOffset.UTC)
+                            .atStartOfDay(zoneId)
+                            .toOffsetDateTime()
             );
             case ALL_TIME -> Optional.empty();
         };
+    }
+
+    public Optional<OffsetDateTime> startsAt(OffsetDateTime now) {
+        return startsAt(now, ZoneOffset.UTC);
     }
 
     public static ScoreboardPeriod fromQueryParam(String value) {

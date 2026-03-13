@@ -34,29 +34,27 @@ const CHART_DENSITY_RULES = [
     {className: "gap-2", labelStep: 1, minColumnWidthRem: 2.75, minCount: 0},
 ] as const;
 
-function toUtcDate(bucketStart: string, bucketUnit: BucketUnit) {
-    return new Date(bucketUnit === "hour" ? bucketStart : `${bucketStart}T00:00:00Z`);
+function toBucketDate(bucketStart: string) {
+    return new Date(bucketStart);
 }
 
 function formatLongDate(bucketStart: string, bucketUnit: BucketUnit) {
-    return toUtcDate(bucketStart, bucketUnit).toLocaleString("en-US", {
+    return toBucketDate(bucketStart).toLocaleString("en-US", {
         day: "numeric",
         hour: bucketUnit === "hour" ? "numeric" : undefined,
         minute: bucketUnit === "hour" ? "2-digit" : undefined,
         month: "short",
-        timeZone: "UTC",
         year: "numeric",
     });
 }
 
 function formatShortDate(bucketStart: string, bucketUnit: BucketUnit) {
-    return toUtcDate(bucketStart, bucketUnit).toLocaleString("en-US", {
+    return toBucketDate(bucketStart).toLocaleString("en-US", {
         day: bucketUnit === "day" ? "numeric" : undefined,
         hour: bucketUnit === "hour" ? "2-digit" : undefined,
         hour12: false,
         month: bucketUnit === "day" ? "short" : undefined,
         minute: bucketUnit === "hour" ? "2-digit" : undefined,
-        timeZone: "UTC",
     });
 }
 
