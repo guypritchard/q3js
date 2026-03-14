@@ -34,6 +34,7 @@ const config = {
     },
     cpma: {
         files: [
+            {src: "cpma/missing.pk3", dst: "/cpma"},
 
             // core pak + maps (already had)
             {src: "cpma/z-cpma-pak153.pk3", dst: "/cpma"},
