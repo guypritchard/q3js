@@ -38,6 +38,8 @@ public class ServerResponse {
     @NotNull
     private Integer g_needpass;
 
+    @NotNull
+    private String fsGame;
 
     private Integer capturelimit;
     private String version;

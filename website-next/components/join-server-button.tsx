@@ -47,7 +47,7 @@ export function JoinServerButton(props: {
 
     const gameUrl = `/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(
         name
-    )}`;
+    )}&fs_game=${props.server.fsGame}`;
 
     return (
         <Dialog>

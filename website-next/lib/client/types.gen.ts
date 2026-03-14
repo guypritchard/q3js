@@ -97,6 +97,7 @@ export type ServerResponse = {
     timelimit: number;
     sv_maxclients: number;
     g_needpass: number;
+    fsGame: string;
     capturelimit?: number;
     version?: string;
     location?: string;

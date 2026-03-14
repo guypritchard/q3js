@@ -77,6 +77,7 @@ public class ServerService {
                 .permanent(true)
                 .lastUpdated(Instant.now().toEpochMilli())
                 .order(1)
+                .fsGame("baseq3")
                 .build());
 
         servers.add(Server.builder()
@@ -85,7 +86,8 @@ public class ServerService {
                 .targetPort(27960)
                 .permanent(true)
                 .lastUpdated(Instant.now().toEpochMilli())
-                .order(1)
+                .order(2)
+                .fsGame("cpma")
                 .build());
 
         servers.add(Server.builder()
@@ -94,7 +96,8 @@ public class ServerService {
                 .targetPort(27960)
                 .permanent(true)
                 .lastUpdated(Instant.now().toEpochMilli())
-                .order(2)
+                .order(3)
+                .fsGame("baseq3")
                 .build());
 
         return servers;
@@ -201,6 +204,7 @@ public class ServerService {
             ServerResponse info = objectMapper.readValue(response.body(), ServerResponse.class);
 
             // Ensure routing-critical fields are always present in the response.
+            info.setFsGame(server.getFsGame());
             info.setHost(server.getHost());
             info.setProxyPort(server.getProxyPort());
             info.setTargetPort(server.getTargetPort());

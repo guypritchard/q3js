@@ -16,4 +16,5 @@ public class Server {
     private long lastUpdated;
     private boolean permanent;
     private int order;
+    private String fsGame;
 }
