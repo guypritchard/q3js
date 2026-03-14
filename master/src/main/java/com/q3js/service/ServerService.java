@@ -81,6 +81,15 @@ public class ServerService {
 
         servers.add(Server.builder()
                 .proxyPort(443)
+                .host("ffa-cpma.q3js.com")
+                .targetPort(27960)
+                .permanent(true)
+                .lastUpdated(Instant.now().toEpochMilli())
+                .order(1)
+                .build());
+
+        servers.add(Server.builder()
+                .proxyPort(443)
                 .host("ctf.q3js.com")
                 .targetPort(27960)
                 .permanent(true)
