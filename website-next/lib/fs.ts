@@ -10,7 +10,7 @@ export type Prog = {
 };
 
 // Persistent data versioning
-const DATA_VERSION = "v1.1";
+const DATA_VERSION = "v1.2";
 const VERSION_FILE = "/baseq3/.ioq3-data-version";
 
 type FSLike = {
