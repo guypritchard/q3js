@@ -43,19 +43,10 @@ public class ServerController {
         return serverService.getServerInfo(id);
     }
 
-
     @PUT
     @Path("/heartbeat")
     public void refreshServer(HeartbeatRequest heartbeatRequest) {
-        LOG.infof("Received heartbeat from %s", getClientIp());
-        var clientIp = getClientIp();
-        serverService.handleHeartbeat(clientIp, heartbeatRequest);
+        serverService.handleHeartbeat(heartbeatRequest);
     }
 
-    private String getClientIp() {
-        var allHeaders = headers.getRequestHeaders();
-        LOG.infof("Headers: %s", allHeaders);
-
-        return request.remoteAddress().host();
-    }
 }

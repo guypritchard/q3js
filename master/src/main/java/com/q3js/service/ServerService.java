@@ -22,8 +22,8 @@ public class ServerService {
     private final CopyOnWriteArrayList<Server> servers = new CopyOnWriteArrayList<>();
     private final ServerStatusClient serverStatusClient;
 
-    public void handleHeartbeat(String clientIp, HeartbeatRequest heartbeatRequest) {
-        var server = findServer(clientIp, heartbeatRequest.getProxyPort());
+    public void handleHeartbeat(HeartbeatRequest heartbeatRequest) {
+        var server = findServer(heartbeatRequest.getTargetHost(), heartbeatRequest.getProxyPort());
         if (server.isPresent()) {
             server.get().setLastHeartbeat(OffsetDateTime.now());
             server.get().setTargetPort(heartbeatRequest.getTargetPort());
@@ -32,7 +32,7 @@ public class ServerService {
 
         servers.add(Server.builder()
                 .proxyPort(heartbeatRequest.getProxyPort())
-                .host(clientIp)
+                .host(heartbeatRequest.getTargetHost())
                 .targetPort(heartbeatRequest.getTargetPort())
                 .lastHeartbeat(OffsetDateTime.now())
                 .secure(heartbeatRequest.isSecure())
