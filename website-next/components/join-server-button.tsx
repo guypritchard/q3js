@@ -17,6 +17,7 @@ import {useLocalStorage} from "@/hooks/use-local-storage.ts";
 import {createRandomPlayerName} from "@/lib/player-name-generator.ts";
 import Link from "next/link";
 import {ServerResponse} from "@/lib/client";
+import {env} from "@/env";
 
 export function JoinServerButton(props: {
     server: ServerResponse;
@@ -30,6 +31,10 @@ export function JoinServerButton(props: {
         "name",
         createRandomPlayerName()
     );
+
+    const joinHost = props.server.secure === false
+        ? env.NEXT_PUBLIC_INSECURE_PROXY_HOST
+        : props.server.host;
 
     if (isFull) {
         return (
@@ -45,7 +50,7 @@ export function JoinServerButton(props: {
         );
     }
 
-    const gameUrl = `/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(
+    const gameUrl = `/game?host=${joinHost}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(
         name
     )}&fs_game=${props.server.info.fsGame}`;
 

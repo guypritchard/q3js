@@ -7,6 +7,7 @@ export const env = createEnv({
     client: {
         NEXT_PUBLIC_APP_TITLE: z.string().min(1).optional(),
         NEXT_PUBLIC_MASTER_SERVER_URL: z.string().default("https://master.q3js.com"),
+        NEXT_PUBLIC_INSECURE_PROXY_HOST: z.string().min(1).default("http://nohttp.q3js.com"),
         NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().default("G-X7L740SND7"),
     },
     runtimeEnv: process.env,
