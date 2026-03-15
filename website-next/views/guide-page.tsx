@@ -77,12 +77,15 @@ export default function GuidePage() {
 
                 <pre className=" whitespace-pre">
 {`mkdir my-q3-server
-cd my-q3-server
-# make sure this exists:
-ls baseq3/`}
+cd my-q3-server`}
             </pre>
 
                 <h2>2. Run the Server</h2>
+                <p>Copy the baseq3 folder to my-q3-server</p>
+                <p>Make sure to use the demo versions of the files</p>
+
+
+                <h2>3. Run the Server</h2>
                 <p>Launch your server with Docker:</p>
 
                 <pre className=" whitespace-pre">
@@ -106,7 +109,7 @@ ls baseq3/`}
                 </p>
 
 
-                <h2>3. How This Command Works</h2>
+                <h2>4. How This Command Works</h2>
                 <ul>
                     <li>
                         <strong>Ports:</strong>
@@ -133,7 +136,7 @@ ls baseq3/`}
                     </li>
                 </ul>
 
-                <h2>4. Confirming the Server Runs</h2>
+                <h2>5. Confirming the Server Runs</h2>
                 <p>
                     Once the container starts, your server will appear on the Q3JS home page
                     as long as it is configured with the correct master server settings
