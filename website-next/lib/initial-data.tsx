@@ -2,17 +2,39 @@ import {
     getGlobalScoreboard, getKillDistribution,
     KillDistributionPointResponse,
     ScoreboardEntryResponse,
-    ScoreboardPeriod,
-    ServerResponse
+    ScoreboardPeriod
 } from "@/lib/client";
-import {getAllServers} from '@/lib/client/sdk.gen';
+import {getAllServers, getServerInfo} from '@/lib/client/sdk.gen';
 import {getRequestTimeZone} from "@/lib/request-time-zone";
+import {ServerWithInfo} from "@/lib/server-info";
 
-export async function getInitialServers(): Promise<ServerResponse[]> {
+export async function getInitialServers(): Promise<ServerWithInfo[]> {
     const {data} = await getAllServers({
         throwOnError: true,
     });
-    return data;
+
+    return Promise.all(
+        data.map(async (server) => {
+            try {
+                const {data: info} = await getServerInfo({
+                    path: {
+                        id: server.id,
+                    },
+                    throwOnError: true,
+                });
+
+                return {
+                    ...server,
+                    info,
+                };
+            } catch {
+                return {
+                    ...server,
+                    info: null,
+                };
+            }
+        })
+    );
 }
 
 export async function getInitialScoreboard(period: ScoreboardPeriod = "DAILY"): Promise<ScoreboardEntryResponse[]> {

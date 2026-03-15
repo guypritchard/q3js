@@ -16,14 +16,16 @@ import {Label} from "@/components/ui/label.tsx";
 import {useLocalStorage} from "@/hooks/use-local-storage.ts";
 import {createRandomPlayerName} from "@/lib/player-name-generator.ts";
 import Link from "next/link";
-import {ServerResponse} from "@/lib/client";
+import {ServerWithInfo} from "@/lib/server-info";
 
 export function JoinServerButton(props: {
-    server: ServerResponse;
+    server: ServerWithInfo;
     ctaLabel?: string;
     className?: string;
 }) {
-    const isFull = props.server.players >= props.server.sv_maxclients;
+    const isFull = props.server.info
+        ? props.server.info.players >= props.server.info.sv_maxclients
+        : false;
     const ctaLabel = props.ctaLabel ?? "Join now";
 
     const [name, setName] = useLocalStorage(
@@ -69,7 +71,7 @@ export function JoinServerButton(props: {
                     <DialogDescription>
                         Choose your player name before joining{" "}
                         <span className="font-semibold">
-              {props.server.sv_hostname}
+              {props.server.info?.sv_hostname ?? props.server.host}
             </span>
                     </DialogDescription>
                 </DialogHeader>
@@ -95,7 +97,7 @@ export function JoinServerButton(props: {
                         prefetch={false}
                         className="w-full"
                         href={gameUrl}
-                        aria-label={`Join ${props.server.sv_hostname}`}
+                        aria-label={`Join ${props.server.info?.sv_hostname ?? props.server.host}`}
                     >
                         <Button className="w-full" size="lg">
                             <Zap className="h-4 w-4 mr-2"/>

@@ -1,8 +1,8 @@
 package com.q3js.controller;
 
 import com.q3js.service.EventService;
-import com.q3js.service.RequestedTimeZone;
-import com.q3js.service.ScoreboardPeriod;
+import com.q3js.service.dto.RequestedTimeZone;
+import com.q3js.service.dto.ScoreboardPeriod;
 import com.q3js.service.dto.PlayerResponse;
 import com.q3js.service.dto.PlayerStatsResponse;
 import jakarta.enterprise.context.ApplicationScoped;

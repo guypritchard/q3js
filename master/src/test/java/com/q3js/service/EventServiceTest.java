@@ -1,9 +1,6 @@
 package com.q3js.service;
 
-import com.q3js.service.dto.CreateEventRequest;
-import com.q3js.service.dto.PlayerResponse;
-import com.q3js.service.dto.PlayerStatsResponse;
-import com.q3js.service.dto.PlayerWeaponBreakdownResponse;
+import com.q3js.service.dto.*;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Result;
