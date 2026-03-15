@@ -53,6 +53,9 @@ public class ServerController {
     }
 
     private String getClientIp() {
+        var allHeaders = headers.getRequestHeaders();
+        LOG.infof("Headers: %s", allHeaders);
+
         return request.remoteAddress().host();
     }
 }
