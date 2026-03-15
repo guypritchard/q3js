@@ -5,22 +5,24 @@ const {env} = require('./env');
 
 const MASTER_SERVER_BASE = env.MASTER_SERVER_BASE;
 const HEARTBEAT_INTERVAL_MS = env.HEARTBEAT_INTERVAL_MS;
-const DEFAULT_TARGET_HOST = env.TARGET_HOST;
-const DEFAULT_TARGET_PORT = env.TARGET_PORT;
-const WS_PORT = env.WS_PORT;
+const TARGET_HOST = env.TARGET_HOST;
+const TARGET_PORT = env.TARGET_PORT;
+const PROXY_PORT = env.PROXY_PORT;
 const SECURE = env.SECURE;
 
-let host = env.HOST;
+let publishHost = env.PUBLISH_HOST;
+let publishPort = env.PUBLISH_PORT || PROXY_PORT;
 
-if (!host) {
+
+if (!publishHost) {
     fetch("https://api.ipify.org").then(res => res.text()).then(ipRes => {
-        host = ipRes;
+        publishHost = ipRes;
     });
 }
 
 
 async function sendHeartbeat() {
-    if (!host) {
+    if (!publishHost) {
         console.warn('Obtaining IP address...');
         return;
     }
@@ -30,9 +32,10 @@ async function sendHeartbeat() {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                targetHost: host,
-                proxyPort: WS_PORT,
-                targetPort: DEFAULT_TARGET_PORT,
+                targetHost: publishHost,
+                proxyPort: publishPort,
+
+                targetPort: TARGET_PORT,
                 secure: SECURE,
             }),
         });
@@ -78,15 +81,15 @@ const httpServer = http.createServer(async (req, res) => {
 
 const wss = new WebSocket.Server({server: httpServer});
 
-httpServer.listen(WS_PORT, () => {
-    console.log(`WS<->UDP proxy on ws://0.0.0.0:${WS_PORT}/`);
-    console.log(`Default target: ${DEFAULT_TARGET_HOST}:${DEFAULT_TARGET_PORT}`);
+httpServer.listen(PROXY_PORT, () => {
+    console.log(`WS<->UDP proxy on ws://0.0.0.0:${PROXY_PORT}/`);
+    console.log(`Default target: ${TARGET_HOST}:${TARGET_PORT}`);
 });
 
 wss.on('connection', ws => {
 
-    const targetHost = DEFAULT_TARGET_HOST;
-    const targetPort = DEFAULT_TARGET_PORT;
+    const targetHost = TARGET_HOST;
+    const targetPort = TARGET_PORT;
 
     const udp = dgram.createSocket('udp4');
 
