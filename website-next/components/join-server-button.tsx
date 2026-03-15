@@ -23,7 +23,7 @@ export function JoinServerButton(props: {
     ctaLabel?: string;
     className?: string;
 }) {
-    const isFull = props.server.players >= props.server.sv_maxclients;
+    const isFull = props.server.info.players >= props.server.info.sv_maxclients;
     const ctaLabel = props.ctaLabel ?? "Join now";
 
     const [name, setName] = useLocalStorage(
@@ -47,7 +47,7 @@ export function JoinServerButton(props: {
 
     const gameUrl = `/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(
         name
-    )}&fs_game=${props.server.fsGame}`;
+    )}&fs_game=${props.server.info.fsGame}`;
 
     return (
         <Dialog>
@@ -69,7 +69,7 @@ export function JoinServerButton(props: {
                     <DialogDescription>
                         Choose your player name before joining{" "}
                         <span className="font-semibold">
-              {props.server.sv_hostname}
+              {props.server.info.sv_hostname}
             </span>
                     </DialogDescription>
                 </DialogHeader>
@@ -95,7 +95,7 @@ export function JoinServerButton(props: {
                         prefetch={false}
                         className="w-full"
                         href={gameUrl}
-                        aria-label={`Join ${props.server.sv_hostname}`}
+                        aria-label={`Join ${props.server.info.sv_hostname}`}
                     >
                         <Button className="w-full" size="lg">
                             <Zap className="h-4 w-4 mr-2"/>

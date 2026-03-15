@@ -1,10 +1,8 @@
 package com.q3js.controller;
 
 import com.q3js.service.EventService;
-import com.q3js.service.dto.RequestedTimeZone;
-import com.q3js.service.dto.ScoreboardPeriod;
-import com.q3js.service.dto.PlayerResponse;
-import com.q3js.service.dto.PlayerStatsResponse;
+import com.q3js.service.ServerService;
+import com.q3js.service.dto.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -25,6 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PlayerController {
     private final EventService eventService;
+    private final ServerService serverService;
 
     @GET
     public List<PlayerResponse> getAllPlayers() {
@@ -40,5 +39,11 @@ public class PlayerController {
     ) {
         ZoneId requestedTimeZone = RequestedTimeZone.fromQueryParam(timeZone);
         return eventService.getPlayerStats(playerName, ScoreboardPeriod.fromQueryParam(period), requestedTimeZone);
+    }
+
+    @GET
+    @Path("/current/count")
+    public CurrentPlayerCountResponse getCurrentPlayerCount() {
+        return serverService.getCurrentPlayerCount();
     }
 }

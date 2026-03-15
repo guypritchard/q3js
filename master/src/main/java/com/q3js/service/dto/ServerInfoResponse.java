@@ -1,5 +1,6 @@
 package com.q3js.service.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,86 +14,105 @@ import java.util.List;
 @Builder
 @Data
 public class ServerInfoResponse {
+    @NotNull
     private String id;
+
+    @NotNull
     private String sv_hostname;
+
+    @NotNull
     private String mapname;
+
+    @NotNull
     private Integer g_gametype;
+
+    @NotNull
     private Integer fraglimit;
+
+    @NotNull
     private Integer timelimit;
+
+    @NotNull
     private Integer sv_maxclients;
+
+    @NotNull
     private Integer g_needpass;
+
+    @NotNull
     private String fsGame;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer capturelimit;
 
-    @Schema(nullable = true)
+    @NotNull
     private String version;
 
-    @Schema(nullable = true)
+    @NotNull
     private String location;
 
+    @NotNull
     private Integer players;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer ping;
 
-    @Schema(nullable = true)
+    @NotNull
     private String host;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer port;
 
-    @Schema(nullable = true)
+    @NotNull
     private String challenge;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer sv_maxPing;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer sv_minPing;
 
-    @Schema(nullable = true)
+    @NotNull
     private String com_gamename;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer com_protocol;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer dmflags;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer sv_privateClients;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer sv_minRate;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer sv_maxRate;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer sv_dlRate;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer sv_floodProtect;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer sv_allowDownload;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer bot_minplayers;
 
-    @Schema(nullable = true)
+    @NotNull
     private String gamename;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer g_maxGameClients;
 
+    @NotNull
     private List<ServerUserResponse> users;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer proxyPort;
 
-    @Schema(nullable = true)
+    @NotNull
     private Integer targetPort;
 }

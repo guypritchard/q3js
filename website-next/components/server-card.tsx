@@ -10,7 +10,7 @@ import {ServerResponse} from "@/lib/client";
 export function ServerCard(props: {
     server: ServerResponse;
 }) {
-    const info = props.server;
+    const info = props.server.info;
 
     const sortedUsers = [...info.users].sort((a, b) => b.score - a.score);
 
@@ -49,12 +49,12 @@ export function ServerCard(props: {
                                         variant="outline"
                                         className="font-mono text-xs border-border/50 text-muted-foreground"
                                     >
-                                        {getGameLimits(info)}
+                                        {getGameLimits(props.server)}
                                     </Badge>
                                 </div>
                             </div>
 
-                            <JoinServerButton server={info}/>
+                            <JoinServerButton server={props.server}/>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-4 text-sm">

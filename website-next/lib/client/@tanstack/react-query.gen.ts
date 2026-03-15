@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { getAllPlayers, getAllServers, getGlobalScoreboard, getKillDistribution, getPlayerStats, ingestEvent, type Options, refreshServer } from '../sdk.gen';
-import type { GetAllPlayersData, GetAllPlayersResponse, GetAllServersData, GetAllServersResponse, GetGlobalScoreboardData, GetGlobalScoreboardResponse, GetKillDistributionData, GetKillDistributionResponse, GetPlayerStatsData, GetPlayerStatsResponse, IngestEventData, RefreshServerData, RefreshServerResponse } from '../types.gen';
+import { getAllPlayers, getAllServers, getCurrentPlayerCount, getGlobalScoreboard, getKillDistribution, getPlayerStats, getServerInfo, ingestEvent, type Options, refreshServer } from '../sdk.gen';
+import type { GetAllPlayersData, GetAllPlayersResponse, GetAllServersData, GetAllServersResponse, GetCurrentPlayerCountData, GetCurrentPlayerCountResponse, GetGlobalScoreboardData, GetGlobalScoreboardResponse, GetKillDistributionData, GetKillDistributionResponse, GetPlayerStatsData, GetPlayerStatsResponse, GetServerInfoData, GetServerInfoResponse, IngestEventData, RefreshServerData, RefreshServerResponse } from '../types.gen';
 
 /**
  * Ingest Event
@@ -110,6 +110,24 @@ export const getAllPlayersOptions = (options?: Options<GetAllPlayersData>) => qu
     queryKey: getAllPlayersQueryKey(options)
 });
 
+export const getCurrentPlayerCountQueryKey = (options?: Options<GetCurrentPlayerCountData>) => createQueryKey('getCurrentPlayerCount', options);
+
+/**
+ * Get Current Player Count
+ */
+export const getCurrentPlayerCountOptions = (options?: Options<GetCurrentPlayerCountData>) => queryOptions<GetCurrentPlayerCountResponse, DefaultError, GetCurrentPlayerCountResponse, ReturnType<typeof getCurrentPlayerCountQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getCurrentPlayerCount({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getCurrentPlayerCountQueryKey(options)
+});
+
 export const getPlayerStatsQueryKey = (options: Options<GetPlayerStatsData>) => createQueryKey('getPlayerStats', options);
 
 /**
@@ -162,3 +180,21 @@ export const refreshServerMutation = (options?: Partial<Options<RefreshServerDat
     };
     return mutationOptions;
 };
+
+export const getServerInfoQueryKey = (options: Options<GetServerInfoData>) => createQueryKey('getServerInfo', options);
+
+/**
+ * Get Server Info
+ */
+export const getServerInfoOptions = (options: Options<GetServerInfoData>) => queryOptions<GetServerInfoResponse, DefaultError, GetServerInfoResponse, ReturnType<typeof getServerInfoQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getServerInfo({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getServerInfoQueryKey(options)
+});

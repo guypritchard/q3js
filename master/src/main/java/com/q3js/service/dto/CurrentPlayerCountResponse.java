@@ -6,14 +6,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
-public class ServerResponse {
-    private String host;
-    private Integer proxyPort;
-    private Integer targetPort;
+@Builder
+public class CurrentPlayerCountResponse {
 
     @NotNull
-    private ServerInfoResponse info;
+    private Integer count;
 }

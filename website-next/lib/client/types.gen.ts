@@ -15,6 +15,10 @@ export type CreateEventRequest = {
     map?: string;
 };
 
+export type CurrentPlayerCountResponse = {
+    count: number;
+};
+
 export type EventPlayer = {
     clientNum?: number;
     name?: string;
@@ -24,6 +28,7 @@ export type HeartbeatRequest = {
     proxyPort?: number;
     targetHost?: string;
     targetPort?: number;
+    secure?: boolean;
 };
 
 export type KillDistributionPointResponse = {
@@ -88,7 +93,7 @@ export const ScoreboardPeriod = {
 
 export type ScoreboardPeriod = typeof ScoreboardPeriod[keyof typeof ScoreboardPeriod];
 
-export type ServerResponse = {
+export type ServerInfoResponse = {
     id: string;
     sv_hostname: string;
     mapname: string;
@@ -98,31 +103,38 @@ export type ServerResponse = {
     sv_maxclients: number;
     g_needpass: number;
     fsGame: string;
-    capturelimit?: number;
-    version?: string;
-    location?: string;
+    capturelimit: number;
+    version: string;
+    location: string;
     players: number;
-    ping?: number;
-    host?: string;
-    port?: number;
-    challenge?: string;
-    sv_maxPing?: number;
-    sv_minPing?: number;
-    com_gamename?: string;
-    com_protocol?: number;
-    dmflags?: number;
-    sv_privateClients?: number;
-    sv_minRate?: number;
-    sv_maxRate?: number;
-    sv_dlRate?: number;
-    sv_floodProtect?: number;
-    sv_allowDownload?: number;
-    bot_minplayers?: number;
-    gamename?: string;
-    g_maxGameClients?: number;
+    ping: number;
+    host: string;
+    port: number;
+    challenge: string;
+    sv_maxPing: number;
+    sv_minPing: number;
+    com_gamename: string;
+    com_protocol: number;
+    dmflags: number;
+    sv_privateClients: number;
+    sv_minRate: number;
+    sv_maxRate: number;
+    sv_dlRate: number;
+    sv_floodProtect: number;
+    sv_allowDownload: number;
+    bot_minplayers: number;
+    gamename: string;
+    g_maxGameClients: number;
     users: Array<ServerUserResponse>;
+    proxyPort: number;
+    targetPort: number;
+};
+
+export type ServerResponse = {
+    host?: string;
     proxyPort?: number;
     targetPort?: number;
+    info: ServerInfoResponse;
 };
 
 export type ServerUserResponse = {
@@ -206,6 +218,22 @@ export type GetAllPlayersResponses = {
 
 export type GetAllPlayersResponse = GetAllPlayersResponses[keyof GetAllPlayersResponses];
 
+export type GetCurrentPlayerCountData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/players/current/count';
+};
+
+export type GetCurrentPlayerCountResponses = {
+    /**
+     * OK
+     */
+    200: CurrentPlayerCountResponse;
+};
+
+export type GetCurrentPlayerCountResponse = GetCurrentPlayerCountResponses[keyof GetCurrentPlayerCountResponses];
+
 export type GetPlayerStatsData = {
     body?: never;
     path: {
@@ -265,3 +293,21 @@ export type RefreshServerResponses = {
 };
 
 export type RefreshServerResponse = RefreshServerResponses[keyof RefreshServerResponses];
+
+export type GetServerInfoData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/servers/{id}/info';
+};
+
+export type GetServerInfoResponses = {
+    /**
+     * OK
+     */
+    200: ServerInfoResponse;
+};
+
+export type GetServerInfoResponse = GetServerInfoResponses[keyof GetServerInfoResponses];

@@ -25,8 +25,8 @@ export function ServerPicker({servers}: { servers: ServerResponse[] }) {
         const normalizedSearch = searchTerm.trim().toLowerCase();
 
         return servers.filter((server) => {
-            const hostname = stripQ3Colors(server.sv_hostname).toLowerCase();
-            const mapname = server.mapname.toLowerCase();
+            const hostname = stripQ3Colors(server.info.sv_hostname).toLowerCase();
+            const mapname = server.info.mapname.toLowerCase();
 
             return normalizedSearch.length === 0 ||
                 hostname.includes(normalizedSearch) ||
@@ -35,12 +35,12 @@ export function ServerPicker({servers}: { servers: ServerResponse[] }) {
     }, [servers, searchTerm]);
 
     const totalPlayerCount = useMemo(
-        () => servers.reduce((sum, server) => sum + server.players, 0),
+        () => servers.reduce((sum, server) => sum + server.info.players, 0),
         [servers]
     );
 
     const filteredPlayerCount = useMemo(
-        () => filteredServers.reduce((sum, server) => sum + server.players, 0),
+        () => filteredServers.reduce((sum, server) => sum + server.info.players, 0),
         [filteredServers]
     );
     const activeFilterCount = [searchTerm.trim().length > 0].filter(Boolean).length;
@@ -106,7 +106,7 @@ export function ServerPicker({servers}: { servers: ServerResponse[] }) {
                 <div className="grid gap-4">
                     {filteredServers.map((server) => (
                         <ServerCard
-                            key={server.id}
+                            key={`${server.host}:${server.proxyPort}`}
                             server={server}
                         />
                     ))}

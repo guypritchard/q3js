@@ -2,6 +2,7 @@ package com.q3js.service;
 
 import com.q3js.client.ServerStatusClient;
 import com.q3js.domain.Server;
+import com.q3js.service.dto.CurrentPlayerCountResponse;
 import com.q3js.service.dto.HeartbeatRequest;
 import com.q3js.service.dto.ServerInfoResponse;
 import com.q3js.service.dto.ServerResponse;
@@ -54,7 +55,13 @@ public class ServerService {
 
     public List<ServerResponse> getAllServers() {
         return servers.stream()
-                .map(s -> new ServerResponse(s.getHost(), s.getProxyPort(), s.getTargetPort()))
+                .map(s -> {
+                    return serverStatusClient.query(s)
+                            .map(info -> {
+                                return new ServerResponse(s.getHost(), s.getProxyPort(), s.getTargetPort(), info);
+                            });
+                })
+                .flatMap(Optional::stream)
                 .toList();
     }
 
@@ -67,4 +74,17 @@ public class ServerService {
                 .orElseThrow(() -> new ServerNotFoundException("Server not found for id: " + id));
     }
 
+    public CurrentPlayerCountResponse getCurrentPlayerCount() {
+        var count = servers.stream()
+                .map(serverStatusClient::query)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(ServerInfoResponse::getPlayers)
+                .mapToInt(Integer::intValue)
+                .sum();
+
+        return CurrentPlayerCountResponse.builder()
+                .count(count)
+                .build();
+    }
 }

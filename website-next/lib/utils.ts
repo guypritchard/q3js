@@ -24,20 +24,23 @@ export function getPingColor(ping: number | undefined) {
     return PING_COLOR_BY_RANGE[getPingRange(ping)]
 }
 
-function getGameLimitType(s: ServerResponse) {
+function getGameLimitType(server: ServerResponse) {
+    const s = server.info;
     if (s.g_gametype === 4 && (s.capturelimit ?? 0) > 0) return "capture";
     if (s.fraglimit > 0) return "frag";
     if (s.timelimit > 0) return "time";
     return "none";
 }
 
-export function getGameLimits(s: ServerResponse) {
+export function getGameLimits(server: ServerResponse) {
+    const s = server.info;
+
     return {
         capture: `${s.capturelimit} caps`,
         frag: `${s.fraglimit} frags`,
         time: `${s.timelimit}min`,
         none: "No limit",
-    }[getGameLimitType(s)];
+    }[getGameLimitType(server)];
 }
 
 export function getPercentage(p: number, m: number) {
