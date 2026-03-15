@@ -134,6 +134,7 @@ export type ServerResponse = {
     host?: string;
     proxyPort?: number;
     targetPort?: number;
+    secure: boolean;
     info: ServerInfoResponse;
 };
 

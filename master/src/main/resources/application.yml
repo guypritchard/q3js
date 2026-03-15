@@ -10,6 +10,7 @@ quarkus:
       proxy-address-forwarding: true
       allow-xForwarded: true
       allow-forwarded: true
+    host: 0.0.0.0
   vertx:
     event-loops-pool-size: 24
   thread-pool:
@@ -42,5 +43,4 @@ mp:
 q3js:
   server-info:
     timeout-ms: 3000
-
 
