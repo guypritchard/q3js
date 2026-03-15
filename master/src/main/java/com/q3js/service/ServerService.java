@@ -30,6 +30,11 @@ public class ServerService {
     private List<ServerResponse> serverResponseCache = List.of();
 
     public void handleHeartbeat(HeartbeatRequest heartbeatRequest) {
+        if (heartbeatRequest.getTargetHost() == null) {
+            LOG.warnf("Received heartbeat with null target host from %s:%d", null, heartbeatRequest.getProxyPort());
+            return;
+        }
+
         LOG.infof("Received heartbeat from %s:%d", heartbeatRequest.getTargetHost(), heartbeatRequest.getProxyPort());
 
         var server = findServer(heartbeatRequest.getTargetHost(), heartbeatRequest.getProxyPort());

@@ -27,17 +27,21 @@ async function sendHeartbeat() {
         return;
     }
 
+    const body = {
+        targetHost: publishHost,
+        proxyPort: publishPort,
+
+        targetPort: TARGET_PORT,
+        secure: SECURE,
+    };
+
+    console.log(`Sending heartbeat to master server with the following configuration: ${JSON.stringify(body)}`);
+
     try {
         const res = await fetch(`${MASTER_SERVER_BASE}/api/servers/heartbeat`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                targetHost: publishHost,
-                proxyPort: publishPort,
-
-                targetPort: TARGET_PORT,
-                secure: SECURE,
-            }),
+            body: JSON.stringify(body),
         });
         if (!res.ok) {
             console.warn('Heartbeat failed:', res.statusText);
