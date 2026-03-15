@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.OffsetDateTime;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -13,8 +15,7 @@ public class Server {
     private String host;
     private int proxyPort;
     private int targetPort;
-    private long lastUpdated;
-    private boolean permanent;
-    private int order;
-    private String fsGame;
+    private boolean secure;
+
+    private OffsetDateTime lastHeartbeat;
 }

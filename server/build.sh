@@ -9,7 +9,7 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 pushd "$BUILD_DIR" >/dev/null
 
-cmake ../../../ioq3 \
+cmake ../../ioq3 \
   -DBUILD_CLIENT=OFF \
   -DBUILD_SERVER=ON \
   -DBUILD_GAME_QVMS=ON \

@@ -1,16 +1,16 @@
 package com.q3js.controller;
 
 import com.q3js.service.ServerService;
-import com.q3js.domain.Server;
 import com.q3js.service.dto.HeartbeatRequest;
+import com.q3js.service.dto.ServerInfoResponse;
 import com.q3js.service.dto.ServerResponse;
+import io.vertx.core.http.HttpServerRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import lombok.RequiredArgsConstructor;
-import io.vertx.core.http.HttpServerRequest;
 import org.jboss.logging.Logger;
 
 import java.util.List;
@@ -36,18 +36,19 @@ public class ServerController {
         return serverService.getAllServers();
     }
 
-    @Path("/heartbeat")
+
+    @GET
+    @Path("/{id}/info")
+    public ServerInfoResponse getServerInfo(@PathParam("id") String id) {
+        return serverService.getServerInfo(id);
+    }
+
+
     @PUT
+    @Path("/heartbeat")
     public void refreshServer(HeartbeatRequest heartbeatRequest) {
         var clientIp = getClientIp();
-        var server = Server.builder()
-                .host(clientIp)
-                .proxyPort(heartbeatRequest.getProxyPort())
-                .targetPort(heartbeatRequest.getTargetPort())
-                .permanent(false)
-                .lastUpdated(System.currentTimeMillis())
-                .build();
-        serverService.refreshServer(server);
+        serverService.handleHeartbeat(clientIp, heartbeatRequest);
     }
 
     private String getClientIp() {

@@ -13,4 +13,5 @@ public class HeartbeatRequest {
     private int proxyPort;
     private String targetHost;
     private int targetPort;
+    private boolean secure;
 }

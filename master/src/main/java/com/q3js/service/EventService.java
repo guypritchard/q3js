@@ -1,14 +1,6 @@
 package com.q3js.service;
 
-import com.q3js.service.dto.CreateEventRequest;
-import com.q3js.service.dto.KillDistributionPointResponse;
-import com.q3js.service.dto.PlayerFavoriteMapResponse;
-import com.q3js.service.dto.PlayerResponse;
-import com.q3js.service.dto.PlayerFavoriteWeaponResponse;
-import com.q3js.service.dto.PlayerStatsResponse;
-import com.q3js.service.dto.PlayerVersusStatResponse;
-import com.q3js.service.dto.PlayerWeaponBreakdownResponse;
-import com.q3js.service.dto.ScoreboardEntryResponse;
+import com.q3js.service.dto.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
