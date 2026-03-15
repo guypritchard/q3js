@@ -8,6 +8,7 @@ const HEARTBEAT_INTERVAL_MS = env.HEARTBEAT_INTERVAL_MS;
 const DEFAULT_TARGET_HOST = env.TARGET_HOST;
 const DEFAULT_TARGET_PORT = env.TARGET_PORT;
 const WS_PORT = env.WS_PORT;
+const SECURE = env.SECURE;
 
 async function sendHeartbeat() {
     try {
@@ -16,7 +17,8 @@ async function sendHeartbeat() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 proxyPort: WS_PORT,
-                targetPort: DEFAULT_TARGET_PORT
+                targetPort: DEFAULT_TARGET_PORT,
+                secure: SECURE,
             }),
         });
         if (!res.ok) {

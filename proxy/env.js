@@ -8,6 +8,7 @@ const env = createEnv({
         TARGET_HOST: z.string().min(1).default('127.0.0.1'),
         TARGET_PORT: z.coerce.number().int().min(1).max(65535).default(27960),
         WS_PORT: z.coerce.number().int().min(1).max(65535).default(27961),
+        SECURE: z.coerce.boolean().default(false),
     },
     clientPrefix: '',
     client: {},

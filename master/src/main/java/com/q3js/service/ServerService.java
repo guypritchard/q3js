@@ -58,7 +58,7 @@ public class ServerService {
                 .map(s -> {
                     return serverStatusClient.query(s)
                             .map(info -> {
-                                return new ServerResponse(s.getHost(), s.getProxyPort(), s.getTargetPort(), info);
+                                return new ServerResponse(s.getHost(), s.getProxyPort(), s.getTargetPort(), s.isSecure(), info);
                             });
                 })
                 .flatMap(Optional::stream)
