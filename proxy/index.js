@@ -1,14 +1,13 @@
 const dgram = require('dgram');
 const http = require('http');
 const WebSocket = require('ws');
+const {env} = require('./env');
 
-const MASTER_SERVER_BASE = process.env.MASTER_SERVER_BASE || 'https://master.q3js.com';
-const HEARTBEAT_INTERVAL_MS = 5 * 1000;
-
-// env defaults
-const DEFAULT_TARGET_HOST = process.env.TARGET_HOST || '127.0.0.1';
-const DEFAULT_TARGET_PORT = parseInt(process.env.TARGET_PORT || '27960', 10);
-const WS_PORT = parseInt(process.env.WS_PORT || '27961', 10);
+const MASTER_SERVER_BASE = env.MASTER_SERVER_BASE;
+const HEARTBEAT_INTERVAL_MS = env.HEARTBEAT_INTERVAL_MS;
+const DEFAULT_TARGET_HOST = env.TARGET_HOST;
+const DEFAULT_TARGET_PORT = env.TARGET_PORT;
+const WS_PORT = env.WS_PORT;
 
 async function sendHeartbeat() {
     try {

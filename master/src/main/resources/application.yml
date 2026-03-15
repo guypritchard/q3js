@@ -6,6 +6,10 @@ quarkus:
       methods: "GET,PUT,POST,DELETE,OPTIONS"
       headers: "origin,accept,authorization,content-type,x-requested-with"
       access-control-allow-credentials: true
+    proxy:
+      proxy-address-forwarding: true
+      allow-xForwarded: true
+      allow-forwarded: true
   vertx:
     event-loops-pool-size: 24
   thread-pool:
@@ -38,4 +42,5 @@ mp:
 q3js:
   server-info:
     timeout-ms: 3000
+
 

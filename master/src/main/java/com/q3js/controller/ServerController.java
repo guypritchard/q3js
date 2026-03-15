@@ -52,23 +52,6 @@ public class ServerController {
     }
 
     private String getClientIp() {
-        var xRealIp = headers.getHeaderString("X-Real-IP");
-        LOG.infof("X-Real-IP: %s", xRealIp);
-        if (xRealIp != null && !xRealIp.isBlank()) {
-            return xRealIp.trim();
-        }
-
-        var xForwardedFor = headers.getHeaderString("X-Forwarded-For");
-        LOG.infof("X-Forwarded-For: %s", xForwardedFor);
-        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-            String first = xForwardedFor.split(",")[0].trim();
-            if (!first.isEmpty()) {
-                return first;
-            }
-        }
-
-        var host = request.remoteAddress().host();
-        LOG.infof("Remote Address: %s", host);
-        return host;
+        return request.remoteAddress().host();
     }
 }
