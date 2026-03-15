@@ -1,6 +1,7 @@
 package com.q3js.service;
 
 import com.q3js.client.ServerStatusClient;
+import com.q3js.controller.ServerController;
 import com.q3js.domain.Server;
 import com.q3js.service.dto.CurrentPlayerCountResponse;
 import com.q3js.service.dto.HeartbeatRequest;
@@ -10,6 +11,7 @@ import com.q3js.service.exception.ServerNotFoundException;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
+import org.jboss.logging.Logger;
 
 import java.time.OffsetDateTime;
 import java.util.Comparator;
@@ -20,16 +22,21 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @ApplicationScoped
 @RequiredArgsConstructor
 public class ServerService {
+    private static final Logger LOG = Logger.getLogger(ServerService.class);
+
     private final CopyOnWriteArrayList<Server> servers = new CopyOnWriteArrayList<>();
     private final ServerStatusClient serverStatusClient;
 
     private List<ServerResponse> serverResponseCache = List.of();
 
     public void handleHeartbeat(HeartbeatRequest heartbeatRequest) {
+        LOG.infof("Received heartbeat from %s:%d", heartbeatRequest.getTargetHost(), heartbeatRequest.getProxyPort());
+
         var server = findServer(heartbeatRequest.getTargetHost(), heartbeatRequest.getProxyPort());
         if (server.isPresent()) {
             server.get().setLastHeartbeat(OffsetDateTime.now());
             server.get().setTargetPort(heartbeatRequest.getTargetPort());
+            server.get().setSecure(heartbeatRequest.isSecure());
             return;
         }
 

@@ -21,7 +21,6 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class ServerController {
-    private static final Logger LOG = Logger.getLogger(ServerController.class);
 
     private final ServerService serverService;
 
