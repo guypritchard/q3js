@@ -62,16 +62,15 @@ export default function GuidePage() {
                 <h1>Run Your Own Q3JS Server</h1>
 
                 <p>
-                    You can host your own Quake III Arena server for Q3JS using the official Docker image.
-                    The dedicated server behaves the same as the original <code>ioq3ded</code> executable,
-                    but wrapped in a convenient, ready-to-run container.
+                    Q3JS can list and connect to standard Quake III dedicated servers. The simplest way to run one is
+                    with the official Docker image, which starts an <code>ioq3ded</code>-compatible server and the
+                    WebSocket proxy Q3JS needs.
                 </p>
 
-                <h2>1. Prepare Your Directory</h2>
+                <h2>1. Create a Server Folder</h2>
                 <p>
-                    Create or enter a directory that contains a <code>baseq3</code> folder.
-                    The server must have access to this folder because that’s where all game data,
-                    configs, and map files live.
+                    Start with an empty directory for your server files. You will place a <code>baseq3</code> folder
+                    inside it in the next step.
                 </p>
 
 
@@ -80,13 +79,18 @@ export default function GuidePage() {
 cd my-q3-server`}
             </pre>
 
-                <h2>2. Run the Server</h2>
-                <p>Copy the baseq3 folder to my-q3-server</p>
-                <p>Make sure to use the demo versions of the files</p>
+                <h2>2. Add Your <code>baseq3</code> Files</h2>
+                <p>
+                    Copy a <code>baseq3</code> directory into <code>my-q3-server</code>. This folder contains the game
+                    assets, configs, and maps the server will load.
+                </p>
+                <p>
+                    Use only files you are allowed to host, such as the Quake III demo data or community-created
+                    content. Do not use redistributable retail game files.
+                </p>
 
-
-                <h2>3. Run the Server</h2>
-                <p>Launch your server with Docker:</p>
+                <h2>3. Start the Container</h2>
+                <p>From inside <code>my-q3-server</code>, run:</p>
 
                 <pre className=" whitespace-pre">
 {`docker run \\
@@ -97,53 +101,59 @@ cd my-q3-server`}
   +map q3dm17`}
             </pre>
 
+                <h2>4. Open the Required Ports</h2>
                 <p>
-                    If you plan to run your own dedicated server and make it visible to players outside your local
-                    network,
-                    ensure that the required ports are forwarded on your router. Quake III Arena servers typically use
-                    UDP <span className=" font-semibold">27960</span> for game traffic and your WebSocket-UDP proxy
-                    listens on
-                    port <span className=" font-semibold">27961</span>. Both must be open and forwarded to the machine
-                    running
-                    your server for others to see and connect to it.
+                    To make the server reachable outside your local network, forward both ports on your router to the
+                    machine running the container.
+                </p>
+                <ul>
+                    <li>
+                        <code>27960/udp</code> handles normal Quake III game traffic.
+                    </li>
+                    <li>
+                        <code>27961/tcp</code> handles the WebSocket proxy used by browser clients.
+                    </li>
+                </ul>
+                <p>
+                    If these ports are not open, the server may work on your LAN but it will not be visible or
+                    joinable from the public internet.
                 </p>
 
-
-                <h2>4. How This Command Works</h2>
+                <h2>5. How the Docker Command Works</h2>
                 <ul>
                     <li>
                         <strong>Ports:</strong>
-                        <code>27960/udp</code> is the Quake game port.
-                        <code>27961</code> is the WebSocket-UDP proxy port used by Q3JS.
+                        <code>-p 27960:27960/udp</code> exposes the Quake III server port, and
+                        <code>-p 27961:27961</code> exposes the proxy port for Q3JS.
                     </li>
 
                     <li>
                         <strong>Volume mount:</strong>
                         <code>-v "$(pwd)/baseq3":/server/baseq3</code>
-                        makes your local <code>baseq3</code> directory available inside the container.
+                        mounts your local <code>baseq3</code> folder into the container.
                     </li>
 
                     <li>
                         <strong>Dedicated server behavior:</strong>
-                        After startup, the process behaves exactly like the classic
-                        <code>ioq3ded</code> server.
-                        Any <code>+set</code> or <code>+map</code> parameters work the same way.
+                        After startup, the container behaves like a normal <code>ioq3ded</code> server, so standard
+                        <code>+set</code> and <code>+map</code> arguments still work.
                     </li>
 
                     <li>
                         <strong>Map loading:</strong>
-                        The example starts on <code>q3dm17</code>, but you can choose any available map.
+                        The example starts on <code>q3dm17</code>, but you can replace it with any map present in your
+                        data files.
                     </li>
                 </ul>
 
-                <h2>5. Confirming the Server Runs</h2>
+                <h2>6. Confirm the Server Is Reachable</h2>
                 <p>
-                    Once the container starts, your server will appear on the Q3JS home page
-                    as long as it is configured with the correct master server settings
-                    (included automatically in this Docker image).
+                    After the container starts, your server should appear on the Q3JS home page. The Docker image
+                    already includes the correct master server settings, so if it does not show up, the usual causes are
+                    missing files, the wrong mounted directory, or closed ports.
                 </p>
 
-                <h2>5. File Requirements</h2>
+                <h2>7. File Requirements</h2>
                 <p>
                     Only official Quake III <em>demo</em> files or community-created assets are allowed.
                     Retail files are not included and cannot be distributed.
