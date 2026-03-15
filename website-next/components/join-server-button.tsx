@@ -32,7 +32,7 @@ export function JoinServerButton(props: {
         createRandomPlayerName()
     );
 
-    const gamePageBaseUrl = props.server.secure === false
+    const gamePageBaseUrl = !props.server.secure
         ? env.NEXT_PUBLIC_INSECURE_GAME_PAGE_BASE_URL
         : "";
 
@@ -96,8 +96,7 @@ export function JoinServerButton(props: {
                 </div>
 
                 <DialogFooter className="mt-4">
-                    <Link
-                        prefetch={false}
+                    <a
                         className="w-full"
                         href={gameUrl}
                         aria-label={`Join ${props.server.info.sv_hostname}`}
@@ -106,7 +105,7 @@ export function JoinServerButton(props: {
                             <Zap className="h-4 w-4 mr-2"/>
                             {ctaLabel}
                         </Button>
-                    </Link>
+                    </a>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
