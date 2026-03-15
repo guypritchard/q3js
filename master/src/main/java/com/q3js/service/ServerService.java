@@ -12,10 +12,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
 
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 @RequiredArgsConstructor
@@ -69,7 +69,12 @@ public class ServerService {
     }
 
     public List<ServerResponse> getAllServers() {
-        return serverResponseCache;
+        return serverResponseCache
+                .stream()
+                .sorted(
+                        Comparator.comparing(s -> s.getInfo().getSv_hostname())
+                )
+                .toList();
     }
 
     public ServerInfoResponse getServerInfo(String id) {
