@@ -79,7 +79,13 @@ public class ServerService {
         return serverResponseCache
                 .stream()
                 .sorted(
-                        Comparator.comparing(s -> s.getInfo().getSv_hostname())
+                        Comparator
+                                .comparing(ServerResponse::getSecure)
+                                .reversed()
+                                .thenComparing(
+                                        (ServerResponse s) -> s.getInfo().getSv_hostname(),
+                                        Comparator.nullsLast(Comparator.reverseOrder())
+                                )
                 )
                 .toList();
     }
