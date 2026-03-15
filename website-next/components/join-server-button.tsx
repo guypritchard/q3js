@@ -32,9 +32,9 @@ export function JoinServerButton(props: {
         createRandomPlayerName()
     );
 
-    const joinHost = props.server.secure === false
-        ? env.NEXT_PUBLIC_INSECURE_PROXY_HOST
-        : props.server.host;
+    const gamePageBaseUrl = props.server.secure === false
+        ? env.NEXT_PUBLIC_INSECURE_GAME_PAGE_BASE_URL
+        : "";
 
     if (isFull) {
         return (
@@ -50,7 +50,7 @@ export function JoinServerButton(props: {
         );
     }
 
-    const gameUrl = `/game?host=${joinHost}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(
+    const gameUrl = `${gamePageBaseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(
         name
     )}&fs_game=${props.server.info.fsGame}`;
 
