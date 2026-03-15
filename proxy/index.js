@@ -10,14 +10,17 @@ const DEFAULT_TARGET_PORT = env.TARGET_PORT;
 const WS_PORT = env.WS_PORT;
 const SECURE = env.SECURE;
 
-let ip;
-fetch("https://api.ipify.org").then(res => res.text()).then(ipRes => {
-    ip = ipRes;
-});
+let host = env.HOST;
+
+if (!host) {
+    fetch("https://api.ipify.org").then(res => res.text()).then(ipRes => {
+        host = ipRes;
+    });
+}
 
 
 async function sendHeartbeat() {
-    if (!ip) {
+    if (!host) {
         console.warn('Obtaining IP address...');
         return;
     }
@@ -27,7 +30,7 @@ async function sendHeartbeat() {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                targetHost: ip,
+                targetHost: host,
                 proxyPort: WS_PORT,
                 targetPort: DEFAULT_TARGET_PORT,
                 secure: SECURE,
