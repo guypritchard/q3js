@@ -5,7 +5,6 @@ package com.q3js.jooq;
 
 
 import com.q3js.jooq.tables.Events;
-import com.q3js.jooq.tables.Servers;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,11 +35,6 @@ public class DefaultSchema extends SchemaImpl {
     public final Events EVENTS = Events.EVENTS;
 
     /**
-     * The table <code>servers</code>.
-     */
-    public final Servers SERVERS = Servers.SERVERS;
-
-    /**
      * No further instances allowed
      */
     private DefaultSchema() {
@@ -63,8 +57,7 @@ public class DefaultSchema extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
-            Events.EVENTS,
-            Servers.SERVERS
+            Events.EVENTS
         );
     }
 }

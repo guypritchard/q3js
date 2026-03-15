@@ -5,9 +5,7 @@ package com.q3js.jooq;
 
 
 import com.q3js.jooq.tables.Events;
-import com.q3js.jooq.tables.Servers;
 import com.q3js.jooq.tables.records.EventsRecord;
-import com.q3js.jooq.tables.records.ServersRecord;
 
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
@@ -27,6 +25,4 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<EventsRecord> EVENTS_PKEY1 = Internal.createUniqueKey(Events.EVENTS, DSL.name("events_pkey1"), new TableField[] { Events.EVENTS.ID }, true);
-    public static final UniqueKey<ServersRecord> SERVERS_PKEY = Internal.createUniqueKey(Servers.SERVERS, DSL.name("servers_pkey"), new TableField[] { Servers.SERVERS.ID }, true);
-    public static final UniqueKey<ServersRecord> UK_SERVERS_HOST_PROXY_TARGET = Internal.createUniqueKey(Servers.SERVERS, DSL.name("uk_servers_host_proxy_target"), new TableField[] { Servers.SERVERS.HOST, Servers.SERVERS.PROXY_PORT, Servers.SERVERS.TARGET_PORT }, true);
 }

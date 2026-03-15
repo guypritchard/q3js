@@ -5,7 +5,6 @@ package com.q3js.jooq;
 
 
 import com.q3js.jooq.tables.Events;
-import com.q3js.jooq.tables.Servers;
 
 
 /**
@@ -18,9 +17,4 @@ public class Tables {
      * The table <code>events</code>.
      */
     public static final Events EVENTS = Events.EVENTS;
-
-    /**
-     * The table <code>servers</code>.
-     */
-    public static final Servers SERVERS = Servers.SERVERS;
 }

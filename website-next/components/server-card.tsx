@@ -5,14 +5,14 @@ import {Badge} from "@/components/ui/badge.tsx";
 import {getGameLimits, getPercentage, getPingColor} from "@/lib/utils.ts";
 import {JoinServerButton} from "@/components/join-server-button.tsx";
 import {PlayerList} from "@/components/player-list.tsx";
-import {ServerWithInfo} from "@/lib/server-info";
+import {ServerResponse} from "@/lib/client";
 
 export function ServerCard(props: {
-    server: ServerWithInfo;
+    server: ServerResponse;
 }) {
-    const {server} = props;
-    const info = server.info;
-    const sortedUsers = [...(info?.users ?? [])].sort((a, b) => b.score - a.score);
+    const info = props.server;
+
+    const sortedUsers = [...info.users].sort((a, b) => b.score - a.score);
 
     return (
         <Card className="bg-card/50 border-border/50 hover:border-primary/50 transition-all">
@@ -23,9 +23,9 @@ export function ServerCard(props: {
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
                                     <h3 className="text-lg font-bold text-foreground">
-                                        {info?.sv_hostname ?? server.host}
+                                        {info.sv_hostname}
                                     </h3>
-                                    {info?.g_needpass === 1 && (
+                                    {info.g_needpass === 1 && (
                                         <Lock className="h-4 w-4 text-muted-foreground"/>
                                     )}
                                 </div>
@@ -34,60 +34,48 @@ export function ServerCard(props: {
                                         variant="outline"
                                         className="font-mono text-xs border-border/50 text-muted-foreground"
                                     >
-                                        <Globe className="h-3 w-3 mr-1"/> {server.host}
+                                        <Globe className="h-3 w-3 mr-1"/> {info.location ?? "Unknown"}
                                     </Badge>
-                                    {info && (
-                                        <>
-                                            <Badge
-                                                variant="outline"
-                                                className="font-mono text-xs border-border/50 text-muted-foreground"
-                                            >
-                                                {info.mapname.toUpperCase()}
-                                            </Badge>
-                                            <Badge className="font-mono text-xs bg-accent/20 text-accent border-accent/30">
-                                                {GAME_TYPES[info.g_gametype] || "Unknown"}
-                                            </Badge>
-                                            <Badge
-                                                variant="outline"
-                                                className="font-mono text-xs border-border/50 text-muted-foreground"
-                                            >
-                                                {getGameLimits(info)}
-                                            </Badge>
-                                        </>
-                                    )}
-                                    {server.fsGame && (
-                                        <Badge
-                                            variant="outline"
-                                            className="font-mono text-xs border-border/50 text-muted-foreground"
-                                        >
-                                            {server.fsGame}
-                                        </Badge>
-                                    )}
+                                    <Badge
+                                        variant="outline"
+                                        className="font-mono text-xs border-border/50 text-muted-foreground"
+                                    >
+                                        {info.mapname.toUpperCase()}
+                                    </Badge>
+                                    <Badge className="font-mono text-xs bg-accent/20 text-accent border-accent/30">
+                                        {GAME_TYPES[info.g_gametype] || "Unknown"}
+                                    </Badge>
+                                    <Badge
+                                        variant="outline"
+                                        className="font-mono text-xs border-border/50 text-muted-foreground"
+                                    >
+                                        {getGameLimits(info)}
+                                    </Badge>
                                 </div>
                             </div>
 
-                            <JoinServerButton server={server}/>
+                            <JoinServerButton server={info}/>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-4 text-sm">
                             <div className="flex items-center gap-2">
                                 <Users className="h-4 w-4 text-muted-foreground"/>
                                 <span className="text-foreground font-mono">
-                                    {info?.players ?? 0}/{info?.sv_maxclients ?? "?"}
+                                    {info.players}/{info.sv_maxclients}
                                 </span>
                                 <div className="w-24 h-2 bg-secondary rounded-full overflow-hidden">
                                     <div
                                         className="h-full bg-primary rounded-full"
                                         style={{
                                             width: `${getPercentage(
-                                                info?.players ?? 0,
-                                                info?.sv_maxclients ?? 0
+                                                info.players,
+                                                info.sv_maxclients
                                             )}%`
                                         }}
                                     />
                                 </div>
                             </div>
-                            {info?.ping !== undefined && (
+                            {info.ping !== undefined && (
                                 <div className="flex items-center gap-2">
                                     <Activity className={`h-4 w-4 ${getPingColor(info.ping)}`}/>
                                     <span className={`font-mono ${getPingColor(info.ping)}`}>

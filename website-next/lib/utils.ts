@@ -1,6 +1,6 @@
 import {type ClassValue, clsx} from 'clsx'
 import {twMerge} from 'tailwind-merge'
-import {ServerInfoResponse} from "@/lib/client";
+import {ServerResponse} from "@/lib/client";
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
@@ -24,14 +24,14 @@ export function getPingColor(ping: number | undefined) {
     return PING_COLOR_BY_RANGE[getPingRange(ping)]
 }
 
-function getGameLimitType(s: ServerInfoResponse) {
+function getGameLimitType(s: ServerResponse) {
     if (s.g_gametype === 4 && (s.capturelimit ?? 0) > 0) return "capture";
     if (s.fraglimit > 0) return "frag";
     if (s.timelimit > 0) return "time";
     return "none";
 }
 
-export function getGameLimits(s: ServerInfoResponse) {
+export function getGameLimits(s: ServerResponse) {
     return {
         capture: `${s.capturelimit} caps`,
         frag: `${s.fraglimit} frags`,
@@ -41,9 +41,6 @@ export function getGameLimits(s: ServerInfoResponse) {
 }
 
 export function getPercentage(p: number, m: number) {
-    if (m <= 0) {
-        return 0;
-    }
     return (p / m) * 100;
 }
 

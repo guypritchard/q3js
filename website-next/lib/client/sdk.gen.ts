@@ -2,8 +2,8 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import { getAllServersResponseTransformer, getPlayerStatsResponseTransformer } from './transformers.gen';
-import type { GetAllPlayersData, GetAllPlayersResponses, GetAllServersData, GetAllServersResponses, GetGlobalScoreboardData, GetGlobalScoreboardResponses, GetKillDistributionData, GetKillDistributionResponses, GetPlayerStatsData, GetPlayerStatsResponses, GetServerInfoData, GetServerInfoResponses, IngestEventData, IngestEventErrors, IngestEventResponses, RefreshServerData, RefreshServerErrors, RefreshServerResponses } from './types.gen';
+import { getPlayerStatsResponseTransformer } from './transformers.gen';
+import type { GetAllPlayersData, GetAllPlayersResponses, GetAllServersData, GetAllServersResponses, GetGlobalScoreboardData, GetGlobalScoreboardResponses, GetKillDistributionData, GetKillDistributionResponses, GetPlayerStatsData, GetPlayerStatsResponses, IngestEventData, IngestEventErrors, IngestEventResponses, RefreshServerData, RefreshServerErrors, RefreshServerResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -58,11 +58,7 @@ export const getPlayerStats = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Get All Servers
  */
-export const getAllServers = <ThrowOnError extends boolean = false>(options?: Options<GetAllServersData, ThrowOnError>) => (options?.client ?? client).get<GetAllServersResponses, unknown, ThrowOnError>({
-    responseTransformer: getAllServersResponseTransformer,
-    url: '/api/servers',
-    ...options
-});
+export const getAllServers = <ThrowOnError extends boolean = false>(options?: Options<GetAllServersData, ThrowOnError>) => (options?.client ?? client).get<GetAllServersResponses, unknown, ThrowOnError>({ url: '/api/servers', ...options });
 
 /**
  * Refresh Server
@@ -75,8 +71,3 @@ export const refreshServer = <ThrowOnError extends boolean = false>(options: Opt
         ...options.headers
     }
 });
-
-/**
- * Get Server Info
- */
-export const getServerInfo = <ThrowOnError extends boolean = false>(options: Options<GetServerInfoData, ThrowOnError>) => (options.client ?? client).get<GetServerInfoResponses, unknown, ThrowOnError>({ url: '/api/servers/{id}/info', ...options });

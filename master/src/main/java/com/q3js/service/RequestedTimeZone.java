@@ -1,4 +1,4 @@
-package com.q3js.service.dto;
+package com.q3js.service;
 
 import jakarta.ws.rs.BadRequestException;
 

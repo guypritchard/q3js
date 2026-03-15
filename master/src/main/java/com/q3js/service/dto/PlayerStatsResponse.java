@@ -1,5 +1,6 @@
 package com.q3js.service.dto;
 
+import com.q3js.service.ScoreboardPeriod;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

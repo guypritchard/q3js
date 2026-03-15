@@ -1,6 +1,5 @@
 package com.q3js.service;
 
-import com.q3js.service.dto.ScoreboardPeriod;
 import jakarta.ws.rs.BadRequestException;
 import org.junit.jupiter.api.Test;
 

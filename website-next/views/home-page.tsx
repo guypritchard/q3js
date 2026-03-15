@@ -47,7 +47,7 @@ export default async function HomePage() {
 
     const allTimeScoreboard = scoreboards.ALL_TIME;
     const dailyScoreboard = scoreboards.DAILY;
-    const currentPlayerCount = initialServers.reduce((sum, server) => sum + (server.info?.players ?? 0), 0);
+    const currentPlayerCount = initialServers.reduce((sum, server) => sum + server.players, 0);
     const totalKillCount = allTimeScoreboard.reduce((sum, entry) => sum + entry.kills, 0);
     const firstServer = initialServers[0];
     const topDailyPlayer = sortScoreboardEntries(dailyScoreboard)[0] ?? null;

@@ -88,7 +88,7 @@ export const ScoreboardPeriod = {
 
 export type ScoreboardPeriod = typeof ScoreboardPeriod[keyof typeof ScoreboardPeriod];
 
-export type ServerInfoResponse = {
+export type ServerResponse = {
     id: string;
     sv_hostname: string;
     mapname: string;
@@ -97,39 +97,32 @@ export type ServerInfoResponse = {
     timelimit: number;
     sv_maxclients: number;
     g_needpass: number;
-    capturelimit: number;
-    version: string;
+    fsGame: string;
+    capturelimit?: number;
+    version?: string;
+    location?: string;
     players: number;
-    ping: number;
-    port: number;
-    challenge: string;
-    sv_maxPing: number;
-    sv_minPing: number;
-    com_gamename: string;
-    com_protocol: number;
-    dmflags: number;
-    sv_privateClients: number;
-    sv_minRate: number;
-    sv_maxRate: number;
-    sv_dlRate: number;
-    sv_floodProtect: number;
-    sv_allowDownload: number;
-    bot_minplayers: number;
-    gamename: string;
-    g_maxGameClients: number;
-    host: string;
-    proxyPort?: number;
+    ping?: number;
+    host?: string;
+    port?: number;
+    challenge?: string;
+    sv_maxPing?: number;
+    sv_minPing?: number;
+    com_gamename?: string;
+    com_protocol?: number;
+    dmflags?: number;
+    sv_privateClients?: number;
+    sv_minRate?: number;
+    sv_maxRate?: number;
+    sv_dlRate?: number;
+    sv_floodProtect?: number;
+    sv_allowDownload?: number;
+    bot_minplayers?: number;
+    gamename?: string;
+    g_maxGameClients?: number;
     users: Array<ServerUserResponse>;
-};
-
-export type ServerResponse = {
-    id: bigint;
-    secure: boolean;
-    host: string;
-    proxyPort: number;
-    targetHost?: string;
-    targetPort: number;
-    fsGame?: string;
+    proxyPort?: number;
+    targetPort?: number;
 };
 
 export type ServerUserResponse = {
@@ -272,21 +265,3 @@ export type RefreshServerResponses = {
 };
 
 export type RefreshServerResponse = RefreshServerResponses[keyof RefreshServerResponses];
-
-export type GetServerInfoData = {
-    body?: never;
-    path: {
-        id: bigint;
-    };
-    query?: never;
-    url: '/api/servers/{id}/info';
-};
-
-export type GetServerInfoResponses = {
-    /**
-     * OK
-     */
-    200: ServerInfoResponse;
-};
-
-export type GetServerInfoResponse = GetServerInfoResponses[keyof GetServerInfoResponses];

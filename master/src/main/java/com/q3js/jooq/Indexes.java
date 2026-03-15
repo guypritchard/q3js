@@ -5,7 +5,6 @@ package com.q3js.jooq;
 
 
 import com.q3js.jooq.tables.Events;
-import com.q3js.jooq.tables.Servers;
 
 import org.jooq.Index;
 import org.jooq.OrderField;
@@ -26,6 +25,4 @@ public class Indexes {
     public static final Index IDX_EVENTS_EVENT_TYPE_KILLER_NAME = Internal.createIndex(DSL.name("idx_events_event_type_killer_name"), Events.EVENTS, new OrderField[] { Events.EVENTS.EVENT_TYPE, Events.EVENTS.KILLER_NAME }, false);
     public static final Index IDX_EVENTS_EVENT_TYPE_RECEIVED_AT = Internal.createIndex(DSL.name("idx_events_event_type_received_at"), Events.EVENTS, new OrderField[] { Events.EVENTS.EVENT_TYPE, Events.EVENTS.RECEIVED_AT.desc() }, false);
     public static final Index IDX_EVENTS_RECEIVED_AT = Internal.createIndex(DSL.name("idx_events_received_at"), Events.EVENTS, new OrderField[] { Events.EVENTS.RECEIVED_AT.desc() }, false);
-    public static final Index IDX_SERVERS_DISPLAY_ORDER = Internal.createIndex(DSL.name("idx_servers_display_order"), Servers.SERVERS, new OrderField[] { Servers.SERVERS.DISPLAY_ORDER, Servers.SERVERS.CREATED_AT }, false);
-    public static final Index IDX_SERVERS_LAST_HEARTBEAT_AT = Internal.createIndex(DSL.name("idx_servers_last_heartbeat_at"), Servers.SERVERS, new OrderField[] { Servers.SERVERS.LAST_HEARTBEAT_AT.desc() }, false);
 }

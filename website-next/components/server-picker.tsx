@@ -8,15 +8,15 @@ import {Button} from "@/components/ui/button.tsx";
 import {stripQ3Colors} from "@/lib/utils.ts";
 import Link from "next/link";
 import {Search} from "lucide-react";
+import {ServerResponse} from "@/lib/client";
 import {useRouter} from "next/navigation";
-import {ServerWithInfo} from "@/lib/server-info";
 
 
 function formatCount(count: number, singular: string, plural = `${singular}s`) {
     return `${count} ${count === 1 ? singular : plural}`;
 }
 
-export function ServerPicker({servers}: { servers: ServerWithInfo[] }) {
+export function ServerPicker({servers}: { servers: ServerResponse[] }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [isRefreshing, startRefreshTransition] = useTransition();
     const router = useRouter();
@@ -25,24 +25,22 @@ export function ServerPicker({servers}: { servers: ServerWithInfo[] }) {
         const normalizedSearch = searchTerm.trim().toLowerCase();
 
         return servers.filter((server) => {
-            const hostname = stripQ3Colors(server.info?.sv_hostname ?? server.host).toLowerCase();
-            const mapname = (server.info?.mapname ?? "").toLowerCase();
-            const fsGame = (server.fsGame ?? "").toLowerCase();
+            const hostname = stripQ3Colors(server.sv_hostname).toLowerCase();
+            const mapname = server.mapname.toLowerCase();
 
             return normalizedSearch.length === 0 ||
                 hostname.includes(normalizedSearch) ||
-                mapname.includes(normalizedSearch) ||
-                fsGame.includes(normalizedSearch);
+                mapname.includes(normalizedSearch);
         });
     }, [servers, searchTerm]);
 
     const totalPlayerCount = useMemo(
-        () => servers.reduce((sum, server) => sum + (server.info?.players ?? 0), 0),
+        () => servers.reduce((sum, server) => sum + server.players, 0),
         [servers]
     );
 
     const filteredPlayerCount = useMemo(
-        () => filteredServers.reduce((sum, server) => sum + (server.info?.players ?? 0), 0),
+        () => filteredServers.reduce((sum, server) => sum + server.players, 0),
         [filteredServers]
     );
     const activeFilterCount = [searchTerm.trim().length > 0].filter(Boolean).length;
