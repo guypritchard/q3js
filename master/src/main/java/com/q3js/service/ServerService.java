@@ -15,12 +15,15 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 @RequiredArgsConstructor
 public class ServerService {
     private final CopyOnWriteArrayList<Server> servers = new CopyOnWriteArrayList<>();
     private final ServerStatusClient serverStatusClient;
+
+    private List<ServerResponse> serverResponseCache = List.of();
 
     public void handleHeartbeat(HeartbeatRequest heartbeatRequest) {
         var server = findServer(heartbeatRequest.getTargetHost(), heartbeatRequest.getProxyPort());
@@ -39,6 +42,19 @@ public class ServerService {
                 .build());
     }
 
+    @Scheduled(every = "5s")
+    public void refreshServerInfo() {
+        serverResponseCache = servers.stream()
+                .map(s -> {
+                    return serverStatusClient.query(s)
+                            .map(info -> {
+                                return new ServerResponse(s.getHost(), s.getProxyPort(), s.getTargetPort(), s.isSecure(), info);
+                            });
+                })
+                .flatMap(Optional::stream)
+                .toList();
+    }
+
     @Scheduled(every = "10s")
     public void pruneServers() {
         servers
@@ -52,17 +68,8 @@ public class ServerService {
                 .findFirst();
     }
 
-
     public List<ServerResponse> getAllServers() {
-        return servers.stream()
-                .map(s -> {
-                    return serverStatusClient.query(s)
-                            .map(info -> {
-                                return new ServerResponse(s.getHost(), s.getProxyPort(), s.getTargetPort(), s.isSecure(), info);
-                            });
-                })
-                .flatMap(Optional::stream)
-                .toList();
+        return serverResponseCache;
     }
 
     public ServerInfoResponse getServerInfo(String id) {
