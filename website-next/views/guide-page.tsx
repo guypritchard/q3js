@@ -89,7 +89,7 @@ ls baseq3/`}
 {`docker run \\
   -p 27961:27961 \\
   -p 27960:27960/udp \\
-  -v $(pwd)/baseq3:/server/baseq3 \\
+  -v "$(pwd)/baseq3":/server/baseq3 \\
   lukaklacar/q3js-server \\
   +map q3dm17`}
             </pre>
@@ -116,7 +116,7 @@ ls baseq3/`}
 
                     <li>
                         <strong>Volume mount:</strong>
-                        <code>-v $(pwd)/baseq3:/server/baseq3</code>
+                        <code>-v "$(pwd)/baseq3":/server/baseq3</code>
                         makes your local <code>baseq3</code> directory available inside the container.
                     </li>
 
