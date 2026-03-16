@@ -70,7 +70,7 @@ public class ServerService {
     @Scheduled(every = "10s")
     public void pruneServers() {
         servers
-                .removeIf(server -> OffsetDateTime.now().minusMinutes(1)
+                .removeIf(server -> OffsetDateTime.now().minusMinutes(5)
                         .isAfter(server.getLastHeartbeat()));
     }
 
