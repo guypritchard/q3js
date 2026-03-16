@@ -18,6 +18,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.q3js.jooq.Tables.EVENTS;
@@ -29,7 +30,7 @@ class EventServiceTest {
     @Test
     void getAllPlayersReturnsDistinctSortedNamesFromLifecycleAndKillEvents() {
         DSLContext dsl = DSL.using(new MockConnection(new AllPlayersMockProvider()), SQLDialect.POSTGRES);
-        EventService eventService = new EventService(dsl);
+        EventService eventService = new EventService(dsl, new EventPersistenceService(dsl));
 
         List<PlayerResponse> response = eventService.getAllPlayers();
 
@@ -111,24 +112,31 @@ class EventServiceTest {
     void ingestEventSupportsActorOnlyEvents() {
         RecordingInsertMockProvider provider = new RecordingInsertMockProvider();
         DSLContext dsl = DSL.using(new MockConnection(provider), SQLDialect.POSTGRES);
-        EventService eventService = new EventService(dsl);
+        EventService eventService = new EventService(dsl, new EventPersistenceService(dsl));
+        eventService.startQueueProcessor();
 
-        eventService.ingestEvent(CreateEventRequest.builder()
-                .event("join")
-                .player(CreateEventRequest.EventPlayer.builder()
-                        .clientNum(4)
-                        .name("Ranger")
-                        .build())
-                .gameTime(1234)
-                .serverTime(5678)
-                .map("q3dm17")
-                .build());
+        try {
+            eventService.ingestEvent(CreateEventRequest.builder()
+                    .event("join")
+                    .player(CreateEventRequest.EventPlayer.builder()
+                            .clientNum(4)
+                            .name("Ranger")
+                            .build())
+                    .gameTime(1234)
+                    .serverTime(5678)
+                    .map("q3dm17")
+                    .build());
 
-        assertEquals(1, provider.executeCount.get());
-        assertArrayEquals(
-                new Object[]{"join", 4, "Ranger", null, null, null, 1234, 5678, "q3dm17"},
-                provider.bindings
-        );
+            waitForInsert(provider.executeCount, 1);
+
+            assertEquals(1, provider.executeCount.get());
+            assertArrayEquals(
+                    new Object[]{"join", 4, "Ranger", null, null, null, 1234, 5678, "q3dm17"},
+                    provider.bindings
+            );
+        } finally {
+            eventService.stopQueueProcessor();
+        }
     }
 
     @Test
@@ -333,7 +341,7 @@ class EventServiceTest {
         }
 
         private TestEventService(DSLContext dsl, List<PlayerWeaponBreakdownResponse> weaponBreakdown, long playtimeSeconds) {
-            super(dsl);
+            super(dsl, new EventPersistenceService(dsl));
             this.weaponBreakdown = weaponBreakdown;
             this.playtimeSeconds = playtimeSeconds;
         }
@@ -353,7 +361,7 @@ class EventServiceTest {
         private final OffsetDateTime now;
 
         private FixedNowEventService(DSLContext dsl, OffsetDateTime now) {
-            super(dsl);
+            super(dsl, new EventPersistenceService(dsl));
             this.now = now;
         }
 
@@ -361,5 +369,23 @@ class EventServiceTest {
         protected OffsetDateTime currentTime() {
             return now;
         }
+    }
+
+    private static void waitForInsert(AtomicInteger executeCount, int expectedCount) {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+        while (System.nanoTime() < deadline) {
+            if (executeCount.get() >= expectedCount) {
+                return;
+            }
+
+            try {
+                TimeUnit.MILLISECONDS.sleep(10);
+            } catch (InterruptedException interruptedException) {
+                Thread.currentThread().interrupt();
+                throw new AssertionError("Interrupted while waiting for queued event persistence", interruptedException);
+            }
+        }
+
+        assertEquals(expectedCount, executeCount.get());
     }
 }

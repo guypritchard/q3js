@@ -1,9 +1,11 @@
 package com.q3js.service;
 
 import com.q3js.service.dto.*;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.jboss.logging.Logger;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -22,6 +24,11 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
 import static com.q3js.jooq.Tables.EVENTS;
@@ -29,34 +36,78 @@ import static com.q3js.jooq.Tables.EVENTS;
 @ApplicationScoped
 @RequiredArgsConstructor
 public class EventService {
+    private static final Logger LOG = Logger.getLogger(EventService.class);
+
     private final DSLContext dsl;
+    private final EventPersistenceService eventPersistenceService;
+    private static final int MAX_QUEUE_SIZE = 10_000;
+    private final LinkedBlockingQueue<QueuedEvent> eventQueue = new LinkedBlockingQueue<>(MAX_QUEUE_SIZE);
+    private final AtomicBoolean running = new AtomicBoolean();
 
-    @Transactional
-    public void ingestEvent(CreateEventRequest createEventRequest) {
-        var event = dsl.newRecord(EVENTS);
-        var eventType = createEventRequest.getEvent();
+    private ExecutorService eventProcessor;
 
-        event.setEventType(eventType);
-        event.setGameTime(createEventRequest.getGameTime());
-        event.setServerTime(createEventRequest.getServerTime());
-        event.setMapName(createEventRequest.getMap());
+    @PostConstruct
+    void startQueueProcessor() {
+        running.set(true);
+        eventProcessor = Executors.newSingleThreadExecutor(Thread.ofPlatform()
+                .name("event-processor-", 0)
+                .factory());
+        eventProcessor.submit(this::processQueuedEvents);
+    }
 
-        if ("join".equalsIgnoreCase(eventType) || "leave".equalsIgnoreCase(eventType)) {
-            var player = createEventRequest.getPlayer();
-            event.setKillerClientNum(player.getClientNum());
-            event.setKillerName(player.getName());
-            event.setVictimClientNum(null);
-            event.setVictimName(null);
-            event.setMeansOfDeath(null);
-        } else {
-            event.setKillerClientNum(createEventRequest.getKiller().getClientNum());
-            event.setKillerName(createEventRequest.getKiller().getName());
-            event.setVictimClientNum(createEventRequest.getVictim().getClientNum());
-            event.setVictimName(createEventRequest.getVictim().getName());
-            event.setMeansOfDeath(createEventRequest.getMeansOfDeath());
+    @PreDestroy
+    void stopQueueProcessor() {
+        running.set(false);
+
+        if (eventProcessor == null) {
+            return;
         }
 
-        event.store();
+        eventProcessor.shutdown();
+        try {
+            if (!eventProcessor.awaitTermination(5, TimeUnit.SECONDS)) {
+                eventProcessor.shutdownNow();
+                LOG.warnf("Event processor stopped with %d events still queued", eventQueue.size());
+            }
+        } catch (InterruptedException interruptedException) {
+            eventProcessor.shutdownNow();
+            Thread.currentThread().interrupt();
+            LOG.warn("Interrupted while waiting for event processor shutdown", interruptedException);
+        }
+    }
+
+    public boolean ingestEvent(CreateEventRequest createEventRequest) {
+        boolean accepted = eventQueue.offer(QueuedEvent.from(createEventRequest));
+        if (!accepted) {
+            LOG.warnf("Dropping event because queue is full. size=%d", eventQueue.size());
+        }
+
+        if (eventQueue.size() > 5_000) {
+            LOG.warnf("Event queue backlog is high: %d", eventQueue.size());
+        }
+
+        return accepted;
+    }
+
+    private void processQueuedEvents() {
+        while (running.get() || !eventQueue.isEmpty()) {
+            try {
+                QueuedEvent queuedEvent = eventQueue.poll(250, TimeUnit.MILLISECONDS);
+                if (queuedEvent == null) {
+                    continue;
+                }
+
+                eventPersistenceService.persist(queuedEvent);
+            } catch (InterruptedException interruptedException) {
+                Thread.currentThread().interrupt();
+                if (running.get()) {
+                    LOG.warn("Event processor interrupted unexpectedly", interruptedException);
+                }
+                break;
+            } catch (Exception exception) {
+                LOG.error("Failed to persist queued event", exception);
+            }
+        }
     }
 
     public List<PlayerResponse> getAllPlayers() {
@@ -67,8 +118,7 @@ public class EventService {
                 .union(
                         dsl.select(EVENTS.VICTIM_NAME.as("player_name"))
                                 .from(EVENTS)
-                                .where(EVENTS.VICTIM_NAME.isNotNull())
-                )
+                                .where(EVENTS.VICTIM_NAME.isNotNull()))
                 .asTable("players");
 
         return dsl.select(playerName)
@@ -85,9 +135,8 @@ public class EventService {
         Field<Integer> kills = DSL.count().as("kills");
         Condition condition = killCondition(period, now, timeZone);
         Table<?> scoreboard = dsl.select(
-                        EVENTS.KILLER_NAME.as("player_name"),
-                        kills
-                )
+                EVENTS.KILLER_NAME.as("player_name"),
+                kills)
                 .from(EVENTS)
                 .where(condition)
                 .groupBy(EVENTS.KILLER_NAME)
@@ -96,7 +145,8 @@ public class EventService {
         Field<String> scoreboardPlayer = DSL.field(DSL.name("scoreboard", "player_name"), String.class);
         Field<Integer> scoreboardKills = DSL.field(DSL.name("scoreboard", "kills"), Integer.class);
         Field<String> lastOnlinePlayer = DSL.field(DSL.name("last_online_by_player", "player_name"), String.class);
-        Field<OffsetDateTime> lastOnline = DSL.field(DSL.name("last_online_by_player", "last_online"), OffsetDateTime.class);
+        Field<OffsetDateTime> lastOnline = DSL.field(DSL.name("last_online_by_player", "last_online"),
+                OffsetDateTime.class);
 
         return dsl.select(scoreboardPlayer, scoreboardKills, lastOnline)
                 .from(scoreboard)
@@ -152,7 +202,8 @@ public class EventService {
         }
 
         Field<LocalDate> day = DSL
-                .field("timezone({0}, {1})::date", SQLDataType.LOCALDATE, DSL.inline(timeZone.getId()), EVENTS.RECEIVED_AT)
+                .field("timezone({0}, {1})::date", SQLDataType.LOCALDATE, DSL.inline(timeZone.getId()),
+                        EVENTS.RECEIVED_AT)
                 .as("bucket");
 
         return dsl.select(day, kills)
@@ -163,7 +214,8 @@ public class EventService {
                 .fetch(record -> {
                     LocalDate bucket = record.get(day);
                     return KillDistributionPointResponse.builder()
-                            .bucketStart(bucket != null ? bucket.atStartOfDay(timeZone).toOffsetDateTime().toString() : null)
+                            .bucketStart(
+                                    bucket != null ? bucket.atStartOfDay(timeZone).toOffsetDateTime().toString() : null)
                             .kills(record.get(kills))
                             .build();
                 });
@@ -199,7 +251,8 @@ public class EventService {
         return OffsetDateTime.now();
     }
 
-    protected long fetchPlaytimeSeconds(String playerName, ScoreboardPeriod period, OffsetDateTime now, ZoneId timeZone) {
+    protected long fetchPlaytimeSeconds(String playerName, ScoreboardPeriod period, OffsetDateTime now,
+            ZoneId timeZone) {
         var periodStart = period.startsAt(now, timeZone).orElse(null);
         Map<String, Deque<OffsetDateTime>> openSessionsBySource = new HashMap<>();
         long totalSeconds = 0;
@@ -214,7 +267,8 @@ public class EventService {
         for (var lifecycleEvent : lifecycleEvents) {
             String sourceIp = lifecycleEvent.get(EVENTS.SOURCE_IP);
             String sourceKey = sourceIp != null ? sourceIp : "";
-            Deque<OffsetDateTime> openSessions = openSessionsBySource.computeIfAbsent(sourceKey, ignored -> new ArrayDeque<>());
+            Deque<OffsetDateTime> openSessions = openSessionsBySource.computeIfAbsent(sourceKey,
+                    ignored -> new ArrayDeque<>());
             OffsetDateTime receivedAt = lifecycleEvent.get(EVENTS.RECEIVED_AT);
 
             if ("join".equalsIgnoreCase(lifecycleEvent.get(EVENTS.EVENT_TYPE))) {
@@ -247,27 +301,23 @@ public class EventService {
 
     private Table<?> lastOnlineByPlayerTable() {
         Table<?> playerActivity = dsl.select(
-                        EVENTS.KILLER_NAME.as("player_name"),
-                        EVENTS.RECEIVED_AT.as("received_at")
-                )
+                EVENTS.KILLER_NAME.as("player_name"),
+                EVENTS.RECEIVED_AT.as("received_at"))
                 .from(EVENTS)
                 .where(EVENTS.KILLER_NAME.isNotNull())
                 .unionAll(
                         dsl.select(
-                                        EVENTS.VICTIM_NAME.as("player_name"),
-                                        EVENTS.RECEIVED_AT.as("received_at")
-                                )
+                                EVENTS.VICTIM_NAME.as("player_name"),
+                                EVENTS.RECEIVED_AT.as("received_at"))
                                 .from(EVENTS)
-                                .where(EVENTS.VICTIM_NAME.isNotNull())
-                )
+                                .where(EVENTS.VICTIM_NAME.isNotNull()))
                 .asTable("player_activity");
         Field<String> playerName = DSL.field(DSL.name("player_activity", "player_name"), String.class);
         Field<OffsetDateTime> receivedAt = DSL.field(DSL.name("player_activity", "received_at"), OffsetDateTime.class);
 
         return dsl.select(
-                        playerName,
-                        DSL.max(receivedAt).as("last_online")
-                )
+                playerName,
+                DSL.max(receivedAt).as("last_online"))
                 .from(playerActivity)
                 .groupBy(playerName)
                 .asTable("last_online_by_player");
@@ -277,9 +327,9 @@ public class EventService {
             OffsetDateTime sessionStart,
             OffsetDateTime sessionEnd,
             OffsetDateTime periodStart,
-            OffsetDateTime periodEnd
-    ) {
-        OffsetDateTime overlapStart = periodStart != null && sessionStart.isBefore(periodStart) ? periodStart : sessionStart;
+            OffsetDateTime periodEnd) {
+        OffsetDateTime overlapStart = periodStart != null && sessionStart.isBefore(periodStart) ? periodStart
+                : sessionStart;
         OffsetDateTime overlapEnd = sessionEnd.isAfter(periodEnd) ? periodEnd : sessionEnd;
 
         if (!overlapEnd.isAfter(overlapStart)) {
@@ -315,9 +365,8 @@ public class EventService {
 
         Field<Integer> groupedKills = DSL.count().as("kills");
         Table<?> leaderboard = dsl.select(
-                        EVENTS.KILLER_NAME.as("player_name"),
-                        groupedKills
-                )
+                EVENTS.KILLER_NAME.as("player_name"),
+                groupedKills)
                 .from(EVENTS)
                 .where(condition)
                 .groupBy(EVENTS.KILLER_NAME)
@@ -328,8 +377,7 @@ public class EventService {
                 .from(leaderboard)
                 .where(
                         leaderboardKills.gt(kills)
-                                .or(leaderboardKills.eq(kills).and(leaderboardPlayer.lt(playerName)))
-                )
+                                .or(leaderboardKills.eq(kills).and(leaderboardPlayer.lt(playerName))))
                 .fetchOne(0, int.class);
 
         return (playersAhead != null ? playersAhead : 0) + 1;
@@ -374,8 +422,7 @@ public class EventService {
                 .sorted(
                         Comparator.<Map.Entry<Integer, Integer>>comparingInt(Map.Entry::getValue)
                                 .reversed()
-                                .thenComparingInt(Map.Entry::getKey)
-                )
+                                .thenComparingInt(Map.Entry::getKey))
                 .map(entry -> PlayerWeaponBreakdownResponse.builder()
                         .meansOfDeath(entry.getKey())
                         .weaponName(meansOfDeathName(entry.getKey()))
@@ -482,5 +529,38 @@ public class EventService {
             case 28 -> "Grapple";
             default -> "Unknown (" + meansOfDeath + ")";
         };
+    }
+
+    record QueuedEvent(
+            String event,
+            CreateEventRequest.EventPlayer player,
+            CreateEventRequest.EventPlayer killer,
+            CreateEventRequest.EventPlayer victim,
+            Integer meansOfDeath,
+            Integer gameTime,
+            Integer serverTime,
+            String map) {
+        static QueuedEvent from(CreateEventRequest request) {
+            return new QueuedEvent(
+                    request.getEvent(),
+                    copyPlayer(request.getPlayer()),
+                    copyPlayer(request.getKiller()),
+                    copyPlayer(request.getVictim()),
+                    request.getMeansOfDeath(),
+                    request.getGameTime(),
+                    request.getServerTime(),
+                    request.getMap());
+        }
+
+        private static CreateEventRequest.EventPlayer copyPlayer(CreateEventRequest.EventPlayer player) {
+            if (player == null) {
+                return null;
+            }
+
+            return CreateEventRequest.EventPlayer.builder()
+                    .clientNum(player.getClientNum())
+                    .name(player.getName())
+                    .build();
+        }
     }
 }
