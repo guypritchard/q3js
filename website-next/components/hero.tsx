@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {Button} from "@/components/ui/button.tsx";
-import {Skull, Target, Users} from "lucide-react";
+import {Github, Skull, Target, Twitter, Users, XIcon} from "lucide-react";
 import {JoinServerButton} from "@/components/join-server-button.tsx";
 import {Q3ColoredText} from "@/components/q3-colored-text.tsx";
 import {ScoreboardEntryResponse, ServerResponse} from "@/lib/client";
@@ -37,16 +37,36 @@ export function Hero(props: {
                         No install step. Click play, pick a server, and jump straight into a live Quake 3 match.
                     </p>
 
-                    <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                    <div className="mt-6 mx-auto grid max-w-md grid-cols-2 gap-3">
                         {props.firstServer ? (
                             <JoinServerButton server={props.firstServer} ctaLabel={"Quick Play"}/>
                         ) : (
-                            <Button size="lg" className="min-w-32" asChild>
+                            <Button size="lg" className="w-full" asChild>
                                 <Link href="#server-browser">Quick Play</Link>
                             </Button>
                         )}
-                        <Button variant="secondary" size="lg" className="min-w-32" asChild>
+                        <Button variant="secondary" size="lg" className="w-full" asChild>
                             <Link href="/scoreboard">Scoreboard</Link>
+                        </Button>
+                        <Button variant="outline" size="lg" className="w-full" asChild>
+                            <Link
+                                href="https://github.com/lklacar/q3js"
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                <Github className="h-4 w-4"/>
+                                GitHub Repo
+                            </Link>
+                        </Button>
+                        <Button variant="outline" size="lg" className="w-full" asChild>
+                            <Link
+                                href="https://x.com/lukathedev"
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                <XIcon className="h-4 w-4"/>
+                                @lukathedev
+                            </Link>
                         </Button>
                     </div>
 
