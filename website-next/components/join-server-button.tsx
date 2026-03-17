@@ -52,7 +52,7 @@ export function JoinServerButton(props: {
 
     const gameUrl = `${gamePageBaseUrl}/game?host=${props.server.host}&proxyPort=${props.server.proxyPort}&name=${encodeURIComponent(
         name
-    )}&fs_game=${props.server.info.fsGame}`;
+    )}&fs_game=${props.server.info.gamename}`;
 
     return (
         <Dialog>
