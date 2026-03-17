@@ -3,7 +3,7 @@
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
 import { getPlayerStatsResponseTransformer } from './transformers.gen';
-import type { GetAllPlayersData, GetAllPlayersResponses, GetAllServersData, GetAllServersResponses, GetCurrentPlayerCountData, GetCurrentPlayerCountResponses, GetGlobalScoreboardData, GetGlobalScoreboardResponses, GetKillDistributionData, GetKillDistributionResponses, GetPlayerStatsData, GetPlayerStatsResponses, GetServerInfoData, GetServerInfoResponses, IngestEventData, IngestEventErrors, IngestEventResponses, RefreshServerData, RefreshServerErrors, RefreshServerResponses } from './types.gen';
+import type { GetAllPlayersData, GetAllPlayersResponses, GetAllServersData, GetAllServersResponses, GetPlayerScoreboardData, GetPlayerScoreboardDistributionData, GetPlayerScoreboardDistributionResponses, GetPlayerScoreboardResponses, GetPlayerStatsData, GetPlayerStatsResponses, GetServerInfoData, GetServerInfoResponses, IngestEventData, IngestEventErrors, IngestEventResponses, RefreshServerData, RefreshServerErrors, RefreshServerResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -32,24 +32,19 @@ export const ingestEvent = <ThrowOnError extends boolean = false>(options: Optio
 });
 
 /**
- * Get Kill Distribution
- */
-export const getKillDistribution = <ThrowOnError extends boolean = false>(options?: Options<GetKillDistributionData, ThrowOnError>) => (options?.client ?? client).get<GetKillDistributionResponses, unknown, ThrowOnError>({ url: '/api/events/distribution', ...options });
-
-/**
- * Get Global Scoreboard
- */
-export const getGlobalScoreboard = <ThrowOnError extends boolean = false>(options?: Options<GetGlobalScoreboardData, ThrowOnError>) => (options?.client ?? client).get<GetGlobalScoreboardResponses, unknown, ThrowOnError>({ url: '/api/events/scoreboard', ...options });
-
-/**
  * Get All Players
  */
 export const getAllPlayers = <ThrowOnError extends boolean = false>(options?: Options<GetAllPlayersData, ThrowOnError>) => (options?.client ?? client).get<GetAllPlayersResponses, unknown, ThrowOnError>({ url: '/api/players', ...options });
 
 /**
- * Get Current Player Count
+ * Get Player Scoreboard
  */
-export const getCurrentPlayerCount = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentPlayerCountData, ThrowOnError>) => (options?.client ?? client).get<GetCurrentPlayerCountResponses, unknown, ThrowOnError>({ url: '/api/players/current/count', ...options });
+export const getPlayerScoreboard = <ThrowOnError extends boolean = false>(options?: Options<GetPlayerScoreboardData, ThrowOnError>) => (options?.client ?? client).get<GetPlayerScoreboardResponses, unknown, ThrowOnError>({ url: '/api/players/scoreboard', ...options });
+
+/**
+ * Get Player Scoreboard Distribution
+ */
+export const getPlayerScoreboardDistribution = <ThrowOnError extends boolean = false>(options?: Options<GetPlayerScoreboardDistributionData, ThrowOnError>) => (options?.client ?? client).get<GetPlayerScoreboardDistributionResponses, unknown, ThrowOnError>({ url: '/api/players/scoreboard/distribution', ...options });
 
 /**
  * Get Player Stats

@@ -5,14 +5,15 @@ import {Button} from "@/components/ui/button.tsx";
 import {Badge} from "@/components/ui/badge.tsx";
 import Link from "next/link";
 import {
+    buildScoreboardHref,
+    DEFAULT_SCOREBOARD_PAGE,
     SCOREBOARD_PERIOD_LABELS,
-    sortScoreboardEntries,
 } from "@/lib/scoreboard.ts";
-import {useMemo, useState, useTransition} from "react";
+import {useTransition} from "react";
 import {Q3ColoredText} from "@/components/q3-colored-text.tsx";
 import {ScoreboardPeriodToggle} from "@/components/scoreboard-period-toggle.tsx";
 import {KillDistributionChart} from "@/components/kill-distribution-chart.tsx";
-import {KillDistributionPointResponse, ScoreboardEntryResponse, ScoreboardPeriod} from "@/lib/client";
+import {KillDistributionPointResponse, ScoreboardPageResponse, ScoreboardPeriod} from "@/lib/client";
 import {useRouter} from "next/navigation";
 import {formatCompactLastOnline} from "@/lib/last-online";
 
@@ -28,20 +29,18 @@ function formatKills(kills: number) {
 }
 
 export function ScoreboardClient(props: {
-    killDistributions: Record<ScoreboardPeriod, KillDistributionPointResponse[]>;
-    scoreboards: Record<ScoreboardPeriod, ScoreboardEntryResponse[]>;
-    initialPeriod?: ScoreboardPeriod;
+    killDistribution: KillDistributionPointResponse[];
+    scoreboard: ScoreboardPageResponse;
 }) {
-    const [period, setPeriod] = useState<ScoreboardPeriod>(props.initialPeriod ?? "DAILY");
+    const period = props.scoreboard.period;
+    const [isNavigating, startNavigationTransition] = useTransition();
     const [isRefreshing, startRefreshTransition] = useTransition();
     const router = useRouter();
-
-    const scoreboard = useMemo(() => {
-        const rows = props.scoreboards[period] ?? [];
-        return sortScoreboardEntries(rows);
-    }, [period, props.scoreboards]);
-
-    const distribution = props.killDistributions[period] ?? [];
+    const isBusy = isNavigating || isRefreshing;
+    const scoreboard = props.scoreboard.entries;
+    const distribution = props.killDistribution;
+    const startRank = scoreboard.length === 0 ? 0 : ((props.scoreboard.page - 1) * props.scoreboard.pageSize) + 1;
+    const endRank = scoreboard.length === 0 ? 0 : startRank + scoreboard.length - 1;
 
     function refreshScoreboard() {
         startRefreshTransition(() => {
@@ -51,7 +50,19 @@ export function ScoreboardClient(props: {
 
     function selectPeriod(nextPeriod: ScoreboardPeriod) {
         if (nextPeriod === period) return;
-        setPeriod(nextPeriod);
+        startNavigationTransition(() => {
+            router.push(buildScoreboardHref(nextPeriod, DEFAULT_SCOREBOARD_PAGE), {scroll: false});
+        });
+    }
+
+    function goToPage(nextPage: number) {
+        if (nextPage === props.scoreboard.page || nextPage < 1 || nextPage > props.scoreboard.totalPages) {
+            return;
+        }
+
+        startNavigationTransition(() => {
+            router.push(buildScoreboardHref(period, nextPage), {scroll: false});
+        });
     }
 
     const periodLabel = SCOREBOARD_PERIOD_LABELS[period];
@@ -63,10 +74,12 @@ export function ScoreboardClient(props: {
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
                             <p className="text-sm text-muted-foreground">
-                                {`${scoreboard.length} players ranked`}
+                                {props.scoreboard.totalEntries === 0
+                                    ? "0 players ranked"
+                                    : `Showing ${startRank}-${endRank} of ${props.scoreboard.totalEntries} players ranked`}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                                Showing {periodLabel.toLowerCase()} frags across reported servers.
+                                {`${formatKills(props.scoreboard.totalKills)} total ${periodLabel.toLowerCase()} frags across reported servers.`}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -75,7 +88,7 @@ export function ScoreboardClient(props: {
                                 variant="outline"
                                 size="sm"
                                 onClick={refreshScoreboard}
-                                disabled={isRefreshing}
+                                disabled={isBusy}
                             >
                                 {isRefreshing ? "Refreshing..." : "Refresh"}
                             </Button>
@@ -99,7 +112,8 @@ export function ScoreboardClient(props: {
                 )}
 
                 {scoreboard.length > 0 && (
-                    <div className="overflow-x-auto">
+                    <div>
+                        <div className="overflow-x-auto">
                         <table className="w-full min-w-[500px] text-sm">
                             <thead>
                             <tr className="border-b border-border/60 text-muted-foreground">
@@ -110,7 +124,7 @@ export function ScoreboardClient(props: {
                             </thead>
                             <tbody>
                             {scoreboard.map((entry, index) => {
-                                const rank = index + 1;
+                                const rank = startRank + index;
 
                                 return (
                                     <tr key={`${entry.playerName}-${rank}`}
@@ -137,6 +151,34 @@ export function ScoreboardClient(props: {
                             })}
                             </tbody>
                         </table>
+                        </div>
+
+                        {props.scoreboard.totalPages > 1 && (
+                            <div
+                                className="flex flex-col gap-3 border-t border-border/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-xs text-muted-foreground">
+                                    {`Page ${props.scoreboard.page} of ${props.scoreboard.totalPages}`}
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => goToPage(props.scoreboard.page - 1)}
+                                        disabled={!props.scoreboard.hasPreviousPage || isBusy}
+                                    >
+                                        Previous
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => goToPage(props.scoreboard.page + 1)}
+                                        disabled={!props.scoreboard.hasNextPage || isBusy}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </CardContent>

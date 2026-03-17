@@ -24,7 +24,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.q3js.jooq.Tables.EVENTS;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EventServiceTest {
     @Test
@@ -140,7 +142,7 @@ class EventServiceTest {
     }
 
     @Test
-    void getKillDistributionUsesRollingHourlyBucketsForDailyPeriod() {
+    void getPlayerScoreboardDistributionUsesRollingHourlyBucketsForDailyPeriod() {
         OffsetDateTime now = OffsetDateTime.of(2026, 3, 11, 15, 42, 0, 0, ZoneOffset.ofHours(1));
         ZoneId timeZone = ZoneId.of("Asia/Tokyo");
         OffsetDateTime dayStart = ScoreboardPeriod.DAILY.startsAt(now, timeZone).orElseThrow();
@@ -152,7 +154,7 @@ class EventServiceTest {
         )), SQLDialect.POSTGRES);
         EventService eventService = new FixedNowEventService(dsl, now);
 
-        var response = eventService.getKillDistribution(ScoreboardPeriod.DAILY, timeZone);
+        var response = eventService.getPlayerScoreboardDistribution(ScoreboardPeriod.DAILY, timeZone);
 
         assertEquals(24, response.size());
         assertEquals(dayStart.toString(), response.getFirst().getBucketStart());
@@ -164,20 +166,73 @@ class EventServiceTest {
     }
 
     @Test
-    void getKillDistributionReturnsLocalMidnightBucketsForCalendarPeriods() {
+    void getPlayerScoreboardDistributionReturnsLocalMidnightBucketsForCalendarPeriods() {
         DSLContext dsl = DSL.using(new MockConnection(new CalendarDistributionMockProvider()), SQLDialect.POSTGRES);
         EventService eventService = new FixedNowEventService(
                 dsl,
                 OffsetDateTime.of(2026, 3, 11, 15, 42, 0, 0, ZoneOffset.UTC)
         );
 
-        var response = eventService.getKillDistribution(ScoreboardPeriod.WEEKLY, ZoneId.of("America/New_York"));
+        var response = eventService.getPlayerScoreboardDistribution(ScoreboardPeriod.WEEKLY, ZoneId.of("America/New_York"));
 
         assertEquals(2, response.size());
         assertEquals("2026-03-09T00:00-04:00", response.getFirst().getBucketStart());
         assertEquals(3, response.getFirst().getKills());
         assertEquals("2026-03-10T00:00-04:00", response.get(1).getBucketStart());
         assertEquals(5, response.get(1).getKills());
+    }
+
+    @Test
+    void getPlayerScoreboardReturnsPaginatedEntriesAndMetadata() {
+        DSLContext dsl = DSL.using(new MockConnection(new ScoreboardMockProvider(
+                row("Slash", 7, "2026-03-10T12:30:00Z"),
+                row("Visor", 5, "2026-03-09T08:00:00Z")
+        )), SQLDialect.POSTGRES);
+        EventService eventService = new EventService(dsl, new EventPersistenceService(dsl));
+
+        ScoreboardPageResponse response = eventService.getPlayerScoreboard(
+                ScoreboardPeriod.MONTHLY,
+                RequestedTimeZone.DEFAULT,
+                2,
+                2
+        );
+
+        assertEquals(ScoreboardPeriod.MONTHLY, response.getPeriod());
+        assertEquals(2, response.getPage());
+        assertEquals(2, response.getPageSize());
+        assertEquals(5, response.getTotalEntries());
+        assertEquals(3, response.getTotalPages());
+        assertEquals(37, response.getTotalKills());
+        assertTrue(response.getHasPreviousPage());
+        assertTrue(response.getHasNextPage());
+        assertEquals(2, response.getEntries().size());
+        assertEquals("Slash", response.getEntries().get(0).getPlayerName());
+        assertEquals(7, response.getEntries().get(0).getKills());
+        assertEquals("2026-03-10T12:30Z", response.getEntries().get(0).getLastOnline());
+        assertEquals("Visor", response.getEntries().get(1).getPlayerName());
+        assertEquals(5, response.getEntries().get(1).getKills());
+    }
+
+    @Test
+    void getPlayerScoreboardClampsPageToLastAvailablePage() {
+        DSLContext dsl = DSL.using(new MockConnection(new ScoreboardMockProvider(
+                row("Xaero", 4, "2026-03-08T07:45:00Z")
+        )), SQLDialect.POSTGRES);
+        EventService eventService = new EventService(dsl, new EventPersistenceService(dsl));
+
+        ScoreboardPageResponse response = eventService.getPlayerScoreboard(
+                ScoreboardPeriod.ALL_TIME,
+                RequestedTimeZone.DEFAULT,
+                99,
+                2
+        );
+
+        assertEquals(3, response.getPage());
+        assertEquals(3, response.getTotalPages());
+        assertTrue(response.getHasPreviousPage());
+        assertFalse(response.getHasNextPage());
+        assertEquals(1, response.getEntries().size());
+        assertEquals("Xaero", response.getEntries().getFirst().getPlayerName());
     }
 
     private static final class PlayerStatsMockProvider implements MockDataProvider {
@@ -330,6 +385,65 @@ class EventServiceTest {
             result.add(dsl.newRecord(bucketField, killsField).values(LocalDate.of(2026, 3, 10), 5));
             return new MockResult[]{new MockResult(result.size(), result)};
         }
+    }
+
+    private static final class ScoreboardMockProvider implements MockDataProvider {
+        private final DSLContext dsl = DSL.using(SQLDialect.POSTGRES);
+        private final AtomicInteger callIndex = new AtomicInteger();
+        private final ScoreboardRow[] rows;
+
+        private ScoreboardMockProvider(ScoreboardRow... rows) {
+            this.rows = rows;
+        }
+
+        @Override
+        public MockResult[] execute(MockExecuteContext context) {
+            return switch (callIndex.getAndIncrement()) {
+                case 0 -> new MockResult[]{new MockResult(1, totalEntriesResult(5))};
+                case 1 -> new MockResult[]{new MockResult(1, totalKillsResult(37))};
+                case 2 -> new MockResult[]{new MockResult(rows.length, pagedEntriesResult(rows))};
+                default -> throw new IllegalStateException("Unexpected query call " + callIndex.get());
+            };
+        }
+
+        private Result<?> totalEntriesResult(int totalEntries) {
+            Field<Integer> field = DSL.field("count", Integer.class);
+            var result = dsl.newResult(field);
+            result.add(dsl.newRecord(field).values(totalEntries));
+            return result;
+        }
+
+        private Result<?> totalKillsResult(int totalKills) {
+            Field<Integer> field = DSL.field("coalesce", Integer.class);
+            var result = dsl.newResult(field);
+            result.add(dsl.newRecord(field).values(totalKills));
+            return result;
+        }
+
+        private Result<?> pagedEntriesResult(ScoreboardRow... rows) {
+            Field<String> playerName = DSL.field(DSL.name("scoreboard", "player_name"), String.class);
+            Field<Integer> kills = DSL.field(DSL.name("scoreboard", "kills"), Integer.class);
+            Field<OffsetDateTime> lastOnline = DSL.field(DSL.name("last_online_by_player", "last_online"),
+                    OffsetDateTime.class);
+            var result = dsl.newResult(playerName, kills, lastOnline);
+
+            for (ScoreboardRow row : rows) {
+                result.add(dsl.newRecord(playerName, kills, lastOnline).values(
+                        row.playerName(),
+                        row.kills(),
+                        OffsetDateTime.parse(row.lastOnline())
+                ));
+            }
+
+            return result;
+        }
+    }
+
+    private record ScoreboardRow(String playerName, Integer kills, String lastOnline) {
+    }
+
+    private static ScoreboardRow row(String playerName, Integer kills, String lastOnline) {
+        return new ScoreboardRow(playerName, kills, lastOnline);
     }
 
     private static final class TestEventService extends EventService {

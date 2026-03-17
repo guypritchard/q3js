@@ -1,24 +1,15 @@
 package com.q3js.controller;
 
 import com.q3js.service.EventService;
-import com.q3js.service.dto.RequestedTimeZone;
-import com.q3js.service.dto.ScoreboardPeriod;
 import com.q3js.service.dto.CreateEventRequest;
-import com.q3js.service.dto.KillDistributionPointResponse;
-import com.q3js.service.dto.ScoreboardEntryResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import lombok.RequiredArgsConstructor;
 import org.jboss.logging.Logger;
-
-import java.time.ZoneId;
-import java.util.List;
 
 @ApplicationScoped
 @Path("/api/events")
@@ -34,25 +25,4 @@ public class EventController {
         LOG.infof("Received event: %s", event);
         eventService.ingestEvent(event);
     }
-
-    @GET
-    @Path("/scoreboard")
-    public List<ScoreboardEntryResponse> getGlobalScoreboard(
-            @QueryParam("period") String period,
-            @QueryParam("timeZone") String timeZone
-    ) {
-        ZoneId requestedTimeZone = RequestedTimeZone.fromQueryParam(timeZone);
-        return eventService.getGlobalScoreboard(ScoreboardPeriod.fromQueryParam(period), requestedTimeZone);
-    }
-
-    @GET
-    @Path("/distribution")
-    public List<KillDistributionPointResponse> getKillDistribution(
-            @QueryParam("period") String period,
-            @QueryParam("timeZone") String timeZone
-    ) {
-        ZoneId requestedTimeZone = RequestedTimeZone.fromQueryParam(timeZone);
-        return eventService.getKillDistribution(ScoreboardPeriod.fromQueryParam(period), requestedTimeZone);
-    }
-
 }

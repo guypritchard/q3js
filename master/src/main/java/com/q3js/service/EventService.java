@@ -130,7 +130,7 @@ public class EventService {
                         .build());
     }
 
-    public List<ScoreboardEntryResponse> getGlobalScoreboard(ScoreboardPeriod period, ZoneId timeZone) {
+    public ScoreboardPageResponse getPlayerScoreboard(ScoreboardPeriod period, ZoneId timeZone, int page, int pageSize) {
         OffsetDateTime now = currentTime();
         Field<Integer> kills = DSL.count().as("kills");
         Condition condition = killCondition(period, now, timeZone);
@@ -147,20 +147,45 @@ public class EventService {
         Field<String> lastOnlinePlayer = DSL.field(DSL.name("last_online_by_player", "player_name"), String.class);
         Field<OffsetDateTime> lastOnline = DSL.field(DSL.name("last_online_by_player", "last_online"),
                 OffsetDateTime.class);
+        Integer totalEntriesValue = dsl.selectCount()
+                .from(scoreboard)
+                .fetchOne(0, Integer.class);
+        Integer totalKillsValue = dsl.select(DSL.coalesce(DSL.sum(scoreboardKills), 0))
+                .from(scoreboard)
+                .fetchOne(0, Integer.class);
+        int totalEntries = valueOrZero(totalEntriesValue);
+        int totalKills = valueOrZero(totalKillsValue);
+        int totalPages = Math.max(1, (int) Math.ceil(totalEntries / (double) pageSize));
+        int safePage = Math.min(page, totalPages);
+        int offset = (safePage - 1) * pageSize;
 
-        return dsl.select(scoreboardPlayer, scoreboardKills, lastOnline)
+        List<ScoreboardEntryResponse> entries = dsl.select(scoreboardPlayer, scoreboardKills, lastOnline)
                 .from(scoreboard)
                 .leftJoin(lastOnlineByPlayer)
                 .on(scoreboardPlayer.eq(lastOnlinePlayer))
                 .orderBy(scoreboardKills.desc(), scoreboardPlayer.asc())
+                .limit(pageSize)
+                .offset(offset)
                 .fetch(record -> ScoreboardEntryResponse.builder()
                         .playerName(record.get(scoreboardPlayer))
                         .kills(record.get(scoreboardKills))
                         .lastOnline(record.get(lastOnline) != null ? record.get(lastOnline).toString() : null)
                         .build());
+
+        return ScoreboardPageResponse.builder()
+                .period(period)
+                .page(safePage)
+                .pageSize(pageSize)
+                .totalEntries(totalEntries)
+                .totalPages(totalPages)
+                .totalKills(totalKills)
+                .hasPreviousPage(safePage > 1)
+                .hasNextPage(safePage < totalPages)
+                .entries(entries)
+                .build();
     }
 
-    public List<KillDistributionPointResponse> getKillDistribution(ScoreboardPeriod period, ZoneId timeZone) {
+    public List<KillDistributionPointResponse> getPlayerScoreboardDistribution(ScoreboardPeriod period, ZoneId timeZone) {
         OffsetDateTime now = currentTime();
         Field<Integer> kills = DSL.count().as("kills");
 
@@ -218,7 +243,8 @@ public class EventService {
                                     bucket != null ? bucket.atStartOfDay(timeZone).toOffsetDateTime().toString() : null)
                             .kills(record.get(kills))
                             .build();
-                });
+                })
+                ;
     }
 
     public PlayerStatsResponse getPlayerStats(String playerName, ScoreboardPeriod period, ZoneId timeZone) {

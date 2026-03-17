@@ -46,10 +46,12 @@ function ScoreboardPageSkeleton() {
     );
 }
 
-export default function ScoreboardRoute() {
+type ScoreboardSearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default function ScoreboardRoute(props: {searchParams: ScoreboardSearchParams}) {
     return (
         <Suspense fallback={<ScoreboardPageSkeleton/>}>
-            <ScoreboardPageContent/>
+            <ScoreboardPageContent searchParams={props.searchParams}/>
         </Suspense>
     );
 }

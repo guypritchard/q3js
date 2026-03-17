@@ -15,10 +15,6 @@ export type CreateEventRequest = {
     map?: string;
 };
 
-export type CurrentPlayerCountResponse = {
-    count: number;
-};
-
 export type EventPlayer = {
     clientNum?: number;
     name?: string;
@@ -82,6 +78,18 @@ export type ScoreboardEntryResponse = {
     playerName: string;
     kills: number;
     lastOnline?: string;
+};
+
+export type ScoreboardPageResponse = {
+    period: ScoreboardPeriod;
+    page: number;
+    pageSize: number;
+    totalEntries: number;
+    totalPages: number;
+    totalKills: number;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
+    entries: Array<ScoreboardEntryResponse>;
 };
 
 export const ScoreboardPeriod = {
@@ -165,44 +173,6 @@ export type IngestEventResponses = {
     201: unknown;
 };
 
-export type GetKillDistributionData = {
-    body?: never;
-    path?: never;
-    query?: {
-        period?: string;
-        timeZone?: string;
-    };
-    url: '/api/events/distribution';
-};
-
-export type GetKillDistributionResponses = {
-    /**
-     * OK
-     */
-    200: Array<KillDistributionPointResponse>;
-};
-
-export type GetKillDistributionResponse = GetKillDistributionResponses[keyof GetKillDistributionResponses];
-
-export type GetGlobalScoreboardData = {
-    body?: never;
-    path?: never;
-    query?: {
-        period?: string;
-        timeZone?: string;
-    };
-    url: '/api/events/scoreboard';
-};
-
-export type GetGlobalScoreboardResponses = {
-    /**
-     * OK
-     */
-    200: Array<ScoreboardEntryResponse>;
-};
-
-export type GetGlobalScoreboardResponse = GetGlobalScoreboardResponses[keyof GetGlobalScoreboardResponses];
-
 export type GetAllPlayersData = {
     body?: never;
     path?: never;
@@ -219,21 +189,45 @@ export type GetAllPlayersResponses = {
 
 export type GetAllPlayersResponse = GetAllPlayersResponses[keyof GetAllPlayersResponses];
 
-export type GetCurrentPlayerCountData = {
+export type GetPlayerScoreboardData = {
     body?: never;
     path?: never;
-    query?: never;
-    url: '/api/players/current/count';
+    query?: {
+        page?: number;
+        pageSize?: number;
+        period?: string;
+        timeZone?: string;
+    };
+    url: '/api/players/scoreboard';
 };
 
-export type GetCurrentPlayerCountResponses = {
+export type GetPlayerScoreboardResponses = {
     /**
      * OK
      */
-    200: CurrentPlayerCountResponse;
+    200: ScoreboardPageResponse;
 };
 
-export type GetCurrentPlayerCountResponse = GetCurrentPlayerCountResponses[keyof GetCurrentPlayerCountResponses];
+export type GetPlayerScoreboardResponse = GetPlayerScoreboardResponses[keyof GetPlayerScoreboardResponses];
+
+export type GetPlayerScoreboardDistributionData = {
+    body?: never;
+    path?: never;
+    query?: {
+        period?: string;
+        timeZone?: string;
+    };
+    url: '/api/players/scoreboard/distribution';
+};
+
+export type GetPlayerScoreboardDistributionResponses = {
+    /**
+     * OK
+     */
+    200: Array<KillDistributionPointResponse>;
+};
+
+export type GetPlayerScoreboardDistributionResponse = GetPlayerScoreboardDistributionResponses[keyof GetPlayerScoreboardDistributionResponses];
 
 export type GetPlayerStatsData = {
     body?: never;

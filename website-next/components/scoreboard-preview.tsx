@@ -6,11 +6,10 @@ import Link from "next/link";
 import {
     SCOREBOARD_PERIOD_LABELS
 } from "@/lib/scoreboard.ts";
-import {useMemo, useState} from "react";
+import {useState} from "react";
 import {Q3ColoredText} from "@/components/q3-colored-text.tsx";
 import {ScoreboardPeriodToggle} from "@/components/scoreboard-period-toggle.tsx";
-import {ScoreboardEntryResponse, ScoreboardPeriod} from "@/lib/client";
-import {sortScoreboardEntries} from "@/lib/scoreboard";
+import {ScoreboardPageResponse, ScoreboardPeriod} from "@/lib/client";
 import {formatCompactLastOnline} from "@/lib/last-online";
 
 function formatKills(kills: number) {
@@ -18,17 +17,12 @@ function formatKills(kills: number) {
 }
 
 export function ScoreboardPreview(props: {
-    scoreboards: Record<ScoreboardPeriod, ScoreboardEntryResponse[]>;
+    scoreboards: Record<ScoreboardPeriod, ScoreboardPageResponse>;
     initialPeriod?: ScoreboardPeriod;
 }) {
     const initialPeriod = props.initialPeriod ?? "DAILY";
     const [period, setPeriod] = useState<ScoreboardPeriod>(initialPeriod);
-
-    const topFraggers = useMemo(() => {
-        const rows = props.scoreboards[period] ?? [];
-        return sortScoreboardEntries(rows)
-            .slice(0, 5);
-    }, [period, props.scoreboards]);
+    const topFraggers = props.scoreboards[period]?.entries ?? [];
 
     function selectPeriod(nextPeriod: ScoreboardPeriod) {
         if (nextPeriod === period) return;

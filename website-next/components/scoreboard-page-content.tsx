@@ -1,12 +1,23 @@
 import ScoreboardPage from "@/views/scoreboard-page";
-import {getInitialKillDistributions, getInitialScoreboards} from "@/lib/initial-data";
-import {SCOREBOARD_PERIODS} from "@/lib/scoreboard";
+import {getInitialKillDistribution, getInitialScoreboard} from "@/lib/initial-data";
+import {
+    DEFAULT_SCOREBOARD_PAGE,
+    DEFAULT_SCOREBOARD_PERIOD,
+    parseScoreboardPage,
+    parseScoreboardPeriod,
+    SCOREBOARD_PAGE_SIZE,
+} from "@/lib/scoreboard";
 
-export async function ScoreboardPageContent() {
-    const [killDistributions, scoreboards] = await Promise.all([
-        getInitialKillDistributions(SCOREBOARD_PERIODS),
-        getInitialScoreboards(SCOREBOARD_PERIODS),
+type ScoreboardSearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export async function ScoreboardPageContent(props: {searchParams: ScoreboardSearchParams}) {
+    const searchParams = await props.searchParams;
+    const period = parseScoreboardPeriod(searchParams.period, DEFAULT_SCOREBOARD_PERIOD);
+    const page = parseScoreboardPage(searchParams.page, DEFAULT_SCOREBOARD_PAGE);
+    const [killDistribution, scoreboard] = await Promise.all([
+        getInitialKillDistribution(period),
+        getInitialScoreboard(period, {page, pageSize: SCOREBOARD_PAGE_SIZE}),
     ]);
 
-    return <ScoreboardPage killDistributions={killDistributions} scoreboards={scoreboards}/>;
+    return <ScoreboardPage killDistribution={killDistribution} scoreboard={scoreboard}/>;
 }

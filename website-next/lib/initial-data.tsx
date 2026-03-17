@@ -1,12 +1,13 @@
 import {
-    getGlobalScoreboard, getKillDistribution,
+    getPlayerScoreboard, getPlayerScoreboardDistribution,
     KillDistributionPointResponse,
-    ScoreboardEntryResponse,
+    ScoreboardPageResponse,
     ScoreboardPeriod,
     ServerResponse
 } from "@/lib/client";
 import {getAllServers} from '@/lib/client/sdk.gen';
 import {getRequestTimeZone} from "@/lib/request-time-zone";
+import {DEFAULT_SCOREBOARD_PAGE, SCOREBOARD_PAGE_SIZE} from "@/lib/scoreboard";
 
 export async function getInitialServers(): Promise<ServerResponse[]> {
     const {data} = await getAllServers({
@@ -15,12 +16,23 @@ export async function getInitialServers(): Promise<ServerResponse[]> {
     return data;
 }
 
-export async function getInitialScoreboard(period: ScoreboardPeriod = "DAILY"): Promise<ScoreboardEntryResponse[]> {
+type ScoreboardRequestOptions = {
+    page?: number;
+    pageSize?: number;
+};
+
+export async function getInitialScoreboard(
+    period: ScoreboardPeriod = "DAILY",
+    options: ScoreboardRequestOptions = {},
+): Promise<ScoreboardPageResponse> {
+    const {page = DEFAULT_SCOREBOARD_PAGE, pageSize = SCOREBOARD_PAGE_SIZE} = options;
     const timeZone = await getRequestTimeZone();
-    const {data} = await getGlobalScoreboard({
+    const {data} = await getPlayerScoreboard({
         query: {
             period,
             timeZone,
+            page,
+            pageSize,
         },
         throwOnError: true
     })
@@ -29,14 +41,18 @@ export async function getInitialScoreboard(period: ScoreboardPeriod = "DAILY"): 
 
 export async function getInitialScoreboards(
     periods: readonly ScoreboardPeriod[],
-): Promise<Record<ScoreboardPeriod, ScoreboardEntryResponse[]>> {
+    options: ScoreboardRequestOptions = {},
+): Promise<Record<ScoreboardPeriod, ScoreboardPageResponse>> {
+    const {page = DEFAULT_SCOREBOARD_PAGE, pageSize = SCOREBOARD_PAGE_SIZE} = options;
     const timeZone = await getRequestTimeZone();
     const entries = await Promise.all(
         periods.map(async (period) => {
-            const {data} = await getGlobalScoreboard({
+            const {data} = await getPlayerScoreboard({
                 query: {
                     period,
                     timeZone,
+                    page,
+                    pageSize,
                 },
                 throwOnError: true,
             });
@@ -45,7 +61,7 @@ export async function getInitialScoreboards(
         }),
     );
 
-    return Object.fromEntries(entries) as Record<ScoreboardPeriod, ScoreboardEntryResponse[]>;
+    return Object.fromEntries(entries) as Record<ScoreboardPeriod, ScoreboardPageResponse>;
 }
 
 export async function getInitialKillDistributions(
@@ -54,7 +70,7 @@ export async function getInitialKillDistributions(
     const timeZone = await getRequestTimeZone();
     const entries = await Promise.all(
         periods.map(async (period) => {
-            const {data} = await getKillDistribution({
+            const {data} = await getPlayerScoreboardDistribution({
                 query: {
                     period,
                     timeZone,
@@ -73,7 +89,7 @@ export async function getInitialKillDistribution(
     period: ScoreboardPeriod = "DAILY"
 ): Promise<KillDistributionPointResponse[]> {
     const timeZone = await getRequestTimeZone();
-    const {data} = await getKillDistribution({
+    const {data} = await getPlayerScoreboardDistribution({
         query: {
             period,
             timeZone,

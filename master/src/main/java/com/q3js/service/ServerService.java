@@ -103,18 +103,4 @@ public class ServerService {
                 .flatMap(serverStatusClient::query)
                 .orElseThrow(() -> new ServerNotFoundException("Server not found for id: " + id));
     }
-
-    public CurrentPlayerCountResponse getCurrentPlayerCount() {
-        var count = servers.stream()
-                .map(serverStatusClient::query)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .map(ServerInfoResponse::getPlayers)
-                .mapToInt(Integer::intValue)
-                .sum();
-
-        return CurrentPlayerCountResponse.builder()
-                .count(count)
-                .build();
-    }
 }
