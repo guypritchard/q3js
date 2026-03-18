@@ -1,5 +1,6 @@
 export const Q3_KEYS = {
     escape: 27,
+    tab: 9,
     ctrl: 137,
     space: 32,
     crouch: 99,

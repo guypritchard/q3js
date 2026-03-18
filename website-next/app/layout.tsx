@@ -5,6 +5,7 @@ import {env} from "@/env";
 import {GoogleAnalytics} from "@next/third-parties/google";
 import QueryClientProviderWrapper from "@/lib/query-client-provider-wrapper.tsx";
 import {TimeZoneSync} from "@/components/time-zone-sync";
+import {ServiceWorkerRegistration} from "@/components/service-worker-registration.tsx";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -31,6 +32,11 @@ export const metadata: Metadata = {
     icons: {
         icon: "/favicon.ico",
         apple: "/apple-touch-icon.png",
+    },
+    appleWebApp: {
+        capable: true,
+        title: siteConfig.name,
+        statusBarStyle: "black-translucent",
     },
     robots: {
         index: true,
@@ -76,6 +82,7 @@ export default function RootLayout({
         <html lang="en-US">
         <body className="antialiased">
         <QueryClientProviderWrapper>
+            <ServiceWorkerRegistration/>
             <TimeZoneSync/>
             <div className="font-mono">{children}</div>
         </QueryClientProviderWrapper>

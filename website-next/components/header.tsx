@@ -18,6 +18,7 @@ import {useLocalStorage} from "@/hooks/use-local-storage.ts";
 import {createRandomPlayerName} from "@/lib/player-name-generator.ts";
 import {MenuIcon} from "lucide-react";
 import {cn} from "@/lib/utils.ts";
+import {PwaInstallControl} from "@/components/pwa-install-control.tsx";
 
 const HEADER_STATUS_STYLES = {
     offline: {
@@ -178,6 +179,7 @@ export function Header() {
                     <span className={`h-2 w-2 rounded-full ${statusStyles.dotClassName}`}/>
                     {statusLabel}
                 </Badge>
+                <PwaInstallControl/>
                 <div className="hidden items-center gap-2 md:flex">
                     {navItems.map((item) => (
                         <HeaderNavBadge

@@ -18,6 +18,8 @@ type MobileControlsProps = {
 
 const LOOK_SENSITIVITY = 2;
 const AXIS_SCALE = 127;
+const TOP_ACTION_BUTTON_CLASS_NAME =
+    "rounded-full border border-white/25 bg-black/50 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.3em] text-white backdrop-blur-sm";
 
 function ControlButton(props: {
     className: string;
@@ -68,6 +70,7 @@ export function MobileControls({canRequestFullscreen, onRequestFullscreen, portr
             sendIOQ3MobileJoystickAxis(0, 0);
             sendIOQ3MobileJoystickAxis(1, 0);
             sendIOQ3MobileKey(Q3_KEYS.ctrl, false);
+            sendIOQ3MobileKey(Q3_KEYS.tab, false);
             sendIOQ3MobileKey(Q3_KEYS.space, false);
             sendIOQ3MobileKey(Q3_KEYS.crouch, false);
         };
@@ -90,7 +93,7 @@ export function MobileControls({canRequestFullscreen, onRequestFullscreen, portr
         sendIOQ3MobileJoystickAxis(1, Math.round(-y * AXIS_SCALE));
     };
 
-        const triggerMenu = () => {
+    const triggerMenu = () => {
         sendIOQ3MobileKey(Q3_KEYS.escape, true);
         sendIOQ3MobileKey(Q3_KEYS.escape, false);
     };
@@ -100,15 +103,21 @@ export function MobileControls({canRequestFullscreen, onRequestFullscreen, portr
             <div className="absolute left-[max(1rem,env(safe-area-inset-left))] top-[max(1rem,env(safe-area-inset-top))] flex gap-3 pointer-events-auto">
                 <button
                     type="button"
-                    className="rounded-full border border-white/25 bg-black/50 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.3em] text-white backdrop-blur-sm"
+                    className={TOP_ACTION_BUTTON_CLASS_NAME}
                     onClick={triggerMenu}
                 >
                     Menu
                 </button>
+                <ControlButton
+                    className={TOP_ACTION_BUTTON_CLASS_NAME}
+                    label="Scores"
+                    onPressStart={() => sendIOQ3MobileKey(Q3_KEYS.tab, true)}
+                    onPressEnd={() => sendIOQ3MobileKey(Q3_KEYS.tab, false)}
+                />
                 {canRequestFullscreen && (
                     <button
                         type="button"
-                        className="rounded-full border border-white/25 bg-black/50 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.3em] text-white backdrop-blur-sm"
+                        className={TOP_ACTION_BUTTON_CLASS_NAME}
                         onClick={onRequestFullscreen}
                     >
                         Fullscreen

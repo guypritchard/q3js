@@ -1,4 +1,8 @@
 {
+  "id": "/",
+  "description": "Play Quake III Arena instantly in your browser with WebAssembly-powered multiplayer.",
+  "lang": "en-US",
+  "dir": "ltr",
   "short_name": "Q3JS",
   "name": "Q3JS - Play Quake III in Your Browser",
   "icons": [
@@ -21,7 +25,11 @@
     }
   ],
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "categories": ["games", "entertainment"],
+  "theme_color": "#101010",
+  "background_color": "#101010"
 }
