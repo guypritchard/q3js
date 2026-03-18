@@ -1,18 +1,22 @@
 import {getWsProtocol} from "@/lib/utils.ts";
-import {ensureMounts, estimateTotalBytes, fetchIntoUint8, type IOQ3Module, type Prog, syncfs} from "@/lib/fs.ts";
+import {ensureMounts, estimateTotalBytes, fetchIntoUint8, type Prog, syncfs} from "@/lib/fs.ts";
+import {registerIOQ3Runtime, type IOQ3RuntimeModule} from "@/lib/ioquake3-runtime";
 
 type Params = {
     host: string;
     proxyPort: number;
     name: string;
     rafUpdate: (prog: Prog) => void;
-    fsGame: string
+    fsGame: string;
+    mobileMode?: boolean;
 }
 
 type FileEntry = {
     src: string;
     dst: string;
 };
+
+const MOBILE_RENDER_SCALE = 2;
 
 const config = {
     baseq3: {
@@ -120,7 +124,7 @@ const config = {
 } as const satisfies Record<string, { files: readonly FileEntry[] }>;
 
 type SupportedGameDir = keyof typeof config;
-type RuntimeModule = IOQ3Module & {
+type RuntimeModule = IOQ3RuntimeModule & {
     addRunDependency: (id: string) => void;
     removeRunDependency: (id: string) => void;
 };
@@ -129,10 +133,24 @@ function isSupportedGameDir(gameDir: string): gameDir is SupportedGameDir {
     return gameDir in config;
 }
 
-export default async function startGame({host, proxyPort, name, rafUpdate, fsGame}: Params) {
+export default async function startGame({host, proxyPort, name, rafUpdate, fsGame, mobileMode = false}: Params) {
     const importIoquake3 = new Function("return import('/ioquake3.js')");
     const ioquake3Module = await (importIoquake3() as Promise<{ default: (moduleArg?: unknown) => unknown }>);
     const ioquake3 = ioquake3Module.default;
+    const canvas = document.getElementById("canvas") as HTMLCanvasElement | null;
+
+    if (!canvas) {
+        throw new Error("Game canvas not found");
+    }
+
+    const initialViewport = canvas.getBoundingClientRect();
+    const initialWidth = Math.max(1, Math.round(initialViewport.width || window.innerWidth));
+    const initialHeight = Math.max(1, Math.round(initialViewport.height || window.innerHeight));
+    const initialRenderWidth = mobileMode ? initialWidth * MOBILE_RENDER_SCALE : initialWidth;
+    const initialRenderHeight = mobileMode ? initialHeight * MOBILE_RENDER_SCALE : initialHeight;
+
+    canvas.width = initialRenderWidth;
+    canvas.height = initialRenderHeight;
 
     const com_basegame = fsGame;
     const fs_basegame = fsGame;
@@ -142,6 +160,7 @@ export default async function startGame({host, proxyPort, name, rafUpdate, fsGam
           +set sv_pure 0
           +set net_enabled 1
           +set r_mode -2
+          +set r_fullscreen 0
           +set cl_allowDownload 1
           +set con_scale 2
           +set fs_game "${fs_game}"
@@ -149,6 +168,19 @@ export default async function startGame({host, proxyPort, name, rafUpdate, fsGam
           +set ui_cdkeychecked 1
           +set cl_firststart 0
         `;
+
+    if (mobileMode) {
+        generatedArguments += `
+          +set r_mode -1
+          +set r_customwidth ${initialRenderWidth}
+          +set r_customheight ${initialRenderHeight}
+          +set in_nograb 1
+          +set in_joystickUseAnalog 1
+          +set j_forward -1
+          +set j_side 1
+        `;
+    }
+
     generatedArguments += ` +connect ${host}:${proxyPort} `;
     generatedArguments += ` +set name "${name.replace(/"/g, "'")}" `;
 
@@ -158,12 +190,12 @@ export default async function startGame({host, proxyPort, name, rafUpdate, fsGam
 
     const dataURL = new URL(location.origin + location.pathname);
 
-    ioquake3({
+    const runtimePromise = ioquake3({
         websocket: {
             url: `${getWsProtocol()}//${host}:${proxyPort}`,
             subprotocol: "binary"
         },
-        canvas: document.getElementById("canvas") as HTMLCanvasElement,
+        canvas,
         arguments: generatedArguments.trim().split(/\s+/),
         onRuntimeInitialized: () => {
             rafUpdate({received: 0, total: 0, pct: 100, current: "ready", stage: "ready"});
@@ -262,5 +294,7 @@ export default async function startGame({host, proxyPort, name, rafUpdate, fsGam
                 }
             },
         ],
-    });
+    }) as Promise<RuntimeModule>;
+
+    registerIOQ3Runtime(runtimePromise);
 }

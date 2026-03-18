@@ -54,7 +54,7 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 pushd "$BUILD_DIR" >/dev/null
 
-emcmake cmake ../../../ioq3 \
+emcmake cmake ../../ioq3 \
   -DBUILD_CLIENT=ON \
   -DBUILD_SERVER=OFF \
   -DBUILD_GAME_SO=OFF \
