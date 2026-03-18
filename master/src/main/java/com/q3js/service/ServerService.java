@@ -3,10 +3,7 @@ package com.q3js.service;
 import com.q3js.client.ServerStatusClient;
 import com.q3js.controller.ServerController;
 import com.q3js.domain.Server;
-import com.q3js.service.dto.CurrentPlayerCountResponse;
-import com.q3js.service.dto.HeartbeatRequest;
-import com.q3js.service.dto.ServerInfoResponse;
-import com.q3js.service.dto.ServerResponse;
+import com.q3js.service.dto.*;
 import com.q3js.service.exception.ServerNotFoundException;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -101,10 +98,14 @@ public class ServerService {
                 .stream()
                 .sorted(
                         Comparator
-                                .comparing((ServerResponse s) -> s.getInfo().getUsers().size())
+                                .comparing((ServerResponse s) -> getRealUsers(s).size())
                                 .reversed()
                 )
                 .toList();
+    }
+
+    private static List<ServerUserResponse> getRealUsers(ServerResponse s) {
+        return s.getInfo().getUsers().stream().filter(u -> u.getPing() > 0).toList();
     }
 
     public ServerInfoResponse getServerInfo(String id) {
