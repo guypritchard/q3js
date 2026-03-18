@@ -101,12 +101,8 @@ public class ServerService {
                 .stream()
                 .sorted(
                         Comparator
-                                .comparing(ServerResponse::getSecure)
+                                .comparing((ServerResponse s) -> s.getInfo().getUsers().size())
                                 .reversed()
-                                .thenComparing(
-                                        (ServerResponse s) -> s.getInfo().getSv_hostname(),
-                                        Comparator.nullsLast(Comparator.reverseOrder())
-                                )
                 )
                 .toList();
     }
