@@ -19,13 +19,14 @@ export async function getInitialServers(): Promise<ServerResponse[]> {
 type ScoreboardRequestOptions = {
     page?: number;
     pageSize?: number;
+    search?: string;
 };
 
 export async function getInitialScoreboard(
     period: ScoreboardPeriod = "DAILY",
     options: ScoreboardRequestOptions = {},
 ): Promise<ScoreboardPageResponse> {
-    const {page = DEFAULT_SCOREBOARD_PAGE, pageSize = SCOREBOARD_PAGE_SIZE} = options;
+    const {page = DEFAULT_SCOREBOARD_PAGE, pageSize = SCOREBOARD_PAGE_SIZE, search} = options;
     const timeZone = await getRequestTimeZone();
     const {data} = await getPlayerScoreboard({
         query: {
@@ -33,6 +34,7 @@ export async function getInitialScoreboard(
             timeZone,
             page,
             pageSize,
+            search,
         },
         throwOnError: true
     })

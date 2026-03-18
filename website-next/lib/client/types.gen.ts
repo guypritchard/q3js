@@ -176,7 +176,10 @@ export type IngestEventResponses = {
 export type GetAllPlayersData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        limit?: number;
+        search?: string;
+    };
     url: '/api/players';
 };
 
@@ -196,6 +199,7 @@ export type GetPlayerScoreboardData = {
         page?: number;
         pageSize?: number;
         period?: string;
+        search?: string;
         timeZone?: string;
     };
     url: '/api/players/scoreboard';

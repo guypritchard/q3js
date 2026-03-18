@@ -98,7 +98,7 @@ export function KillDistributionChart(props: {
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                         <div className="space-y-1">
-                            <h2 className="text-xl font-semibold tracking-tight">Frag Distribution</h2>
+                            <h2 className="text-xl font-semibold tracking-tight">Activity</h2>
                             <p className="text-sm text-muted-foreground">
                                 {BUCKET_LABELS[props.bucketUnit]} frag totals for the {props.periodLabel.toLowerCase()} window.
                             </p>

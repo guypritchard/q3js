@@ -37,6 +37,7 @@ import static com.q3js.jooq.Tables.EVENTS;
 @RequiredArgsConstructor
 public class EventService {
     private static final Logger LOG = Logger.getLogger(EventService.class);
+    private static final String Q3_COLOR_CODE_REGEX = "\\^\\d";
 
     private final DSLContext dsl;
     private final EventPersistenceService eventPersistenceService;
@@ -111,7 +112,12 @@ public class EventService {
     }
 
     public List<PlayerResponse> getAllPlayers() {
+        return getAllPlayers(null, null);
+    }
+
+    public List<PlayerResponse> getAllPlayers(String search, Integer limit) {
         Field<String> playerName = DSL.field(DSL.name("players", "player_name"), String.class);
+        Field<String> normalizedPlayerName = normalizedPlayerName(playerName);
         Table<?> players = dsl.select(EVENTS.KILLER_NAME.as("player_name"))
                 .from(EVENTS)
                 .where(EVENTS.KILLER_NAME.isNotNull())
@@ -120,20 +126,49 @@ public class EventService {
                                 .from(EVENTS)
                                 .where(EVENTS.VICTIM_NAME.isNotNull()))
                 .asTable("players");
+        String normalizedSearch = normalizePlayerSearch(search);
+        Condition condition = DSL.trim(playerName).ne("");
 
-        return dsl.select(playerName)
+        if (!normalizedSearch.isBlank()) {
+            condition = condition.and(normalizedPlayerName.contains(normalizedSearch));
+        }
+
+        var query = dsl.select(playerName)
                 .from(players)
-                .where(DSL.trim(playerName).ne(""))
-                .orderBy(playerName.asc())
-                .fetch(name -> PlayerResponse.builder()
-                        .playerName(name.get(playerName))
-                        .build());
+                .where(condition)
+                .orderBy(
+                        !normalizedSearch.isBlank()
+                                ? DSL.case_()
+                                        .when(normalizedPlayerName.eq(normalizedSearch), 0)
+                                        .when(normalizedPlayerName.startsWith(normalizedSearch), 1)
+                                        .otherwise(2)
+                                : DSL.inline(0),
+                        normalizedPlayerName.asc(),
+                        playerName.asc());
+
+        if (limit != null) {
+            return query.limit(limit)
+                    .fetch(name -> PlayerResponse.builder()
+                            .playerName(name.get(playerName))
+                            .build());
+        }
+
+        return query.fetch(name -> PlayerResponse.builder()
+                .playerName(name.get(playerName))
+                .build());
     }
 
-    public ScoreboardPageResponse getPlayerScoreboard(ScoreboardPeriod period, ZoneId timeZone, int page, int pageSize) {
+    public ScoreboardPageResponse getPlayerScoreboard(
+            ScoreboardPeriod period,
+            ZoneId timeZone,
+            int page,
+            int pageSize,
+            String search
+    ) {
         OffsetDateTime now = currentTime();
         Field<Integer> kills = DSL.count().as("kills");
         Condition condition = killCondition(period, now, timeZone);
+        String normalizedSearch = normalizePlayerSearch(search);
         Table<?> scoreboard = dsl.select(
                 EVENTS.KILLER_NAME.as("player_name"),
                 kills)
@@ -144,14 +179,20 @@ public class EventService {
         Table<?> lastOnlineByPlayer = lastOnlineByPlayerTable();
         Field<String> scoreboardPlayer = DSL.field(DSL.name("scoreboard", "player_name"), String.class);
         Field<Integer> scoreboardKills = DSL.field(DSL.name("scoreboard", "kills"), Integer.class);
+        Field<String> normalizedScoreboardPlayer = normalizedPlayerName(scoreboardPlayer);
         Field<String> lastOnlinePlayer = DSL.field(DSL.name("last_online_by_player", "player_name"), String.class);
         Field<OffsetDateTime> lastOnline = DSL.field(DSL.name("last_online_by_player", "last_online"),
                 OffsetDateTime.class);
+        Condition scoreboardCondition = !normalizedSearch.isBlank()
+                ? normalizedScoreboardPlayer.contains(normalizedSearch)
+                : DSL.noCondition();
         Integer totalEntriesValue = dsl.selectCount()
                 .from(scoreboard)
+                .where(scoreboardCondition)
                 .fetchOne(0, Integer.class);
         Integer totalKillsValue = dsl.select(DSL.coalesce(DSL.sum(scoreboardKills), 0))
                 .from(scoreboard)
+                .where(scoreboardCondition)
                 .fetchOne(0, Integer.class);
         int totalEntries = valueOrZero(totalEntriesValue);
         int totalKills = valueOrZero(totalKillsValue);
@@ -163,6 +204,7 @@ public class EventService {
                 .from(scoreboard)
                 .leftJoin(lastOnlineByPlayer)
                 .on(scoreboardPlayer.eq(lastOnlinePlayer))
+                .where(scoreboardCondition)
                 .orderBy(scoreboardKills.desc(), scoreboardPlayer.asc())
                 .limit(pageSize)
                 .offset(offset)
@@ -374,6 +416,23 @@ public class EventService {
         }
 
         return condition;
+    }
+
+    private Field<String> normalizedPlayerName(Field<String> playerName) {
+        return DSL.lower(DSL.trim(DSL.field(
+                "regexp_replace({0}, {1}, '', 'g')",
+                SQLDataType.VARCHAR,
+                playerName,
+                DSL.inline(Q3_COLOR_CODE_REGEX)
+        )));
+    }
+
+    private String normalizePlayerSearch(String search) {
+        if (search == null) {
+            return "";
+        }
+
+        return search.replaceAll(Q3_COLOR_CODE_REGEX, "").trim().toLowerCase();
     }
 
     private int countEvents(Condition condition) {

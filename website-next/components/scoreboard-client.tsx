@@ -5,17 +5,19 @@ import {Button} from "@/components/ui/button.tsx";
 import {Badge} from "@/components/ui/badge.tsx";
 import Link from "next/link";
 import {
+    buildScoreboardDistributionHref,
     buildScoreboardHref,
     DEFAULT_SCOREBOARD_PAGE,
     SCOREBOARD_PERIOD_LABELS,
 } from "@/lib/scoreboard.ts";
-import {useTransition} from "react";
+import {FormEvent, useTransition} from "react";
 import {Q3ColoredText} from "@/components/q3-colored-text.tsx";
 import {ScoreboardPeriodToggle} from "@/components/scoreboard-period-toggle.tsx";
-import {KillDistributionChart} from "@/components/kill-distribution-chart.tsx";
-import {KillDistributionPointResponse, ScoreboardPageResponse, ScoreboardPeriod} from "@/lib/client";
+import {ScoreboardPageResponse, ScoreboardPeriod} from "@/lib/client";
 import {useRouter} from "next/navigation";
 import {formatCompactLastOnline} from "@/lib/last-online";
+import {Input} from "@/components/ui/input.tsx";
+import {ScoreboardToolbar} from "@/components/scoreboard-toolbar.tsx";
 
 function rankBadge(rank: number) {
     if (rank === 1) return <Badge className="min-w-10 justify-center bg-primary text-primary-foreground">#1</Badge>;
@@ -29,7 +31,7 @@ function formatKills(kills: number) {
 }
 
 export function ScoreboardClient(props: {
-    killDistribution: KillDistributionPointResponse[];
+    search: string;
     scoreboard: ScoreboardPageResponse;
 }) {
     const period = props.scoreboard.period;
@@ -38,7 +40,7 @@ export function ScoreboardClient(props: {
     const router = useRouter();
     const isBusy = isNavigating || isRefreshing;
     const scoreboard = props.scoreboard.entries;
-    const distribution = props.killDistribution;
+    const hasSearch = props.search.trim().length > 0;
     const startRank = scoreboard.length === 0 ? 0 : ((props.scoreboard.page - 1) * props.scoreboard.pageSize) + 1;
     const endRank = scoreboard.length === 0 ? 0 : startRank + scoreboard.length - 1;
 
@@ -51,7 +53,7 @@ export function ScoreboardClient(props: {
     function selectPeriod(nextPeriod: ScoreboardPeriod) {
         if (nextPeriod === period) return;
         startNavigationTransition(() => {
-            router.push(buildScoreboardHref(nextPeriod, DEFAULT_SCOREBOARD_PAGE), {scroll: false});
+            router.push(buildScoreboardHref(nextPeriod, DEFAULT_SCOREBOARD_PAGE, props.search), {scroll: false});
         });
     }
 
@@ -61,7 +63,26 @@ export function ScoreboardClient(props: {
         }
 
         startNavigationTransition(() => {
-            router.push(buildScoreboardHref(period, nextPage), {scroll: false});
+            router.push(buildScoreboardHref(period, nextPage, props.search), {scroll: false});
+        });
+    }
+
+    function submitSearch(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const nextSearch = formData.get("search")?.toString() ?? "";
+        startNavigationTransition(() => {
+            router.push(buildScoreboardHref(period, DEFAULT_SCOREBOARD_PAGE, nextSearch), {scroll: false});
+        });
+    }
+
+    function clearSearch() {
+        if (!hasSearch) {
+            return;
+        }
+
+        startNavigationTransition(() => {
+            router.push(buildScoreboardHref(period, DEFAULT_SCOREBOARD_PAGE), {scroll: false});
         });
     }
 
@@ -70,20 +91,32 @@ export function ScoreboardClient(props: {
     return (
         <Card className="border-border/60 bg-card/60">
             <CardContent className="p-0">
-                <div className="flex flex-col gap-3 border-b border-border/60 p-4">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <div>
+                <ScoreboardToolbar
+                    description={
+                        <>
                             <p className="text-sm text-muted-foreground">
-                                {props.scoreboard.totalEntries === 0
-                                    ? "0 players ranked"
-                                    : `Showing ${startRank}-${endRank} of ${props.scoreboard.totalEntries} players ranked`}
+                                {hasSearch
+                                    ? (props.scoreboard.totalEntries === 0
+                                        ? `No players matched "${props.search}"`
+                                        : `Showing ${startRank}-${endRank} of ${props.scoreboard.totalEntries} matching players`)
+                                    : (props.scoreboard.totalEntries === 0
+                                        ? "0 players ranked"
+                                        : `Showing ${startRank}-${endRank} of ${props.scoreboard.totalEntries} players ranked`)}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                                {`${formatKills(props.scoreboard.totalKills)} total ${periodLabel.toLowerCase()} frags across reported servers.`}
+                                {hasSearch
+                                    ? `${formatKills(props.scoreboard.totalKills)} ${periodLabel.toLowerCase()} frags from matched players.`
+                                    : `${formatKills(props.scoreboard.totalKills)} total ${periodLabel.toLowerCase()} frags across reported servers.`}
                             </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <ScoreboardPeriodToggle period={period} onChange={selectPeriod}/>
+                        </>
+                    }
+                    actions={
+                        <>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={buildScoreboardDistributionHref(period)}>
+                                    Activity
+                                </Link>
+                            </Button>
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -92,22 +125,40 @@ export function ScoreboardClient(props: {
                             >
                                 {isRefreshing ? "Refreshing..." : "Refresh"}
                             </Button>
-                        </div>
-                    </div>
-                </div>
-
-                <KillDistributionChart
-                    bucketUnit={period === "DAILY" ? "hour" : "day"}
-                    data={distribution}
-                    isError={false}
-                    isPending={false}
-                    periodLabel={periodLabel}
+                        </>
+                    }
+                    periodControls={<ScoreboardPeriodToggle period={period} onChange={selectPeriod}/>}
+                    search={
+                        <form className="flex w-full flex-col gap-2 sm:flex-row" onSubmit={submitSearch}>
+                            <Input
+                                type="search"
+                                key={props.search}
+                                name="search"
+                                defaultValue={props.search}
+                                placeholder="Search players on the scoreboard"
+                                className="min-w-0 flex-1"
+                            />
+                            <div className="flex items-center gap-2">
+                                <Button type="submit" variant="outline" size="sm" disabled={isBusy}>
+                                    Search
+                                </Button>
+                                {hasSearch && (
+                                    <Button type="button" variant="ghost" size="sm" onClick={clearSearch} disabled={isBusy}>
+                                        Clear
+                                    </Button>
+                                )}
+                            </div>
+                        </form>
+                    }
                 />
 
                 {scoreboard.length === 0 && (
                     <div className="p-10 text-center">
-                        <p className="text-sm text-muted-foreground">No {periodLabel.toLowerCase()} frag events have
-                            been recorded yet.</p>
+                        <p className="text-sm text-muted-foreground">
+                            {hasSearch
+                                ? "Try a shorter player fragment or clear the search."
+                                : `No ${periodLabel.toLowerCase()} frag events have been recorded yet.`}
+                        </p>
                         </div>
                 )}
 

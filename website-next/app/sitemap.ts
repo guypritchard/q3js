@@ -25,6 +25,18 @@ function getStaticEntries(lastModified: Date): MetadataRoute.Sitemap {
             priority: 0.9,
             lastModified,
         },
+        {
+            url: absoluteUrl("/scoreboard/distribution"),
+            changeFrequency: "hourly",
+            priority: 0.8,
+            lastModified,
+        },
+        {
+            url: absoluteUrl("/players"),
+            changeFrequency: "daily",
+            priority: 0.8,
+            lastModified,
+        },
     ];
 }
 

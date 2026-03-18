@@ -17,7 +17,9 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,6 +47,30 @@ class EventServiceTest {
                 ),
                 response
         );
+    }
+
+    @Test
+    void getAllPlayersSearchNormalizesColorCodesAndAppliesLimit() {
+        SearchPlayersMockProvider provider = new SearchPlayersMockProvider();
+        DSLContext dsl = DSL.using(new MockConnection(provider), SQLDialect.POSTGRES);
+        EventService eventService = new EventService(dsl, new EventPersistenceService(dsl));
+
+        List<PlayerResponse> response = eventService.getAllPlayers("^1ran", 2);
+
+        assertEquals(
+                List.of(
+                        PlayerResponse.builder().playerName("^1Ranger").build(),
+                        PlayerResponse.builder().playerName("Rango").build()
+                ),
+                response
+        );
+        assertTrue(provider.executedSql.toLowerCase(Locale.ROOT).contains("regexp_replace"));
+        assertTrue(
+                provider.executedSql.toLowerCase(Locale.ROOT).contains("limit")
+                        || provider.executedSql.toLowerCase(Locale.ROOT).contains("fetch next")
+        );
+        assertTrue(Arrays.asList(provider.bindings).contains("ran"));
+        assertTrue(Arrays.asList(provider.bindings).contains(2));
     }
 
     @Test
@@ -194,7 +220,8 @@ class EventServiceTest {
                 ScoreboardPeriod.MONTHLY,
                 RequestedTimeZone.DEFAULT,
                 2,
-                2
+                2,
+                null
         );
 
         assertEquals(ScoreboardPeriod.MONTHLY, response.getPeriod());
@@ -224,7 +251,8 @@ class EventServiceTest {
                 ScoreboardPeriod.ALL_TIME,
                 RequestedTimeZone.DEFAULT,
                 99,
-                2
+                2,
+                null
         );
 
         assertEquals(3, response.getPage());
@@ -233,6 +261,31 @@ class EventServiceTest {
         assertFalse(response.getHasNextPage());
         assertEquals(1, response.getEntries().size());
         assertEquals("Xaero", response.getEntries().getFirst().getPlayerName());
+    }
+
+    @Test
+    void getPlayerScoreboardSearchNormalizesColorCodes() {
+        SearchableScoreboardMockProvider provider = new SearchableScoreboardMockProvider(
+                row("^1Ranger", 9, "2026-03-10T12:30:00Z"),
+                row("Rango", 4, "2026-03-09T08:00:00Z")
+        );
+        DSLContext dsl = DSL.using(new MockConnection(provider), SQLDialect.POSTGRES);
+        EventService eventService = new EventService(dsl, new EventPersistenceService(dsl));
+
+        ScoreboardPageResponse response = eventService.getPlayerScoreboard(
+                ScoreboardPeriod.ALL_TIME,
+                RequestedTimeZone.DEFAULT,
+                1,
+                25,
+                "^1ran"
+        );
+
+        assertEquals(2, response.getTotalEntries());
+        assertEquals(13, response.getTotalKills());
+        assertEquals(2, response.getEntries().size());
+        assertTrue(provider.countSql.toLowerCase(Locale.ROOT).contains("regexp_replace"));
+        assertTrue(Arrays.asList(provider.countBindings).contains("ran"));
+        assertTrue(Arrays.asList(provider.entriesBindings).contains("ran"));
     }
 
     private static final class PlayerStatsMockProvider implements MockDataProvider {
@@ -353,6 +406,25 @@ class EventServiceTest {
         }
     }
 
+    private static final class SearchPlayersMockProvider implements MockDataProvider {
+        private final DSLContext dsl = DSL.using(SQLDialect.POSTGRES);
+        private String executedSql;
+        private Object[] bindings;
+
+        @Override
+        public MockResult[] execute(MockExecuteContext context) {
+            executedSql = context.sql();
+            bindings = context.bindings();
+
+            Field<String> playerName = DSL.field(DSL.name("players", "player_name"), String.class);
+            var result = dsl.newResult(playerName);
+            result.add(dsl.newRecord(playerName).values("^1Ranger"));
+            result.add(dsl.newRecord(playerName).values("Rango"));
+
+            return new MockResult[]{new MockResult(result.size(), result)};
+        }
+    }
+
     private static final class DailyDistributionMockProvider implements MockDataProvider {
         private final DSLContext dsl = DSL.using(SQLDialect.POSTGRES);
         private final OffsetDateTime[] receivedAtValues;
@@ -402,6 +474,68 @@ class EventServiceTest {
                 case 0 -> new MockResult[]{new MockResult(1, totalEntriesResult(5))};
                 case 1 -> new MockResult[]{new MockResult(1, totalKillsResult(37))};
                 case 2 -> new MockResult[]{new MockResult(rows.length, pagedEntriesResult(rows))};
+                default -> throw new IllegalStateException("Unexpected query call " + callIndex.get());
+            };
+        }
+
+        private Result<?> totalEntriesResult(int totalEntries) {
+            Field<Integer> field = DSL.field("count", Integer.class);
+            var result = dsl.newResult(field);
+            result.add(dsl.newRecord(field).values(totalEntries));
+            return result;
+        }
+
+        private Result<?> totalKillsResult(int totalKills) {
+            Field<Integer> field = DSL.field("coalesce", Integer.class);
+            var result = dsl.newResult(field);
+            result.add(dsl.newRecord(field).values(totalKills));
+            return result;
+        }
+
+        private Result<?> pagedEntriesResult(ScoreboardRow... rows) {
+            Field<String> playerName = DSL.field(DSL.name("scoreboard", "player_name"), String.class);
+            Field<Integer> kills = DSL.field(DSL.name("scoreboard", "kills"), Integer.class);
+            Field<OffsetDateTime> lastOnline = DSL.field(DSL.name("last_online_by_player", "last_online"),
+                    OffsetDateTime.class);
+            var result = dsl.newResult(playerName, kills, lastOnline);
+
+            for (ScoreboardRow row : rows) {
+                result.add(dsl.newRecord(playerName, kills, lastOnline).values(
+                        row.playerName(),
+                        row.kills(),
+                        OffsetDateTime.parse(row.lastOnline())
+                ));
+            }
+
+            return result;
+        }
+    }
+
+    private static final class SearchableScoreboardMockProvider implements MockDataProvider {
+        private final DSLContext dsl = DSL.using(SQLDialect.POSTGRES);
+        private final AtomicInteger callIndex = new AtomicInteger();
+        private final ScoreboardRow[] rows;
+        private String countSql;
+        private Object[] countBindings;
+        private Object[] entriesBindings;
+
+        private SearchableScoreboardMockProvider(ScoreboardRow... rows) {
+            this.rows = rows;
+        }
+
+        @Override
+        public MockResult[] execute(MockExecuteContext context) {
+            return switch (callIndex.getAndIncrement()) {
+                case 0 -> {
+                    countSql = context.sql();
+                    countBindings = context.bindings();
+                    yield new MockResult[]{new MockResult(1, totalEntriesResult(2))};
+                }
+                case 1 -> new MockResult[]{new MockResult(1, totalKillsResult(13))};
+                case 2 -> {
+                    entriesBindings = context.bindings();
+                    yield new MockResult[]{new MockResult(rows.length, pagedEntriesResult(rows))};
+                }
                 default -> throw new IllegalStateException("Unexpected query call " + callIndex.get());
             };
         }

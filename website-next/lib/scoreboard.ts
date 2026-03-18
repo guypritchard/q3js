@@ -45,14 +45,33 @@ export function parseScoreboardPage(
     return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-export function buildScoreboardHref(period: ScoreboardPeriod, page: number = DEFAULT_SCOREBOARD_PAGE) {
+export function parseScoreboardSearch(value: string | string[] | undefined) {
+    const candidate = firstQueryValue(value)?.trim();
+    return candidate ?? "";
+}
+
+export function buildScoreboardHref(
+    period: ScoreboardPeriod,
+    page: number = DEFAULT_SCOREBOARD_PAGE,
+    search?: string,
+) {
     const params = new URLSearchParams({period});
+    const normalizedSearch = search?.trim() ?? "";
 
     if (page > DEFAULT_SCOREBOARD_PAGE) {
         params.set("page", String(page));
     }
 
+    if (normalizedSearch.length > 0) {
+        params.set("search", normalizedSearch);
+    }
+
     return `/scoreboard?${params.toString()}`;
+}
+
+export function buildScoreboardDistributionHref(period: ScoreboardPeriod) {
+    const params = new URLSearchParams({period});
+    return `/scoreboard/distribution?${params.toString()}`;
 }
 
 export function sortScoreboardEntries(entries: ScoreboardEntryResponse[]) {

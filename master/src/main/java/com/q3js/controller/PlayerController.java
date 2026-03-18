@@ -26,13 +26,18 @@ public class PlayerController {
     private static final int DEFAULT_SCOREBOARD_PAGE = 1;
     private static final int DEFAULT_SCOREBOARD_PAGE_SIZE = 25;
     private static final int MAX_SCOREBOARD_PAGE_SIZE = 100;
+    private static final int DEFAULT_PLAYER_SEARCH_LIMIT = 25;
+    private static final int MAX_PLAYER_SEARCH_LIMIT = 100;
 
     private final EventService eventService;
     private final ServerService serverService;
 
     @GET
-    public List<PlayerResponse> getAllPlayers() {
-        return eventService.getAllPlayers();
+    public List<PlayerResponse> getAllPlayers(
+            @QueryParam("search") String search,
+            @QueryParam("limit") Integer limit
+    ) {
+        return eventService.getAllPlayers(search, validatePlayerSearchLimit(search, limit));
     }
 
     @GET
@@ -52,14 +57,16 @@ public class PlayerController {
             @QueryParam("period") String period,
             @QueryParam("timeZone") String timeZone,
             @QueryParam("page") Integer page,
-            @QueryParam("pageSize") Integer pageSize
+            @QueryParam("pageSize") Integer pageSize,
+            @QueryParam("search") String search
     ) {
         ZoneId requestedTimeZone = RequestedTimeZone.fromQueryParam(timeZone);
         return eventService.getPlayerScoreboard(
                 ScoreboardPeriod.fromQueryParam(period),
                 requestedTimeZone,
                 validatePage(page),
-                validatePageSize(pageSize)
+                validatePageSize(pageSize),
+                search
         );
     }
 
@@ -98,5 +105,19 @@ public class PlayerController {
         }
 
         return pageSize;
+    }
+
+    private Integer validatePlayerSearchLimit(String search, Integer limit) {
+        String normalizedSearch = search != null ? search.trim() : "";
+
+        if (limit == null) {
+            return normalizedSearch.isEmpty() ? null : DEFAULT_PLAYER_SEARCH_LIMIT;
+        }
+
+        if (limit < 1 || limit > MAX_PLAYER_SEARCH_LIMIT) {
+            throw new BadRequestException("Player search limit must be between 1 and 100.");
+        }
+
+        return limit;
     }
 }

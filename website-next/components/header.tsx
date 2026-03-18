@@ -76,6 +76,16 @@ export function Header() {
                     variant="outline"
                     className="h-6 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
                 >
+                    <Link href="/scoreboard/distribution">
+                        <span className="sm:hidden">Activity</span>
+                        <span className="hidden sm:inline">Activity</span>
+                    </Link>
+                </Badge>
+                <Badge
+                    asChild
+                    variant="outline"
+                    className="h-6 border-muted-foreground/30 text-muted-foreground hover:border-foreground hover:text-foreground transition-colors"
+                >
                     <Link href="/scoreboard">
                         <span className="sm:hidden">Scores</span>
                         <span className="hidden sm:inline">Global Scoreboard</span>
