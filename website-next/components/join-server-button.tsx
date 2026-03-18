@@ -15,7 +15,6 @@ import {Input} from "@/components/ui/input.tsx";
 import {Label} from "@/components/ui/label.tsx";
 import {useLocalStorage} from "@/hooks/use-local-storage.ts";
 import {createRandomPlayerName} from "@/lib/player-name-generator.ts";
-import Link from "next/link";
 import {ServerResponse} from "@/lib/client";
 import {env} from "@/env";
 
@@ -40,7 +39,7 @@ export function JoinServerButton(props: {
         return (
             <Button
                 size="lg"
-                className={`lg:w-auto w-full bg-primary text-primary-foreground font-bold ${
+                className={`w-full sm:w-auto bg-primary text-primary-foreground font-bold ${
                     props.className ?? ""
                 }`.trim()}
                 disabled
@@ -59,7 +58,7 @@ export function JoinServerButton(props: {
             <DialogTrigger asChild>
                 <Button
                     size="lg"
-                    className={`lg:w-auto w-full bg-primary text-primary-foreground font-bold ${
+                    className={`w-full sm:w-auto bg-primary text-primary-foreground font-bold ${
                         props.className ?? ""
                     }`.trim()}
                 >
