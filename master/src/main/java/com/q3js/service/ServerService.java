@@ -14,10 +14,12 @@ import lombok.RequiredArgsConstructor;
 import org.jboss.logging.Logger;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Stream;
 
 @ApplicationScoped
 @RequiredArgsConstructor
@@ -56,7 +58,10 @@ public class ServerService {
 
     @Scheduled(every = "5s")
     public void refreshServerInfo() {
-        serverResponseCache = servers.stream()
+        addToCacheIfNotExist("q3.pieter.com", 443, true);
+
+        serverResponseCache = servers
+                .stream()
                 .map(s -> {
                     return serverStatusClient.query(s)
                             .map(info -> {
@@ -65,6 +70,17 @@ public class ServerService {
                 })
                 .flatMap(Optional::stream)
                 .toList();
+    }
+
+    private void addToCacheIfNotExist(String host, int port, boolean secure) {
+        if (servers.stream().noneMatch(server -> server.getHost().equals(host) && server.getProxyPort() == port)) {
+            servers.add(Server.builder()
+                    .host(host)
+                    .proxyPort(port)
+                    .secure(secure)
+                    .lastHeartbeat(OffsetDateTime.now())
+                    .build());
+        }
     }
 
     @Scheduled(every = "10s")
