@@ -9,9 +9,14 @@ export type Prog = {
     etaSeconds?: number;
 };
 
+export const PERSIST_ROOT = "/persist";
+export const PERSIST_CONFIG_DIR = `${PERSIST_ROOT}/config`;
+export const PERSIST_DATA_DIR = `${PERSIST_ROOT}/data`;
+export const PERSIST_STATE_DIR = `${PERSIST_ROOT}/state`;
+
 // Persistent data versioning
 const DATA_VERSION = "v1.2";
-const VERSION_FILE = "/baseq3/.ioq3-data-version";
+const VERSION_FILE = `${PERSIST_ROOT}/.ioq3-asset-version`;
 
 type FSLike = {
     syncfs: (populate: boolean, callback: (err: unknown) => void) => void;
@@ -89,13 +94,22 @@ function normalizeMountDirs(gameDirs: string[]) {
     );
 }
 
-export async function ensureMounts(module: IOQ3Module, gameDirs: string[] = ["baseq3"]): Promise<{ persist: boolean }> {
+type EnsureMountsOptions = {
+    assetGameDirs?: string[];
+};
+
+export async function ensureMounts(
+    module: IOQ3Module,
+    {assetGameDirs = ["baseq3"]}: EnsureMountsOptions = {}
+): Promise<{ persist: boolean }> {
     const {FS} = module;
-    const mountDirs = normalizeMountDirs(["baseq3", ...gameDirs]);
-    for (const dir of mountDirs) {
+    const assetMountDirs = normalizeMountDirs(["baseq3", ...assetGameDirs]);
+
+    for (const dir of assetMountDirs) {
         FS.mkdirTree(`/${dir}`);
     }
     FS.mkdirTree("/baseq3/vm");
+    FS.mkdirTree(PERSIST_ROOT);
 
     const IDBFS = resolveIDBFS(module);
     if (!IDBFS) {
@@ -103,15 +117,23 @@ export async function ensureMounts(module: IOQ3Module, gameDirs: string[] = ["ba
         return {persist: false};
     }
 
-    for (const dir of mountDirs) {
+    for (const dir of assetMountDirs) {
         try {
             FS.mount(IDBFS, {autoPersist: true}, `/${dir}`);
         } catch {
             // already mounted
         }
     }
+    try {
+        FS.mount(IDBFS, {autoPersist: true}, PERSIST_ROOT);
+    } catch {
+        // already mounted
+    }
 
     await syncfs(module, true);
+    FS.mkdirTree(PERSIST_CONFIG_DIR);
+    FS.mkdirTree(PERSIST_DATA_DIR);
+    FS.mkdirTree(PERSIST_STATE_DIR);
     const current = readDataVersion(FS);
     if (current === null) {
         try {
@@ -122,7 +144,7 @@ export async function ensureMounts(module: IOQ3Module, gameDirs: string[] = ["ba
         }
     } else if (current !== DATA_VERSION) {
         try {
-            for (const dir of mountDirs) {
+            for (const dir of assetMountDirs) {
                 clearDirectory(FS, `/${dir}`);
             }
             FS.writeFile(VERSION_FILE, DATA_VERSION);

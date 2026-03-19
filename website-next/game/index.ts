@@ -1,5 +1,14 @@
 import {getWsProtocol} from "@/lib/utils.ts";
-import {ensureMounts, estimateTotalBytes, fetchIntoUint8, type Prog, syncfs} from "@/lib/fs.ts";
+import {
+    ensureMounts,
+    estimateTotalBytes,
+    fetchIntoUint8,
+    PERSIST_CONFIG_DIR,
+    PERSIST_DATA_DIR,
+    PERSIST_STATE_DIR,
+    type Prog,
+    syncfs
+} from "@/lib/fs.ts";
 import {registerIOQ3Runtime, type IOQ3RuntimeModule} from "@/lib/ioquake3-runtime";
 
 type Params = {
@@ -164,6 +173,9 @@ export default async function startGame({host, proxyPort, name, rafUpdate, fsGam
           +set cl_allowDownload 1
           +set con_scale 2
           +set fs_game "${fs_game}"
+          +set fs_homeconfigpath "${PERSIST_CONFIG_DIR}"
+          +set fs_homedatapath "${PERSIST_DATA_DIR}"
+          +set fs_homestatepath "${PERSIST_STATE_DIR}"
           +set com_introplayed 1
           +set ui_cdkeychecked 1
           +set cl_firststart 0
@@ -215,7 +227,7 @@ export default async function startGame({host, proxyPort, name, rafUpdate, fsGam
                         stage: "initializing"
                     });
                     const mountDirs = Array.from(new Set([com_basegame, fs_basegame, fs_game, "baseq3"]));
-                    const {persist} = await ensureMounts(module, mountDirs);
+                    const {persist} = await ensureMounts(module, {assetGameDirs: mountDirs});
                     const configuredGameDirs = mountDirs.filter(isSupportedGameDir);
                     const allFileEntries = configuredGameDirs.flatMap<FileEntry>((g) => config[g].files);
                     const uniqueFileEntries = Array.from(
