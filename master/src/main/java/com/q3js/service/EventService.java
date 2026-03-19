@@ -9,6 +9,7 @@ import org.jboss.logging.Logger;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.SortField;
 import org.jooq.Table;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.DSL;
@@ -18,6 +19,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
@@ -133,18 +135,21 @@ public class EventService {
             condition = condition.and(normalizedPlayerName.contains(normalizedSearch));
         }
 
+        List<SortField<?>> sortFields = new ArrayList<>();
+        if (!normalizedSearch.isBlank()) {
+            sortFields.add(DSL.case_()
+                    .when(normalizedPlayerName.eq(normalizedSearch), 0)
+                    .when(normalizedPlayerName.startsWith(normalizedSearch), 1)
+                    .otherwise(2)
+                    .asc());
+        }
+        sortFields.add(normalizedPlayerName.asc());
+        sortFields.add(playerName.asc());
+
         var query = dsl.select(playerName)
                 .from(players)
                 .where(condition)
-                .orderBy(
-                        !normalizedSearch.isBlank()
-                                ? DSL.case_()
-                                        .when(normalizedPlayerName.eq(normalizedSearch), 0)
-                                        .when(normalizedPlayerName.startsWith(normalizedSearch), 1)
-                                        .otherwise(2)
-                                : DSL.inline(0),
-                        normalizedPlayerName.asc(),
-                        playerName.asc());
+                .orderBy(sortFields);
 
         if (limit != null) {
             return query.limit(limit)

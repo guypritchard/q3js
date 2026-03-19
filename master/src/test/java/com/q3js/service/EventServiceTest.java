@@ -33,7 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class EventServiceTest {
     @Test
     void getAllPlayersReturnsDistinctSortedNamesFromLifecycleAndKillEvents() {
-        DSLContext dsl = DSL.using(new MockConnection(new AllPlayersMockProvider()), SQLDialect.POSTGRES);
+        AllPlayersMockProvider provider = new AllPlayersMockProvider();
+        DSLContext dsl = DSL.using(new MockConnection(provider), SQLDialect.POSTGRES);
         EventService eventService = new EventService(dsl, new EventPersistenceService(dsl));
 
         List<PlayerResponse> response = eventService.getAllPlayers();
@@ -47,6 +48,7 @@ class EventServiceTest {
                 ),
                 response
         );
+        assertFalse(provider.executedSql.toLowerCase(Locale.ROOT).contains("order by 0"));
     }
 
     @Test
@@ -392,9 +394,11 @@ class EventServiceTest {
 
     private static final class AllPlayersMockProvider implements MockDataProvider {
         private final DSLContext dsl = DSL.using(SQLDialect.POSTGRES);
+        private String executedSql;
 
         @Override
         public MockResult[] execute(MockExecuteContext context) {
+            executedSql = context.sql();
             Field<String> playerName = DSL.field(DSL.name("players", "player_name"), String.class);
             var result = dsl.newResult(playerName);
             result.add(dsl.newRecord(playerName).values("Anarki"));
