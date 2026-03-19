@@ -1,9 +1,11 @@
 package com.q3js.service;
 
 import com.q3js.client.ServerStatusClient;
-import com.q3js.controller.ServerController;
 import com.q3js.domain.Server;
-import com.q3js.service.dto.*;
+import com.q3js.service.dto.HeartbeatRequest;
+import com.q3js.service.dto.ServerInfoResponse;
+import com.q3js.service.dto.ServerResponse;
+import com.q3js.service.dto.ServerUserResponse;
 import com.q3js.service.exception.ServerNotFoundException;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -11,109 +13,193 @@ import lombok.RequiredArgsConstructor;
 import org.jboss.logging.Logger;
 
 import java.time.OffsetDateTime;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Stream;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @ApplicationScoped
 @RequiredArgsConstructor
 public class ServerService {
     private static final Logger LOG = Logger.getLogger(ServerService.class);
+    private static final int HEARTBEAT_TTL_MINUTES = 5;
+    private static final String FFA_HOST = "ffa.q3js.com";
+    private static final String PIETER_HOST = "q3.pieter.com";
+    private static final int DEFAULT_PROXY_PORT = 443;
 
-    private final CopyOnWriteArrayList<Server> servers = new CopyOnWriteArrayList<>();
+    private final Map<String, Server> servers = new ConcurrentHashMap<>();
     private final ServerStatusClient serverStatusClient;
 
-    private List<ServerResponse> serverResponseCache = List.of();
+    private volatile List<ServerResponse> serverResponseCache = List.of();
 
     public void handleHeartbeat(HeartbeatRequest heartbeatRequest) {
         if (heartbeatRequest.getTargetHost() == null) {
-            LOG.warnf("Received heartbeat with null target host from %s:%d", null, heartbeatRequest.getProxyPort());
+            LOG.warnf(
+                    "Received heartbeat with null target host from proxy port %d",
+                    heartbeatRequest.getProxyPort()
+            );
             return;
         }
 
-        LOG.infof("Received heartbeat from %s:%d", heartbeatRequest.getTargetHost(), heartbeatRequest.getProxyPort());
+        String host = heartbeatRequest.getTargetHost();
+        int proxyPort = heartbeatRequest.getProxyPort();
+        int targetPort = heartbeatRequest.getTargetPort();
+        boolean secure = heartbeatRequest.isSecure();
+        OffsetDateTime now = OffsetDateTime.now();
 
-        var server = findServer(heartbeatRequest.getTargetHost(), heartbeatRequest.getProxyPort());
-        if (server.isPresent()) {
-            server.get().setLastHeartbeat(OffsetDateTime.now());
-            server.get().setTargetPort(heartbeatRequest.getTargetPort());
-            server.get().setSecure(heartbeatRequest.isSecure());
-            return;
-        }
+        String key = key(host, proxyPort);
 
-        servers.add(Server.builder()
-                .proxyPort(heartbeatRequest.getProxyPort())
-                .host(heartbeatRequest.getTargetHost())
-                .targetPort(heartbeatRequest.getTargetPort())
-                .lastHeartbeat(OffsetDateTime.now())
-                .secure(heartbeatRequest.isSecure())
-                .build());
+        servers.compute(key, (k, existing) -> {
+            if (existing == null) {
+                LOG.infof("Registering server from heartbeat %s:%d", host, proxyPort);
+            } else {
+                LOG.debugf("Refreshing heartbeat for %s:%d", host, proxyPort);
+            }
+
+            return Server.builder()
+                    .host(host)
+                    .proxyPort(proxyPort)
+                    .targetPort(targetPort)
+                    .secure(secure)
+                    .lastHeartbeat(now)
+                    .build();
+        });
     }
 
     @Scheduled(every = "5s")
     public void refreshServerInfo() {
-        addToCacheIfNotExist("q3.pieter.com", 443, true);
+        addIfMissing(FFA_HOST, DEFAULT_PROXY_PORT, true);
+        addIfMissing(PIETER_HOST, DEFAULT_PROXY_PORT, true);
 
-        serverResponseCache = servers
-                .stream()
-                .map(s -> {
-                    return serverStatusClient.query(s)
-                            .map(info -> {
-                                return new ServerResponse(s.getHost(), s.getProxyPort(), s.getTargetPort(), s.isSecure(), info);
-                            });
+        List<Server> snapshot = List.copyOf(servers.values());
+
+        serverResponseCache = snapshot.stream()
+                .map(server -> serverStatusClient.query(server)
+                        .map(info -> new ServerResponse(
+                                server.getHost(),
+                                server.getProxyPort(),
+                                server.getTargetPort(),
+                                server.isSecure(),
+                                info
+                        )))
+                .peek(result -> {
+                    if (result.isEmpty()) {
+                        // no-op here, logging happens below with explicit loop if needed
+                    }
                 })
-                .flatMap(Optional::stream)
+                .flatMap(java.util.Optional::stream)
                 .toList();
+
+        for (Server server : snapshot) {
+            boolean present = serverResponseCache.stream().anyMatch(r ->
+                    r.getHost().equals(server.getHost()) && r.getProxyPort() == server.getProxyPort()
+            );
+
+            if (!present) {
+                LOG.warnf(
+                        "Failed to refresh server info for %s:%d (lastHeartbeat=%s)",
+                        server.getHost(),
+                        server.getProxyPort(),
+                        server.getLastHeartbeat()
+                );
+            }
+        }
+
+        LOG.debugf(
+                "Refresh complete: knownServers=%d visibleServers=%d",
+                snapshot.size(),
+                serverResponseCache.size()
+        );
     }
 
-    private void addToCacheIfNotExist(String host, int port, boolean secure) {
-        if (servers.stream().noneMatch(server -> server.getHost().equals(host) && server.getProxyPort() == port)) {
-            servers.add(Server.builder()
+    private void addIfMissing(String host, int proxyPort, boolean secure) {
+        String key = key(host, proxyPort);
+
+        servers.computeIfAbsent(key, k -> {
+            LOG.infof("Adding static server %s:%d", host, proxyPort);
+            return Server.builder()
                     .host(host)
-                    .proxyPort(port)
+                    .proxyPort(proxyPort)
                     .secure(secure)
                     .lastHeartbeat(OffsetDateTime.now())
-                    .build());
-        }
+                    .build();
+        });
     }
 
     @Scheduled(every = "10s")
     public void pruneServers() {
-        servers
-                .removeIf(server -> OffsetDateTime.now().minusMinutes(5)
-                        .isAfter(server.getLastHeartbeat()));
-    }
+        OffsetDateTime cutoff = OffsetDateTime.now().minusMinutes(HEARTBEAT_TTL_MINUTES);
 
-    private Optional<Server> findServer(String host, int proxyPort) {
-        return servers.stream()
-                .filter(server -> server.getHost().equals(host) && server.getProxyPort() == proxyPort)
-                .findFirst();
+        servers.entrySet().removeIf(entry -> {
+            Server server = entry.getValue();
+            boolean expired = cutoff.isAfter(server.getLastHeartbeat());
+
+            if (expired) {
+                LOG.warnf(
+                        "Pruning server %s:%d, lastHeartbeat=%s",
+                        server.getHost(),
+                        server.getProxyPort(),
+                        server.getLastHeartbeat()
+                );
+            }
+
+            return expired;
+        });
     }
 
     public List<ServerResponse> getAllServers() {
-        return serverResponseCache
-                .stream()
+        return serverResponseCache.stream()
                 .sorted(
-                        Comparator
-                                .comparing((ServerResponse s) -> getRealUsers(s).size())
-                                .reversed()
+                        Comparator.comparingInt(ServerService::getDisplayPriority)
+                                .thenComparing(
+                                        Comparator.comparingInt((ServerResponse s) -> getRealUsers(s).size())
+                                                .reversed()
+                                )
                 )
                 .toList();
     }
 
+    private static int getDisplayPriority(ServerResponse server) {
+        if (isServer(server, FFA_HOST, DEFAULT_PROXY_PORT)) {
+            return 0;
+        }
+
+        if (isServer(server, PIETER_HOST, DEFAULT_PROXY_PORT)) {
+            return 1;
+        }
+
+        return 2;
+    }
+
+    private static boolean isServer(ServerResponse server, String host, int proxyPort) {
+        return host.equals(server.getHost()) && proxyPort == server.getProxyPort();
+    }
+
     private static List<ServerUserResponse> getRealUsers(ServerResponse s) {
-        return s.getInfo().getUsers().stream().filter(u -> u.getPing() > 0).toList();
+        return s.getInfo().getUsers().stream()
+                .filter(u -> u.getPing() > 0)
+                .toList();
     }
 
     public ServerInfoResponse getServerInfo(String id) {
-        var host = id.split(":")[0];
-        var port = Integer.parseInt(id.split(":")[1]);
+        String[] parts = id.split(":", 2);
+        if (parts.length != 2) {
+            throw new ServerNotFoundException("Invalid server id: " + id);
+        }
 
-        return findServer(host, port)
-                .flatMap(serverStatusClient::query)
+        String host = parts[0];
+        int proxyPort = Integer.parseInt(parts[1]);
+
+        Server server = servers.get(key(host, proxyPort));
+        if (server == null) {
+            throw new ServerNotFoundException("Server not found for id: " + id);
+        }
+
+        return serverStatusClient.query(server)
                 .orElseThrow(() -> new ServerNotFoundException("Server not found for id: " + id));
+    }
+
+    private static String key(String host, int proxyPort) {
+        return host + ":" + proxyPort;
     }
 }
