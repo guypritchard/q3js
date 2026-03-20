@@ -4,17 +4,6 @@
 
 #canvas {
     display: block;
-    max-width: 100vw;
-    max-height: 100vh;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    margin: auto;
-}
-
-html.game-page-active #canvas,
-body.game-page-active #canvas {
-    display: block;
     max-width: 100%;
     max-height: 100%;
     width: 100%;

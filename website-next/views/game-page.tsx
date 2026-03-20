@@ -64,8 +64,13 @@ function getCanvasDisplaySize(target: HTMLElement) {
     };
 }
 
-function useTouchDevice() {
-    const [isTouchDevice, setIsTouchDevice] = useState<boolean | null>(null);
+function useLandscapeFullscreen(targetRef: RefObject<HTMLElement | null>) {
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isLandscape, setIsLandscape] = useState(true);
+    const [hasSeenLandscape, setHasSeenLandscape] = useState(false);
+    const [isTouchDevice, setIsTouchDevice] = useState(false);
+    const [canRequestFullscreen, setCanRequestFullscreen] = useState(true);
+    const [isViewportReady, setIsViewportReady] = useState(false);
 
     useEffect(() => {
         if (typeof window === "undefined") {
@@ -73,32 +78,8 @@ function useTouchDevice() {
         }
 
         const mediaQuery = window.matchMedia("(pointer: coarse)");
-        const updateTouchMode = () => setIsTouchDevice(mediaQuery.matches || navigator.maxTouchPoints > 0);
-
-        updateTouchMode();
-        mediaQuery.addEventListener("change", updateTouchMode);
-
-        return () => {
-            mediaQuery.removeEventListener("change", updateTouchMode);
-        };
-    }, []);
-
-    return isTouchDevice;
-}
-
-function useLandscapeFullscreen(enabled: boolean, targetRef: RefObject<HTMLElement | null>) {
-    const [mobileFullscreen, setMobileFullscreen] = useState(false);
-    const [mobileLandscape, setMobileLandscape] = useState(true);
-    const [mobileHasSeenLandscape, setMobileHasSeenLandscape] = useState(false);
-    const [mobileCanRequestFullscreen, setMobileCanRequestFullscreen] = useState(true);
-    const [mobileViewportReady, setMobileViewportReady] = useState(false);
-
-    useEffect(() => {
-        if (!enabled || typeof window === "undefined") {
-            return;
-        }
-
         const screenOrientation = typeof screen !== "undefined" ? screen.orientation : null;
+        const updateTouchMode = () => setIsTouchDevice(mediaQuery.matches || navigator.maxTouchPoints > 0);
         const updateOrientation = () => {
             let nextIsLandscape = window.innerWidth >= window.innerHeight;
             const target = targetRef.current;
@@ -106,28 +87,28 @@ function useLandscapeFullscreen(enabled: boolean, targetRef: RefObject<HTMLEleme
                 const {width, height} = getCanvasDisplaySize(target);
                 nextIsLandscape = width >= height;
             }
-            setMobileLandscape(nextIsLandscape);
+            setIsLandscape(nextIsLandscape);
             if (nextIsLandscape) {
-                setMobileHasSeenLandscape(true);
+                setHasSeenLandscape(true);
             }
-            setMobileViewportReady(true);
+            setIsViewportReady(true);
         };
         const updateFullscreen = () => {
             const fullscreenElement = document.fullscreenElement;
             if (!fullscreenElement) {
-                setMobileFullscreen(false);
+                setIsFullscreen(false);
                 return;
             }
 
             if (targetRef.current) {
-                setMobileFullscreen(fullscreenElement === targetRef.current || targetRef.current.contains(fullscreenElement));
+                setIsFullscreen(fullscreenElement === targetRef.current || targetRef.current.contains(fullscreenElement));
                 return;
             }
 
-            setMobileFullscreen(true);
+            setIsFullscreen(true);
         };
         const updateFullscreenSupport = () => {
-            setMobileCanRequestFullscreen(
+            setCanRequestFullscreen(
                 !isIPhoneUserAgent() && Boolean(
                     document.fullscreenEnabled
                     || (targetRef.current as FullscreenCapableElement | null)?.webkitRequestFullscreen
@@ -135,25 +116,28 @@ function useLandscapeFullscreen(enabled: boolean, targetRef: RefObject<HTMLEleme
             );
         };
 
+        updateTouchMode();
         updateOrientation();
         updateFullscreen();
         updateFullscreenSupport();
 
+        mediaQuery.addEventListener("change", updateTouchMode);
         window.addEventListener("resize", updateOrientation);
         window.addEventListener("orientationchange", updateOrientation);
         document.addEventListener("fullscreenchange", updateFullscreen);
         screenOrientation?.addEventListener("change", updateOrientation);
 
         return () => {
+            mediaQuery.removeEventListener("change", updateTouchMode);
             window.removeEventListener("resize", updateOrientation);
             window.removeEventListener("orientationchange", updateOrientation);
             document.removeEventListener("fullscreenchange", updateFullscreen);
             screenOrientation?.removeEventListener("change", updateOrientation);
         };
-    }, [enabled, targetRef]);
+    }, [targetRef]);
 
     const requestFullscreenLandscape = async () => {
-        if (!enabled || !mobileCanRequestFullscreen) {
+        if (!canRequestFullscreen) {
             return;
         }
 
@@ -177,11 +161,12 @@ function useLandscapeFullscreen(enabled: boolean, targetRef: RefObject<HTMLEleme
     };
 
     return {
-        isFullscreen: enabled ? mobileFullscreen : false,
-        isLandscape: enabled ? mobileLandscape : true,
-        hasSeenLandscape: enabled ? mobileHasSeenLandscape : true,
-        canRequestFullscreen: enabled ? mobileCanRequestFullscreen : true,
-        isViewportReady: enabled ? mobileViewportReady : true,
+        isFullscreen,
+        isLandscape,
+        hasSeenLandscape,
+        isTouchDevice,
+        canRequestFullscreen,
+        isViewportReady,
         requestFullscreenLandscape,
     };
 }
@@ -206,21 +191,20 @@ export default function GamePage() {
     const name = searchParams?.get("name") ?? "Player";
     const fsGame = searchParams?.get("fs_game") ?? "baseq3";
     const forceMobileControls = searchParams?.get("mobileControls") === "1";
-    const isTouchDevice = useTouchDevice();
-    const showTouchUi = forceMobileControls || isTouchDevice === true;
     const {
         isFullscreen,
         isLandscape,
         hasSeenLandscape,
+        isTouchDevice,
         canRequestFullscreen,
         isViewportReady,
         requestFullscreenLandscape
-    } = useLandscapeFullscreen(showTouchUi, gameShellRef);
+    } = useLandscapeFullscreen(gameShellRef);
     const [mobileBridgeReady, setMobileBridgeReady] = useState(false);
-    const touchModeReady = forceMobileControls || isTouchDevice !== null;
+    const showTouchUi = isTouchDevice || forceMobileControls;
     const portraitGate = showTouchUi && (!isViewportReady || !hasSeenLandscape);
     const showRotateOverlay = showTouchUi && hasSeenLandscape && !isLandscape;
-    const canStartGame = Boolean(host && proxyPort && touchModeReady && (!showTouchUi || (isViewportReady && hasSeenLandscape)));
+    const canStartGame = Boolean(host && proxyPort && isViewportReady && (!showTouchUi || hasSeenLandscape));
     const gameStartKey = `${host}|${proxyPort}|${name}|${fsGame}|${showTouchUi ? "mobile" : "desktop"}`;
 
     useEffect(() => {
@@ -250,10 +234,6 @@ export default function GamePage() {
     }, []);
 
     useEffect(() => {
-        if (!showTouchUi) {
-            return;
-        }
-
         document.body.classList.add("game-page-active");
         document.documentElement.classList.add("game-page-active");
 
@@ -261,10 +241,10 @@ export default function GamePage() {
             document.body.classList.remove("game-page-active");
             document.documentElement.classList.remove("game-page-active");
         };
-    }, [showTouchUi]);
+    }, []);
 
     useEffect(() => {
-        if (!showTouchUi || prog.stage !== "ready") {
+        if (prog.stage !== "ready") {
             return;
         }
 
@@ -288,7 +268,7 @@ export default function GamePage() {
         return () => {
             window.clearInterval(intervalId);
         };
-    }, [prog.stage, showTouchUi]);
+    }, [prog.stage]);
 
     useEffect(() => {
         if (!showTouchUi || prog.stage !== "ready" || !mobileBridgeReady) {
@@ -413,12 +393,6 @@ export default function GamePage() {
         }[prog.stage]
         : "Preparing downloads";
     const showMobileControls = showTouchUi && prog.stage === "ready" && mobileBridgeReady && !showRotateOverlay;
-    const gameShellClassName = showTouchUi
-        ? "relative isolate h-dvh min-h-dvh w-screen overflow-hidden bg-black"
-        : "relative w-full h-full min-h-screen";
-    const canvasClassName = showTouchUi
-        ? "absolute inset-0 z-0 h-full w-full"
-        : "w-full h-full";
 
     if (portraitGate) {
         return (
@@ -452,9 +426,9 @@ export default function GamePage() {
     }
 
     return (
-        <main ref={gameShellRef} className={gameShellClassName}>
+        <main ref={gameShellRef} className="relative isolate h-dvh min-h-dvh w-screen overflow-hidden bg-black">
             <h1 className="sr-only">Play Quake III Arena in your browser</h1>
-            <canvas id="canvas" className={canvasClassName}/>
+            <canvas id="canvas" className="absolute inset-0 z-0 h-full w-full"/>
             {showMobileControls && (
                 <MobileControls
                     canRequestFullscreen={canRequestFullscreen}

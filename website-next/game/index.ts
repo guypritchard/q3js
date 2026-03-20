@@ -25,6 +25,8 @@ type FileEntry = {
     dst: string;
 };
 
+const MOBILE_RENDER_SCALE = 2;
+
 const config = {
     baseq3: {
         files: [
@@ -150,19 +152,14 @@ export default async function startGame({host, proxyPort, name, rafUpdate, fsGam
         throw new Error("Game canvas not found");
     }
 
-    let initialRenderWidth = 0;
-    let initialRenderHeight = 0;
+    const initialViewport = canvas.getBoundingClientRect();
+    const initialWidth = Math.max(1, Math.round(initialViewport.width || window.innerWidth));
+    const initialHeight = Math.max(1, Math.round(initialViewport.height || window.innerHeight));
+    const initialRenderWidth = mobileMode ? initialWidth * MOBILE_RENDER_SCALE : initialWidth;
+    const initialRenderHeight = mobileMode ? initialHeight * MOBILE_RENDER_SCALE : initialHeight;
 
-    if (mobileMode) {
-        const initialViewport = canvas.getBoundingClientRect();
-        const initialWidth = Math.max(1, Math.round(initialViewport.width || window.innerWidth));
-        const initialHeight = Math.max(1, Math.round(initialViewport.height || window.innerHeight));
-        initialRenderWidth = initialWidth * 2;
-        initialRenderHeight = initialHeight * 2;
-
-        canvas.width = initialRenderWidth;
-        canvas.height = initialRenderHeight;
-    }
+    canvas.width = initialRenderWidth;
+    canvas.height = initialRenderHeight;
 
     const com_basegame = fsGame;
     const fs_basegame = fsGame;
@@ -172,6 +169,7 @@ export default async function startGame({host, proxyPort, name, rafUpdate, fsGam
           +set sv_pure 0
           +set net_enabled 1
           +set r_mode -2
+          +set r_fullscreen 0
           +set cl_allowDownload 1
           +set con_scale 2
           +set fs_game "${fs_game}"
@@ -185,7 +183,6 @@ export default async function startGame({host, proxyPort, name, rafUpdate, fsGam
 
     if (mobileMode) {
         generatedArguments += `
-          +set r_fullscreen 0
           +set r_mode -1
           +set r_customwidth ${initialRenderWidth}
           +set r_customheight ${initialRenderHeight}
@@ -311,7 +308,5 @@ export default async function startGame({host, proxyPort, name, rafUpdate, fsGam
         ],
     }) as Promise<RuntimeModule>;
 
-    if (mobileMode) {
-        registerIOQ3Runtime(runtimePromise);
-    }
+    registerIOQ3Runtime(runtimePromise);
 }
