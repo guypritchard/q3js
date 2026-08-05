@@ -1,29 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.q3js</groupId>
     <artifactId>master</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>quarkus</packaging>
 
     <properties>
-        <compiler-plugin.version>3.14.1</compiler-plugin.version>
-        <maven.compiler.release>21</maven.compiler.release>
+        <compiler-plugin.version>3.15.0</compiler-plugin.version>
+        <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.29.3</quarkus.platform.version>
-        <skipITs>true</skipITs>
-        <surefire-plugin.version>3.5.4</surefire-plugin.version>
-        <lombok.version>1.18.42</lombok.version>
-        <jooq.version>3.20.10</jooq.version>
+        <quarkus.platform.version>3.38.0</quarkus.platform.version>
+        <jooq.version>3.19.36</jooq.version>
         <geoip2.version>5.0.2</geoip2.version>
-        <quarkiverse.jooq.version>2.1.0</quarkiverse.jooq.version>
-        <flyway-maven-plugin.version>11.20.0</flyway-maven-plugin.version>
-        <flyway.url>jdbc:postgresql://localhost:5432/postgres</flyway.url>
-        <flyway.user>postgres</flyway.user>
-        <flyway.password>postgres</flyway.password>
+        <postgresql.version>42.7.13</postgresql.version>
+        <jooq.codegen.jdbc.url>jdbc:postgresql://localhost:5432/postgres</jooq.codegen.jdbc.url>
+        <jooq.codegen.jdbc.user>postgres</jooq.codegen.jdbc.user>
+        <jooq.codegen.jdbc.password>postgres</jooq.codegen.jdbc.password>
+        <skipITs>true</skipITs>
+        <surefire-plugin.version>3.5.6</surefire-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -55,9 +53,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-arc</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -66,10 +63,6 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest-jackson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-config-yaml</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -84,14 +77,24 @@
             <artifactId>quarkus-flyway-postgresql</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.quarkiverse.jooq</groupId>
-            <artifactId>quarkus-jooq</artifactId>
-            <version>${quarkiverse.jooq.version}</version>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-health</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-openapi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-scheduler</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-validator</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jooq</groupId>
-            <artifactId>jooq-postgres-extensions</artifactId>
-            <version>${jooq.version}</version>
+            <artifactId>jooq</artifactId>
         </dependency>
         <dependency>
             <groupId>com.maxmind.geoip2</groupId>
@@ -100,11 +103,7 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-arc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
+            <artifactId>quarkus-junit</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -114,51 +113,33 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-scheduler</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-openapi</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-hibernate-validator</artifactId>
+            <artifactId>quarkus-junit-mockito</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>org.flywaydb</groupId>
-                <artifactId>flyway-maven-plugin</artifactId>
-                <version>${flyway-maven-plugin.version}</version>
-                <configuration>
-                    <url>${flyway.url}</url>
-                    <user>${flyway.user}</user>
-                    <password>${flyway.password}</password>
-                    <schemas>
-                        <schema>public</schema>
-                    </schemas>
-                    <locations>
-                        <location>filesystem:src/main/resources/db/migration</location>
-                    </locations>
-                    <table>flyway_schema_history</table>
-                    <cleanDisabled>true</cleanDisabled>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq-codegen-maven</artifactId>
                 <version>${jooq.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>${postgresql.version}</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
+                    <logging>WARN</logging>
                     <jdbc>
                         <driver>org.postgresql.Driver</driver>
-                        <url>${flyway.url}</url>
-                        <user>${flyway.user}</user>
-                        <password>${flyway.password}</password>
+                        <url>${jooq.codegen.jdbc.url}</url>
+                        <user>${jooq.codegen.jdbc.user}</user>
+                        <password>${jooq.codegen.jdbc.password}</password>
                     </jdbc>
                     <generator>
-                        <name>org.jooq.codegen.DefaultGenerator</name>
                         <database>
                             <name>org.jooq.meta.postgres.PostgresDatabase</name>
                             <inputSchema>public</inputSchema>
@@ -167,14 +148,15 @@
                             <outputSchemaToDefault>true</outputSchemaToDefault>
                         </database>
                         <generate>
+                            <deprecated>false</deprecated>
                             <pojos>true</pojos>
                             <records>true</records>
-                            <javaTimeTypes>true</javaTimeTypes>
                             <relations>true</relations>
+                            <javaTimeTypes>true</javaTimeTypes>
                         </generate>
                         <target>
-                            <packageName>com.q3js.jooq</packageName>
-                            <directory>src/main/java</directory>
+                            <packageName>com.q3js.master.database.generated</packageName>
+                            <directory>${project.basedir}/src/main/java</directory>
                         </target>
                     </generator>
                 </configuration>
@@ -184,36 +166,19 @@
                 <artifactId>quarkus-maven-plugin</artifactId>
                 <version>${quarkus.platform.version}</version>
                 <extensions>true</extensions>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>build</goal>
-                            <goal>generate-code</goal>
-                            <goal>generate-code-tests</goal>
-                            <goal>native-image-agent</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${compiler-plugin.version}</version>
                 <configuration>
                     <parameters>true</parameters>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>1.18.42</version>
-                        </path>
-                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire-plugin.version}</version>
                 <configuration>
-                    <argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
+                    <argLine>@{argLine}</argLine>
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
@@ -232,10 +197,9 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
+                    <argLine>@{argLine}</argLine>
                     <systemPropertyVariables>
-                        <native.image.path>${project.build.directory}/${project.build.finalName}-runner
-                        </native.image.path>
+                        <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
                     </systemPropertyVariables>

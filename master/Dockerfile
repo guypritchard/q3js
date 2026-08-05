@@ -1,19 +1,27 @@
-FROM ghcr.io/graalvm/native-image-community:21 AS build
+FROM maven:3.9.16-eclipse-temurin-17 AS dependencies
 
-WORKDIR /master
+WORKDIR /workspace/master
 
-RUN microdnf install -y maven
+COPY master/pom.xml ./
+RUN mvn --batch-mode dependency:go-offline -DskipTests
 
-COPY master .
+FROM dependencies AS builder
 
-RUN mvn clean package -Dnative -DskipTests
+COPY master/src src
+RUN mvn --batch-mode package -DskipTests
 
+FROM eclipse-temurin:17-jre-jammy AS runtime
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5
+RUN groupadd --gid 10001 q3js \
+    && useradd --uid 10001 --gid q3js --no-create-home --home-dir /opt/q3js q3js
+
+WORKDIR /opt/q3js/master
+
+COPY --from=builder --chown=q3js:q3js /workspace/master/target/quarkus-app/ ./
+
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0"
 
 EXPOSE 8080
-COPY --from=build /master/target/master-1.0-SNAPSHOT-runner /runner
+USER q3js
 
-COPY --from=build /master/target/*.so /
-
-CMD ["/runner"]
+ENTRYPOINT ["java", "-jar", "quarkus-run.jar"]
