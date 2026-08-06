@@ -6,7 +6,15 @@ import { siteConfig, socialImage } from "@/lib/seo";
 import "./globals.css";
 
 const googleVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
-const analyticsId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || "G-X7L740SND7";
+const analyticsId = (() => {
+  const value = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
+
+  if (!value) {
+    throw new Error("NEXT_PUBLIC_GA_MEASUREMENT_ID is required");
+  }
+
+  return value;
+})();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),

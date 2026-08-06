@@ -21,9 +21,9 @@ Copy `.env.example` to `.env.local` to override local endpoints. `NEXT_PUBLIC_Q3
 
 Set `NEXT_PUBLIC_Q3JS_SITE_URL` to the public canonical origin. It is used for
 canonical URLs, Open Graph metadata, structured data, `robots.txt`, and the
-generated sitemap. `NEXT_PUBLIC_GA_MEASUREMENT_ID` defaults to the existing Q3JS
-Google Analytics property, while `GOOGLE_SITE_VERIFICATION` optionally adds the
-Google Search Console verification meta tag.
+generated sitemap. `NEXT_PUBLIC_GA_MEASUREMENT_ID` is required and must contain
+the Google Analytics measurement ID, while `GOOGLE_SITE_VERIFICATION` optionally
+adds the Google Search Console verification meta tag.
 
 The sitemap includes every player profile known to the master server. Keep
 `Q3JS_MASTER_URL` configured with a server-reachable API URL in production so
