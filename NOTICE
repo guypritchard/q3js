@@ -1,0 +1,36 @@
+q3js — Notices and Attributions
+
+Copyright © 2025–2026 Luka Klačar
+
+Licensing terms for this repository are provided in the top-level LICENSE file.
+
+ioquake3
+
+This project includes a modified, ioquake3-derived engine in game/engine/.
+ioquake3 is based on source code released by id Software and is distributed
+under the GNU General Public License version 2.0 only. The full license text and
+retained upstream notices are available in game/engine/COPYING.txt and the
+engine source files.
+
+Project website: https://ioquake3.org/
+
+DB-IP Country Lite
+
+This project includes the DB-IP Country Lite database in
+master/src/main/resources/. It is provided by DB-IP.com under the Creative
+Commons Attribution 4.0 International License (CC BY 4.0).
+
+Attribution: https://db-ip.com
+License: https://creativecommons.org/licenses/by/4.0/
+
+Other third-party software
+
+This repository uses additional third-party libraries, tools, generated code,
+and runtime dependencies. Those materials remain subject to their respective
+copyright notices and license terms.
+
+Trademarks and affiliation
+
+Quake III Arena and related names and marks are the property of their
+respective owners. q3js is an independent project and is not affiliated with or
+endorsed by id Software or ZeniMax Media.

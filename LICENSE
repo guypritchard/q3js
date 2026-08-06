@@ -1,0 +1,62 @@
+q3js — Multi-License Notice
+
+Copyright © 2025–2026 Luka Klačar
+
+This repository contains multiple components under different licenses. The
+license that applies to each component is described below. When a component
+contains its own license or notice file, that file takes precedence for that
+component.
+
+1. ioquake3-derived engine
+
+   Directory: game/engine/
+
+   This component is licensed under the GNU General Public License version 2.0
+   only (GPL-2.0-only). See game/engine/COPYING.txt for the full license text.
+
+   Engine-derived binaries and other derivative works remain subject to the
+   GPL, including when they are packaged or distributed with another Q3JS
+   component.
+
+2. Q3JS components
+
+   Directories:
+
+   - game/client/
+   - game/server/
+   - master/
+   - static/
+   - website/
+
+   Repository-level build, deployment, and integration files are included in
+   this category unless another license or notice expressly applies.
+
+   These components are proprietary software. All rights reserved.
+
+   No part of these components may be copied, modified, distributed, deployed,
+   sublicensed, or used to create derivative works without the author's prior
+   written permission, except where applicable law or a third-party license
+   expressly grants otherwise.
+
+Third-Party Notices
+
+This project builds upon ioquake3 and other open-source components. Third-party
+software, data, generated code, and dependencies remain subject to their
+respective licenses and notices. Nothing in this notice restricts rights granted
+under those licenses.
+
+The DB-IP Country Lite database included under master/src/main/resources/ is
+licensed under the Creative Commons Attribution 4.0 International License
+(CC BY 4.0). DB-IP attribution: https://db-ip.com
+
+Quake III Arena game data is not licensed by this notice and is not included in
+this repository. Users must provide any required game data under terms that
+permit their use.
+
+SPDX identifiers
+
+- game/engine/: GPL-2.0-only
+- Q3JS proprietary components: LicenseRef-Q3JS-Proprietary
+- DB-IP Country Lite database: CC-BY-4.0
+
+For licensing inquiries, contact the repository owner.
