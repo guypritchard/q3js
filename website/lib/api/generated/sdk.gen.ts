@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetProfileData, GetProfileErrors, GetProfileResponses, GetProfileSitemapData, GetProfileSitemapResponses, GetRequesterCountryData, GetRequesterCountryResponses, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionErrors, GetScoreboardDistributionResponses, GetScoreboardErrors, GetScoreboardResponses, GetStatsData, GetStatsResponses, HeartbeatData, HeartbeatErrors, HeartbeatResponses, IngestData, IngestErrors, IngestResponses, SearchProfilesData, SearchProfilesErrors, SearchProfilesResponses, ServersData, ServersResponses, StatusData, StatusResponses } from './types.gen';
+import type { GetProfileData, GetProfileDistributionData, GetProfileDistributionErrors, GetProfileDistributionResponses, GetProfileErrors, GetProfileResponses, GetProfileSitemapData, GetProfileSitemapResponses, GetRequesterCountryData, GetRequesterCountryResponses, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionErrors, GetScoreboardDistributionResponses, GetScoreboardErrors, GetScoreboardResponses, GetStatsData, GetStatsResponses, HeartbeatData, HeartbeatErrors, HeartbeatResponses, IngestData, IngestErrors, IngestResponses, SearchProfilesData, SearchProfilesErrors, SearchProfilesResponses, ServersData, ServersResponses, StatusData, StatusResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -50,6 +50,11 @@ export const getProfileSitemap = <ThrowOnError extends boolean = true>(options?:
  * Get a player profile
  */
 export const getProfile = <ThrowOnError extends boolean = true>(options: Options<GetProfileData, ThrowOnError>): RequestResult<GetProfileResponses, GetProfileErrors, ThrowOnError> => (options.client ?? client).get<GetProfileResponses, GetProfileErrors, ThrowOnError>({ url: '/api/players/{playerName}', ...options });
+
+/**
+ * Get a player's frag activity over time
+ */
+export const getProfileDistribution = <ThrowOnError extends boolean = true>(options: Options<GetProfileDistributionData, ThrowOnError>): RequestResult<GetProfileDistributionResponses, GetProfileDistributionErrors, ThrowOnError> => (options.client ?? client).get<GetProfileDistributionResponses, GetProfileDistributionErrors, ThrowOnError>({ url: '/api/players/{playerName}/distribution', ...options });
 
 /**
  * Get the global frag scoreboard

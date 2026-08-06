@@ -7,18 +7,23 @@ import com.q3js.master.profile.domain.ProfileSitemapEntry;
 import com.q3js.master.profile.domain.ProfileWeaponKills;
 import com.q3js.master.profile.domain.ProfileWeaponStats;
 import com.q3js.master.profile.repository.ProfileRepository;
+import com.q3js.master.scoreboard.domain.KillDistributionPoint;
+import com.q3js.master.scoreboard.domain.ScoreboardPeriod;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.NotFoundException;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 @ApplicationScoped
 public class ProfileService {
+    private static final int DAILY_BUCKETS = 24;
     private final ProfileRepository repository;
 
     public ProfileService(ProfileRepository repository) {
@@ -59,6 +64,35 @@ public class ProfileService {
             repository.findTopVictims(playerName),
             repository.findTopNemeses(playerName)
         );
+    }
+
+    public List<KillDistributionPoint> distribution(
+        String playerName,
+        ScoreboardPeriod period,
+        ZoneId timeZone
+    ) {
+        if (repository.findLastOnline(playerName) == null) {
+            throw new NotFoundException("Player profile not found.");
+        }
+
+        OffsetDateTime now = currentTime();
+        OffsetDateTime periodStart = period.startsAt(now, timeZone).orElse(null);
+        if (period == ScoreboardPeriod.DAILY) {
+            Map<Integer, Long> killsByHour = repository.hourlyKillDistribution(playerName, periodStart, now);
+            return IntStream.range(0, DAILY_BUCKETS)
+                .mapToObj(index -> new KillDistributionPoint(
+                    periodStart.atZoneSameInstant(timeZone).plusHours(index).toOffsetDateTime(),
+                    killsByHour.getOrDefault(index, 0L)
+                ))
+                .toList();
+        }
+
+        return repository.dailyKillDistribution(playerName, periodStart, now, timeZone).entrySet().stream()
+            .map(entry -> new KillDistributionPoint(
+                entry.getKey().atStartOfDay(timeZone).toOffsetDateTime(),
+                entry.getValue()
+            ))
+            .toList();
     }
 
     protected OffsetDateTime currentTime() {

@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { getProfile, getProfileSitemap, getRequesterCountry, getScoreboard, getScoreboardDistribution, getStats, heartbeat, ingest, type Options, searchProfiles, servers, status } from '../sdk.gen';
-import type { GetProfileData, GetProfileResponse, GetProfileSitemapData, GetProfileSitemapResponse, GetRequesterCountryData, GetRequesterCountryResponse, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionResponse, GetScoreboardResponse, GetStatsData, GetStatsResponse, HeartbeatData, HeartbeatResponse, IngestData, IngestResponse, SearchProfilesData, SearchProfilesResponse, ServersData, ServersResponse, StatusData, StatusResponse2 } from '../types.gen';
+import { getProfile, getProfileDistribution, getProfileSitemap, getRequesterCountry, getScoreboard, getScoreboardDistribution, getStats, heartbeat, ingest, type Options, searchProfiles, servers, status } from '../sdk.gen';
+import type { GetProfileData, GetProfileDistributionData, GetProfileDistributionResponse, GetProfileResponse, GetProfileSitemapData, GetProfileSitemapResponse, GetRequesterCountryData, GetRequesterCountryResponse, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionResponse, GetScoreboardResponse, GetStatsData, GetStatsResponse, HeartbeatData, HeartbeatResponse, IngestData, IngestResponse, SearchProfilesData, SearchProfilesResponse, ServersData, ServersResponse, StatusData, StatusResponse2 } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -158,6 +158,24 @@ export const getProfileOptions = (options: Options<GetProfileData>) => queryOpti
         return data;
     },
     queryKey: getProfileQueryKey(options)
+});
+
+export const getProfileDistributionQueryKey = (options: Options<GetProfileDistributionData>) => createQueryKey('getProfileDistribution', options, false, ['Profiles']);
+
+/**
+ * Get a player's frag activity over time
+ */
+export const getProfileDistributionOptions = (options: Options<GetProfileDistributionData>) => queryOptions<GetProfileDistributionResponse, DefaultError, GetProfileDistributionResponse, ReturnType<typeof getProfileDistributionQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getProfileDistribution({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getProfileDistributionQueryKey(options)
 });
 
 export const getScoreboardQueryKey = (options?: Options<GetScoreboardData>) => createQueryKey('getScoreboard', options, false, ['Scoreboard']);

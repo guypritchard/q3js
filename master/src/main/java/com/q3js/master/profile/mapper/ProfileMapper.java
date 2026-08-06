@@ -10,6 +10,8 @@ import com.q3js.master.profile.dto.ProfileRivalResponse;
 import com.q3js.master.profile.dto.ProfileSummaryResponse;
 import com.q3js.master.profile.dto.ProfileSitemapEntryResponse;
 import com.q3js.master.profile.dto.ProfileWeaponResponse;
+import com.q3js.master.scoreboard.domain.KillDistributionPoint;
+import com.q3js.master.scoreboard.dto.KillDistributionPointResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.List;
@@ -44,6 +46,12 @@ public class ProfileMapper {
             rivals(profile.topVictims()),
             rivals(profile.topNemeses())
         );
+    }
+
+    public List<KillDistributionPointResponse> distribution(List<KillDistributionPoint> distribution) {
+        return distribution.stream()
+            .map(point -> new KillDistributionPointResponse(point.bucketStart(), point.kills()))
+            .toList();
     }
 
     private ProfileWeaponResponse weapon(ProfileWeaponStats weapon) {

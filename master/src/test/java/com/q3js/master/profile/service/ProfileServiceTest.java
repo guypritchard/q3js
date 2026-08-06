@@ -6,11 +6,16 @@ import com.q3js.master.profile.domain.ProfileRivalStats;
 import com.q3js.master.profile.domain.ProfileSitemapEntry;
 import com.q3js.master.profile.domain.ProfileWeaponKills;
 import com.q3js.master.profile.repository.ProfileRepository;
+import com.q3js.master.scoreboard.domain.ScoreboardPeriod;
 import jakarta.ws.rs.NotFoundException;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -83,6 +88,35 @@ class ProfileServiceTest {
         var entries = new FixedTimeProfileService(repository, NOW).sitemapEntries();
 
         assertEquals(repository.sitemapEntries, entries);
+    }
+
+    @Test
+    void returnsAZeroFilledHourlyFragDistribution() {
+        var repository = populatedRepository();
+        repository.hourlyDistribution = Map.of(0, 2L, 23, 5L);
+        var service = new FixedTimeProfileService(repository, NOW);
+
+        var distribution = service.distribution("Ranger", ScoreboardPeriod.DAILY, ZoneId.of("Z"));
+
+        assertEquals(24, distribution.size());
+        assertEquals(NOW.minusHours(24), distribution.get(0).bucketStart());
+        assertEquals(2, distribution.get(0).kills());
+        assertEquals(0, distribution.get(1).kills());
+        assertEquals(5, distribution.get(23).kills());
+    }
+
+    @Test
+    void returnsDailyFragDistributionForLongerPeriods() {
+        var repository = populatedRepository();
+        repository.dailyDistribution = new LinkedHashMap<>();
+        repository.dailyDistribution.put(LocalDate.parse("2026-08-04"), 9L);
+        var service = new FixedTimeProfileService(repository, NOW);
+
+        var distribution = service.distribution("Ranger", ScoreboardPeriod.WEEKLY, ZoneId.of("Z"));
+
+        assertEquals(1, distribution.size());
+        assertEquals(OffsetDateTime.parse("2026-08-04T00:00:00Z"), distribution.get(0).bucketStart());
+        assertEquals(9, distribution.get(0).kills());
     }
 
     @Test
@@ -163,6 +197,8 @@ class ProfileServiceTest {
         private List<ProfileRivalStats> nemeses = List.of();
         private List<ProfileLifecycleEvent> lifecycleEvents = List.of();
         private List<ProfileSitemapEntry> sitemapEntries = List.of();
+        private Map<Integer, Long> hourlyDistribution = Map.of();
+        private Map<LocalDate, Long> dailyDistribution = Map.of();
 
         private RecordingProfileRepository() {
             super(null);
@@ -223,6 +259,25 @@ class ProfileServiceTest {
         @Override
         public List<ProfileLifecycleEvent> findLifecycleEvents(String playerName) {
             return lifecycleEvents;
+        }
+
+        @Override
+        public Map<Integer, Long> hourlyKillDistribution(
+            String playerName,
+            OffsetDateTime periodStart,
+            OffsetDateTime periodEnd
+        ) {
+            return hourlyDistribution;
+        }
+
+        @Override
+        public Map<LocalDate, Long> dailyKillDistribution(
+            String playerName,
+            OffsetDateTime periodStart,
+            OffsetDateTime periodEnd,
+            ZoneId timeZone
+        ) {
+            return dailyDistribution;
         }
     }
 }
