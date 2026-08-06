@@ -297,6 +297,44 @@ export type GetProfileResponses = {
 
 export type GetProfileResponse = GetProfileResponses[keyof GetProfileResponses];
 
+export type GetProfileDistributionData = {
+    body?: never;
+    path: {
+        playerName: string;
+    };
+    query?: {
+        /**
+         * daily, weekly, monthly, or all-time
+         */
+        period?: string;
+        /**
+         * IANA time zone used for bucket boundaries
+         */
+        timeZone?: string;
+    };
+    url: '/api/players/{playerName}/distribution';
+};
+
+export type GetProfileDistributionErrors = {
+    /**
+     * Distribution parameters are invalid
+     */
+    400: unknown;
+    /**
+     * Player profile was not found
+     */
+    404: unknown;
+};
+
+export type GetProfileDistributionResponses = {
+    /**
+     * Hourly or daily player frag totals
+     */
+    200: Array<KillDistributionPointResponse>;
+};
+
+export type GetProfileDistributionResponse = GetProfileDistributionResponses[keyof GetProfileDistributionResponses];
+
 export type GetScoreboardData = {
     body?: never;
     path?: never;

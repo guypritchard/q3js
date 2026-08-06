@@ -14,10 +14,14 @@ import org.jooq.Table;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static com.q3js.master.database.generated.Tables.EVENTS;
 
@@ -209,6 +213,53 @@ public class ProfileRepository {
             ));
     }
 
+    public Map<Integer, Long> hourlyKillDistribution(
+        String playerName,
+        OffsetDateTime periodStart,
+        OffsetDateTime periodEnd
+    ) {
+        Field<Integer> bucket = DSL.field(
+            "floor(extract(epoch from ({0} - {1})) / 3600)::int",
+            SQLDataType.INTEGER,
+            EVENTS.RECEIVED_AT,
+            DSL.val(periodStart)
+        ).as("bucket");
+        Field<Long> kills = DSL.count().cast(SQLDataType.BIGINT).as("kills");
+        Map<Integer, Long> distribution = new LinkedHashMap<>();
+        dsl.select(bucket, kills)
+            .from(EVENTS)
+            .where(playerKillCondition(playerName, periodStart, periodEnd))
+            .groupBy(bucket)
+            .orderBy(bucket.asc())
+            .fetch()
+            .forEach(record -> distribution.put(record.get(bucket), valueOrZero(record.get(kills))));
+        return distribution;
+    }
+
+    public Map<LocalDate, Long> dailyKillDistribution(
+        String playerName,
+        OffsetDateTime periodStart,
+        OffsetDateTime periodEnd,
+        ZoneId timeZone
+    ) {
+        Field<LocalDate> bucket = DSL.field(
+            "timezone({0}, {1})::date",
+            SQLDataType.LOCALDATE,
+            DSL.inline(timeZone.getId()),
+            EVENTS.RECEIVED_AT
+        ).as("bucket");
+        Field<Long> kills = DSL.count().cast(SQLDataType.BIGINT).as("kills");
+        Map<LocalDate, Long> distribution = new LinkedHashMap<>();
+        dsl.select(bucket, kills)
+            .from(EVENTS)
+            .where(playerKillCondition(playerName, periodStart, periodEnd))
+            .groupBy(bucket)
+            .orderBy(bucket.asc())
+            .fetch()
+            .forEach(record -> distribution.put(record.get(bucket), valueOrZero(record.get(kills))));
+        return distribution;
+    }
+
     private int count(Condition condition) {
         Integer count = dsl.selectCount()
             .from(EVENTS)
@@ -219,6 +270,21 @@ public class ProfileRepository {
 
     private Condition killCondition() {
         return EVENTS.EVENT_TYPE.eq("kill");
+    }
+
+    private Condition playerKillCondition(
+        String playerName,
+        OffsetDateTime periodStart,
+        OffsetDateTime periodEnd
+    ) {
+        Condition condition = killCondition().and(EVENTS.KILLER_NAME.eq(playerName));
+        if (periodStart != null) {
+            condition = condition.and(EVENTS.RECEIVED_AT.ge(periodStart));
+        }
+        if (periodEnd != null) {
+            condition = condition.and(EVENTS.RECEIVED_AT.lt(periodEnd));
+        }
+        return condition;
     }
 
     private static Field<String> normalizedPlayerName(Field<String> playerName) {
@@ -237,6 +303,10 @@ public class ProfileRepository {
     }
 
     private static int valueOrZero(Integer value) {
+        return value == null ? 0 : value;
+    }
+
+    private static long valueOrZero(Long value) {
         return value == null ? 0 : value;
     }
 }

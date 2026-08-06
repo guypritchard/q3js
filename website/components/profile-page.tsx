@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Crosshair, Trophy } from "@phosphor-icons/react/dist/ssr";
 import { JsonLd } from "@/components/json-ld";
+import { KillDistributionChart } from "@/components/kill-distribution-chart";
 import { Q3ColoredText } from "@/components/q3-colored-text";
 import type {
+  KillDistributionPointResponse,
   ProfileResponse,
   ProfileRivalResponse,
   ProfileWeaponResponse,
@@ -10,6 +12,19 @@ import type {
 import { formatRelativeTime } from "@/lib/format";
 import { absoluteUrl, siteConfig } from "@/lib/seo";
 import { cn } from "@/lib/utils";
+
+const periods = [
+  { value: "daily", label: "24 hours", description: "the last 24 hours", bucketUnit: "hour" },
+  { value: "weekly", label: "This week", description: "this week", bucketUnit: "day" },
+  { value: "monthly", label: "This month", description: "this month", bucketUnit: "day" },
+  { value: "all-time", label: "All time", description: "all recorded time", bucketUnit: "day" },
+] as const;
+
+function profileHref(playerName: string, period: string, timeZone: string): string {
+  const parameters = new URLSearchParams({ period });
+  if (timeZone !== "UTC") parameters.set("timeZone", timeZone);
+  return `/players/${encodeURIComponent(playerName)}?${parameters.toString()}`;
+}
 
 function stripQuakeColors(value: string): string {
   return value.replace(/\^(?:[0-9]|x[0-9a-f]{6})/gi, "").replaceAll("^^", "^");
@@ -100,10 +115,21 @@ function Rivals({
   );
 }
 
-export function ProfilePage({ profile }: Readonly<{ profile: ProfileResponse }>) {
+export function ProfilePage({
+  distribution,
+  period,
+  profile,
+  timeZone,
+}: Readonly<{
+  distribution: KillDistributionPointResponse[];
+  period: string;
+  profile: ProfileResponse;
+  timeZone: string;
+}>) {
   const plainName = stripQuakeColors(profile.playerName) || profile.playerName;
   const profileUrl = absoluteUrl(`/players/${encodeURIComponent(profile.playerName)}`);
   const description = `${plainName}'s Q3JS player profile: ${profile.kills} kills and ${profile.deaths} deaths.`;
+  const activePeriod = periods.find((option) => option.value === period) ?? periods[0];
   return (
     <main className="mx-auto w-full max-w-5xl px-4 pb-20 pt-8 md:pt-12">
       <JsonLd
@@ -156,6 +182,31 @@ export function ProfilePage({ profile }: Readonly<{ profile: ProfileResponse }>)
         <Stat label="Playtime" value={formatPlaytime(profile.playtimeSeconds)} />
         <Stat compact label="Last online" value={formatRelativeTime(profile.lastOnline)} />
       </dl>
+
+      <nav aria-label="Player activity period" className="mt-4 flex flex-wrap gap-1 border border-border/60 bg-card/45 p-1">
+        {periods.map((option) => (
+          <Link
+            key={option.value}
+            href={profileHref(profile.playerName, option.value, timeZone)}
+            aria-current={option.value === activePeriod.value ? "page" : undefined}
+            className={cn(
+              "px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground",
+              option.value === activePeriod.value && "bg-secondary text-foreground",
+            )}
+          >
+            {option.label}
+          </Link>
+        ))}
+      </nav>
+
+      <div className="mt-4">
+        <KillDistributionChart
+          bucketUnit={activePeriod.bucketUnit}
+          data={distribution}
+          periodLabel={activePeriod.description}
+          timeZone={timeZone}
+        />
+      </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <section className="border border-border/60 bg-card/35 p-5 md:p-6">

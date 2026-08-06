@@ -3,12 +3,15 @@ package com.q3js.master.profile.controller;
 import com.q3js.master.profile.domain.PlayerProfile;
 import com.q3js.master.profile.domain.ProfileSitemapEntry;
 import com.q3js.master.profile.service.ProfileService;
+import com.q3js.master.scoreboard.domain.KillDistributionPoint;
+import com.q3js.master.scoreboard.domain.ScoreboardPeriod;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.ws.rs.NotFoundException;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import static io.restassured.RestAssured.given;
@@ -89,6 +92,26 @@ class ProfileControllerTest {
             .when().get("/api/players/Unknown")
             .then()
             .statusCode(404);
+    }
+
+    @Test
+    void returnsPlayerFragDistribution() {
+        when(profileService.distribution("Ranger", ScoreboardPeriod.DAILY, ZoneId.of("Z")))
+            .thenReturn(List.of(new KillDistributionPoint(
+                OffsetDateTime.parse("2026-08-03T12:00:00Z"),
+                4
+            )));
+
+        given()
+            .queryParam("period", "daily")
+            .queryParam("timeZone", "Z")
+            .when().get("/api/players/Ranger/distribution")
+            .then()
+            .statusCode(200)
+            .body("size()", is(1))
+            .body("[0].kills", is(4));
+
+        verify(profileService).distribution("Ranger", ScoreboardPeriod.DAILY, ZoneId.of("Z"));
     }
 
     @Test

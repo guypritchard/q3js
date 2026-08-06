@@ -5,6 +5,8 @@ import com.q3js.master.profile.dto.ProfileSitemapEntryResponse;
 import com.q3js.master.profile.dto.ProfileSummaryResponse;
 import com.q3js.master.profile.mapper.ProfileMapper;
 import com.q3js.master.profile.service.ProfileService;
+import com.q3js.master.scoreboard.domain.ScoreboardPeriod;
+import com.q3js.master.scoreboard.dto.KillDistributionPointResponse;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -18,7 +20,11 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+import java.time.DateTimeException;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Locale;
 
 @Path("/api/players")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -66,10 +72,27 @@ public class ProfileController {
     @APIResponse(responseCode = "400", description = "Player name is invalid")
     @APIResponse(responseCode = "404", description = "Player profile was not found")
     public ProfileResponse getProfile(@PathParam("playerName") String playerName) {
-        if (playerName == null || playerName.isBlank() || playerName.length() > MAX_PLAYER_NAME_LENGTH) {
-            throw new BadRequestException("Player name must contain between 1 and 128 characters.");
-        }
+        validatePlayerName(playerName);
         return profileMapper.response(profileService.get(playerName));
+    }
+
+    @GET
+    @Path("/{playerName}/distribution")
+    @Operation(operationId = "getProfileDistribution", summary = "Get a player's frag activity over time")
+    @APIResponse(responseCode = "200", description = "Hourly or daily player frag totals")
+    @APIResponse(responseCode = "400", description = "Distribution parameters are invalid")
+    @APIResponse(responseCode = "404", description = "Player profile was not found")
+    public List<KillDistributionPointResponse> distribution(
+        @PathParam("playerName") String playerName,
+        @QueryParam("period") @Parameter(description = "daily, weekly, monthly, or all-time") String period,
+        @QueryParam("timeZone") @Parameter(description = "IANA time zone used for bucket boundaries") String timeZone
+    ) {
+        validatePlayerName(playerName);
+        return profileMapper.distribution(profileService.distribution(
+            playerName,
+            distributionPeriod(period),
+            distributionTimeZone(timeZone)
+        ));
     }
 
     private static int searchLimit(Integer limit) {
@@ -80,5 +103,35 @@ public class ProfileController {
             throw new BadRequestException("Profile search limit must be between 1 and 100.");
         }
         return limit;
+    }
+
+    private static void validatePlayerName(String playerName) {
+        if (playerName == null || playerName.isBlank() || playerName.length() > MAX_PLAYER_NAME_LENGTH) {
+            throw new BadRequestException("Player name must contain between 1 and 128 characters.");
+        }
+    }
+
+    private static ScoreboardPeriod distributionPeriod(String value) {
+        if (value == null || value.isBlank()) {
+            return ScoreboardPeriod.DAILY;
+        }
+        return switch (value.trim().toLowerCase(Locale.ROOT)) {
+            case "daily", "day" -> ScoreboardPeriod.DAILY;
+            case "weekly", "week" -> ScoreboardPeriod.WEEKLY;
+            case "monthly", "month" -> ScoreboardPeriod.MONTHLY;
+            case "all-time", "all_time", "alltime", "all" -> ScoreboardPeriod.ALL_TIME;
+            default -> throw new BadRequestException("Unsupported distribution period: " + value);
+        };
+    }
+
+    private static ZoneId distributionTimeZone(String value) {
+        if (value == null || value.isBlank()) {
+            return ZoneOffset.UTC;
+        }
+        try {
+            return ZoneId.of(value.trim());
+        } catch (DateTimeException exception) {
+            throw new BadRequestException("Unsupported time zone: " + value);
+        }
     }
 }
