@@ -25,7 +25,7 @@ export function Footer() {
             .
           </p>
         </div>
-        <div className="flex flex-wrap content-start gap-x-4 md:justify-end">
+        <div className="flex flex-col items-start md:items-end">
           <a href={siteConfig.supportUrl} target="_blank" rel="noreferrer" className="hover:text-foreground">
             Support Q3JS
           </a>
