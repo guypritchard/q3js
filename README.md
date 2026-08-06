@@ -18,6 +18,12 @@
       <img src="https://shieldcn.dev/badge/play-q3js.com-d94a36.svg?variant=branded&amp;logo=googlechrome&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Play at q3js.com" />
     </picture>
   </a>
+  <a href="https://discord.com/invite/mKvM9su443">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/discord/members/mKvM9su443.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
+      <img src="https://shieldcn.dev/discord/members/mKvM9su443.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Discord members" />
+    </picture>
+  </a>
   <a href="https://github.com/lklacar/q3js/stargazers">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/stars/lklacar/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
