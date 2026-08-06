@@ -171,6 +171,20 @@ export type TopFraggerResponse = {
     frags: number;
 };
 
+export type WeaponLeaderResponse = {
+    playerName: string;
+    kills: number;
+};
+
+export type WeaponUsageResponse = {
+    slug: string;
+    weaponName: string;
+    kills: number;
+    uniquePlayers: number;
+    killShare: number;
+    leaders: Array<WeaponLeaderResponse>;
+};
+
 export type GetRequesterCountryData = {
     body?: never;
     path?: never;
@@ -487,3 +501,28 @@ export type StatusResponses = {
 };
 
 export type StatusResponse2 = StatusResponses[keyof StatusResponses];
+
+export type GetWeaponUsageData = {
+    body?: never;
+    path: {
+        slug: string;
+    };
+    query?: never;
+    url: '/api/weapons/{slug}';
+};
+
+export type GetWeaponUsageErrors = {
+    /**
+     * Unknown weapon
+     */
+    404: unknown;
+};
+
+export type GetWeaponUsageResponses = {
+    /**
+     * Weapon totals and leading players
+     */
+    200: WeaponUsageResponse;
+};
+
+export type GetWeaponUsageResponse = GetWeaponUsageResponses[keyof GetWeaponUsageResponses];

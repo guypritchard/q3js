@@ -96,6 +96,45 @@ input:focus-visible {
     border-color: color-mix(in oklch, var(--primary) 48%, var(--border));
   }
 
+  .weapon-viewer {
+    position: relative;
+    min-height: 390px;
+    overflow: hidden;
+    border: 1px solid color-mix(in oklch, var(--weapon-accent) 32%, var(--border));
+    background:
+      radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--weapon-accent) 14%, transparent) 0, transparent 44%),
+      linear-gradient(145deg, color-mix(in oklch, var(--card) 88%, black), var(--background));
+  }
+
+  .weapon-viewer::after {
+    content: "";
+    position: absolute;
+    inset: auto 12% 17% 12%;
+    height: 12%;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--weapon-accent) 16%, transparent);
+    filter: blur(22px);
+    pointer-events: none;
+  }
+
+  .weapon-viewer-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--weapon-accent) 8%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--weapon-accent) 8%, transparent) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom, transparent, black 28%, black 80%, transparent);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+}
+
+@media (min-width: 1024px) {
+  .weapon-viewer {
+    min-height: 500px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

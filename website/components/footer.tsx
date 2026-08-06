@@ -29,6 +29,7 @@ export function Footer() {
           <a href={siteConfig.supportUrl} target="_blank" rel="noreferrer" className="hover:text-foreground">
             Support Q3JS
           </a>
+          <Link href="/weapons" className="hover:text-foreground">Weapon database</Link>
           <Link href="/guide" className="hover:text-foreground">Run a server</Link>
           <a href="https://github.com/lklacar/q3js" target="_blank" rel="noreferrer" className="hover:text-foreground">
             GitHub source

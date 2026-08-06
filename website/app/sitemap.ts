@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { getProfileSitemap } from "@/lib/api/generated/sdk.gen";
 import { serverApiClient } from "@/lib/api/server-client";
 import { absoluteUrl } from "@/lib/seo";
+import { weapons } from "@/lib/weapons";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
@@ -32,6 +33,18 @@ function staticEntries(lastModified: Date): MetadataRoute.Sitemap {
       priority: 0.8,
       lastModified,
     },
+    {
+      url: absoluteUrl("/weapons"),
+      changeFrequency: "weekly",
+      priority: 0.9,
+      lastModified,
+    },
+    ...weapons.map((weapon) => ({
+      url: absoluteUrl(`/weapons/${weapon.slug}`),
+      changeFrequency: "weekly" as const,
+      priority: 0.85,
+      lastModified,
+    })),
   ];
 }
 
