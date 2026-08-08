@@ -10,6 +10,24 @@
 
 static qboolean q3js_mobile_bindings_initialized = qfalse;
 
+#ifdef __EMSCRIPTEN__
+EM_JS( void, Q3JS_NotifyChatActive, ( int active ), {
+	if( typeof window === "undefined" )
+	{
+		return;
+	}
+
+	window.dispatchEvent( new CustomEvent( "q3js:chat-active-change", {
+		detail: active !== 0
+	} ) );
+} );
+#else
+void Q3JS_NotifyChatActive( int active )
+{
+	(void)active;
+}
+#endif
+
 static void Q3JS_InitMobileBindings( void )
 {
 	if( q3js_mobile_bindings_initialized )

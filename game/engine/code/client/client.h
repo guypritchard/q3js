@@ -616,6 +616,7 @@ void CL_InitUI( void );
 void CL_ShutdownUI( void );
 int Key_GetCatcher( void );
 void Key_SetCatcher( int catcher );
+void Q3JS_NotifyChatActive( int active );
 void LAN_LoadCachedServers( void );
 void LAN_SaveServersToCache( void );
 
@@ -640,4 +641,3 @@ qboolean CL_VideoRecording( void );
 // cl_main.c
 //
 void CL_WriteDemoMessage ( msg_t *msg, int headerBytes );
-
