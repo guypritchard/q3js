@@ -46,6 +46,12 @@ type ServerFilter = "featured" | "active" | "all" | "open";
 type JoinEntryPoint = "quick_play" | "server_card";
 
 const DEFAULT_VOICE_DEVICE = "default";
+const filterOptions = [
+  { value: "all", label: "All servers" },
+  { value: "featured", label: "Featured" },
+  { value: "active", label: "With players" },
+  { value: "open", label: "Open slots" },
+] as const satisfies ReadonlyArray<{ value: ServerFilter; label: string }>;
 
 function joinHref(
   server: ListedServer,
@@ -336,11 +342,11 @@ function ServerCard({ onJoin, server }: Readonly<{
 }>) {
   return (
     <article className={`arena-card border ${server.official ? "border-primary/60 bg-card/80" : "border-border/60 bg-card/50"}`}>
-      <div className="p-5 md:p-6">
+      <div className="p-4 sm:p-5 md:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="break-words font-mono text-2xl font-bold tracking-[0.025em]">
+            <div className="flex flex-wrap items-start gap-2">
+              <h3 className="min-w-0 flex-[1_1_12rem] break-words font-mono text-xl font-bold leading-tight tracking-[0.025em] sm:text-2xl">
                 <Q3ColoredText text={server.coloredName} />
               </h3>
               {server.official && (
@@ -361,11 +367,11 @@ function ServerCard({ onJoin, server }: Readonly<{
             </p>
           </div>
           {isOpen(server) ? (
-            <Button size="lg" className="sm:self-start" onClick={() => onJoin(server)}>
+            <Button size="lg" className="w-full sm:w-auto sm:self-start" onClick={() => onJoin(server)}>
               Join arena
             </Button>
           ) : (
-            <Button size="lg" className="sm:self-start" disabled>Server full</Button>
+            <Button size="lg" className="w-full sm:w-auto sm:self-start" disabled>Server full</Button>
           )}
         </div>
 
@@ -376,7 +382,7 @@ function ServerCard({ onJoin, server }: Readonly<{
         </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
             <span className="font-mono">{server.players}/{server.capacity || "—"}</span>
             <div className="h-1.5 w-24 overflow-hidden bg-secondary" aria-hidden="true">
               <div className="h-full bg-primary" style={{ width: `${occupancy(server)}%` }} />
@@ -446,14 +452,14 @@ function BrowserHeading({ serverCount, playerCount, pending = false }: Readonly<
   pending?: boolean;
 }>) {
   return (
-    <div className="flex items-end justify-between gap-4">
+    <div className="flex flex-col items-start justify-between gap-3 min-[380px]:flex-row min-[380px]:items-end min-[380px]:gap-4">
       <div>
         <p className="mb-2 font-mono text-xs uppercase tracking-[0.16em] text-primary">02 / Live arenas</p>
         <h2 id="servers-heading" className="font-mono text-2xl font-bold uppercase tracking-[0.035em] md:text-3xl">Server browser</h2>
         <p className="mt-2 text-base text-muted-foreground">Choose your arena and join the fight.</p>
       </div>
       {serverCount !== undefined && (
-        <p className="shrink-0 text-right font-mono text-xs leading-5 text-muted-foreground">
+        <p className="shrink-0 font-mono text-xs leading-5 text-muted-foreground min-[380px]:text-right">
           {countLabel(serverCount, "server")}<br />
           {countLabel(playerCount ?? 0, "player")} online
         </p>
@@ -510,16 +516,14 @@ function ServerBrowserQuery() {
     [filter, normalizedQuery, orderedServers],
   );
   const playerCount = servers.reduce((total, server) => total + server.players, 0);
-  const openServer = orderedServers.find(
-    (server) => isOpen(server) && (filter !== "featured" || isFeatured(server)),
-  );
+  const openServer = filteredServers.find(isOpen);
 
   return (
     <section id="servers" aria-labelledby="servers-heading" className="scroll-mt-20">
       <BrowserHeading serverCount={servers.length} playerCount={playerCount} />
 
-      <div className="mt-6 border border-border/60 bg-card/60 p-4">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+      <div className="mt-5 border border-border/60 bg-card/60 p-3 sm:mt-6 sm:p-4">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:gap-3">
           <label className="relative min-w-0">
             <span className="sr-only">Search servers</span>
             <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -531,30 +535,42 @@ function ServerBrowserQuery() {
             />
           </label>
 
-          <div className="flex gap-2">
-            {openServer && (
-              <Button
-                size="lg"
-                className="h-10 flex-1 px-4 lg:flex-none"
-                onClick={() => setSelection({ server: openServer, entryPoint: "quick_play" })}
-              >
-                Quick play
-              </Button>
-            )}
+          {openServer && (
             <Button
-              variant="outline"
-              size="icon-lg"
-              className="size-10 bg-transparent"
-              disabled={isFetching}
-              onClick={() => void refetch()}
-              aria-label="Refresh server list"
+              size="lg"
+              className="col-span-2 row-start-2 h-10 w-full px-4 sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:w-auto"
+              onClick={() => setSelection({ server: openServer, entryPoint: "quick_play" })}
             >
-              <ArrowClockwise className={isFetching ? "animate-spin" : undefined} />
+              Quick play
             </Button>
-          </div>
+          )}
+          <Button
+            variant="outline"
+            size="icon-lg"
+            className="col-start-2 row-start-1 size-10 bg-transparent sm:col-start-3"
+            disabled={isFetching}
+            onClick={() => void refetch()}
+            aria-label="Refresh server list"
+          >
+            <ArrowClockwise className={isFetching ? "animate-spin" : undefined} />
+          </Button>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-1">
+        <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:hidden">
+          <Select value={filter} onValueChange={(value) => setFilter(value as ServerFilter)}>
+            <SelectTrigger className="h-10 w-full min-w-0 border-border bg-background/40 px-3 text-sm" aria-label="Filter servers">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {filterOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span className="font-mono text-xs text-muted-foreground">{filteredServers.length} shown</span>
+        </div>
+
+        <div className="mt-3 hidden flex-wrap items-center gap-1.5 sm:flex">
           <FilterButton active={filter === "featured"} onClick={() => setFilter("featured")}>Featured</FilterButton>
           <FilterButton active={filter === "all"} onClick={() => setFilter("all")}>All</FilterButton>
           <FilterButton active={filter === "active"} onClick={() => setFilter("active")}>With players</FilterButton>
@@ -583,7 +599,7 @@ function ServerBrowserQuery() {
           ))}
         </div>
       ) : (
-        <div className="mt-5 border border-border/60 bg-card/50 px-6 py-12 text-center">
+        <div className="mt-5 border border-border/60 bg-card/50 px-4 py-8 text-center sm:px-6 sm:py-12">
           <p className="text-base font-semibold">
             {servers.length === 0 ? "No servers are live right now." : "No servers match your filters."}
           </p>
@@ -615,21 +631,24 @@ function ServerBrowserPending() {
     <section id="servers" aria-labelledby="servers-heading" aria-busy="true">
       <BrowserHeading pending />
 
-      <div className="mt-6 border border-border/60 bg-card/60 p-4" aria-hidden="true">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+      <div className="mt-5 border border-border/60 bg-card/60 p-3 sm:mt-6 sm:p-4" aria-hidden="true">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:gap-3">
           <div className="relative flex h-10 items-center border border-border bg-input pl-9 pr-3 text-sm text-muted-foreground">
             <MagnifyingGlass className="absolute left-3 size-4" />
             Search server, map, or player
           </div>
-          <div className="flex gap-2">
-            <Button size="lg" className="h-10 flex-1 px-4 lg:flex-none" disabled>Quick play</Button>
-            <Button variant="outline" size="icon-lg" className="size-10 bg-transparent" disabled>
-              <ArrowClockwise className="animate-spin" />
-            </Button>
-          </div>
+          <Button size="lg" className="col-span-2 row-start-2 h-10 w-full px-4 sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:w-auto" disabled>Quick play</Button>
+          <Button variant="outline" size="icon-lg" className="col-start-2 row-start-1 size-10 bg-transparent sm:col-start-3" disabled>
+            <ArrowClockwise className="animate-spin" />
+          </Button>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-1">
+        <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:hidden">
+          <Button variant="outline" size="lg" className="h-10 w-full justify-start" disabled>Featured</Button>
+          <span className="font-mono text-xs text-muted-foreground">Syncing</span>
+        </div>
+
+        <div className="mt-3 hidden flex-wrap items-center gap-1.5 sm:flex">
           <Button variant="secondary" size="sm" disabled>Featured</Button>
           <Button variant="ghost" size="sm" disabled>All</Button>
           <Button variant="ghost" size="sm" disabled>With players</Button>
@@ -641,13 +660,13 @@ function ServerBrowserPending() {
       </div>
 
       <article className="arena-card mt-5 border border-border/60 bg-card/50" aria-hidden="true">
-        <div className="p-5 md:p-6">
-          <div className="flex items-start justify-between gap-4">
+        <div className="p-4 sm:p-5 md:p-6">
+          <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">
               <Skeleton className="h-5 w-44 max-w-[70%]" />
               <Skeleton className="mt-2 h-2 w-28 bg-muted/70" />
             </div>
-            <Button size="lg" disabled>Join arena</Button>
+            <Button size="lg" className="w-full sm:w-auto" disabled>Join arena</Button>
           </div>
 
           <div className="mt-4 flex gap-2">

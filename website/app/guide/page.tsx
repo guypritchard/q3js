@@ -67,7 +67,7 @@ const guideStructuredData = {
 
 function Code({ children }: Readonly<{ children: string }>) {
   return (
-    <pre className="max-w-full overflow-x-auto border border-border bg-card/50 p-4 font-mono text-sm leading-6 text-foreground">
+    <pre className="max-w-full overflow-x-auto border border-border bg-card/50 p-3 font-mono text-xs leading-6 text-foreground sm:p-4 sm:text-sm">
       <code>{children}</code>
     </pre>
   );
@@ -103,7 +103,7 @@ export default function GuidePage() {
       <JsonLd data={guideStructuredData} />
       <SiteHeader />
 
-      <main className="mx-auto w-full max-w-4xl px-4 py-12 md:py-16">
+      <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:py-12 md:py-16">
         <header className="pb-6">
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">
             Field manual / Server operators
@@ -133,7 +133,7 @@ export default function GuidePage() {
           </div>
         </header>
 
-        <div className="grid gap-10 pt-10">
+        <div className="grid gap-9 pt-8 sm:gap-10 sm:pt-10">
           <Step number="01" title="Create a server folder">
             <p>
               Start with an empty directory for your server files. You will place a <code>baseq3</code> folder

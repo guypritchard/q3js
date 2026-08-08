@@ -67,13 +67,13 @@ export default async function WeaponPage({ params }: WeaponPageProps) {
     <div className="min-h-screen bg-background text-foreground" style={{ "--weapon-accent": weapon.accent } as React.CSSProperties}>
       <JsonLd data={structuredData} />
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl px-4 pb-20 pt-6 md:pt-9">
-        <nav aria-label="Breadcrumb" className="mb-7 flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+      <main className="mx-auto w-full max-w-6xl px-4 pb-16 pt-5 sm:pb-20 sm:pt-6 md:pt-9">
+        <nav aria-label="Breadcrumb" className="mb-6 flex min-w-0 items-center gap-2 overflow-hidden text-[10px] uppercase tracking-[0.14em] text-muted-foreground sm:mb-7">
           <Link href="/" className="hover:text-foreground">Q3JS</Link>
           <span aria-hidden="true">/</span>
           <Link href="/weapons" className="hover:text-foreground">Weapons</Link>
           <span aria-hidden="true">/</span>
-          <span className="text-[var(--weapon-accent)]">{weapon.shortName}</span>
+          <span className="min-w-0 truncate text-[var(--weapon-accent)]">{weapon.shortName}</span>
         </nav>
 
         <section className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-stretch">
@@ -83,7 +83,7 @@ export default async function WeaponPage({ params }: WeaponPageProps) {
               <span className="h-px w-12 bg-[var(--weapon-accent)] opacity-60" />
               <span>{weapon.range}</span>
             </div>
-            <h1 className="mt-5 text-4xl font-black uppercase leading-none tracking-[0.015em] sm:text-6xl lg:text-7xl">
+            <h1 className="mt-5 break-words text-[2.5rem] font-black uppercase leading-none tracking-[0.01em] sm:text-6xl sm:tracking-[0.015em] lg:text-7xl">
               {weapon.name}
             </h1>
             <p className="mt-5 text-lg font-bold uppercase leading-7 tracking-[0.04em]">{weapon.intro}</p>
@@ -100,7 +100,7 @@ export default async function WeaponPage({ params }: WeaponPageProps) {
           <WeaponModelViewer accent={weapon.accent} model={weapon.model} weaponName={weapon.name} />
         </section>
 
-        <dl className="mt-8 grid grid-cols-2 gap-x-8 gap-y-6 border border-border/70 bg-card px-5 py-6 sm:grid-cols-5 sm:px-7">
+        <dl className="mt-8 grid grid-cols-2 gap-x-5 gap-y-6 border border-border/70 bg-card px-4 py-5 sm:grid-cols-5 sm:gap-x-8 sm:px-7 sm:py-6">
           {stats.map(([label, value]) => (
             <div key={label}>
               <dt className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{label}</dt>
@@ -109,7 +109,7 @@ export default async function WeaponPage({ params }: WeaponPageProps) {
           ))}
         </dl>
 
-        <section aria-labelledby="usage-heading" className="mt-16 scroll-mt-24">
+        <section aria-labelledby="usage-heading" className="mt-12 scroll-mt-24 sm:mt-16">
           <div className="mb-6 flex items-end justify-between gap-4 border-b border-border/70 pb-4">
             <div>
               <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--weapon-accent)]">Live telemetry</p>
@@ -120,7 +120,7 @@ export default async function WeaponPage({ params }: WeaponPageProps) {
           <WeaponUsage slug={weapon.slug} />
         </section>
 
-        <div className="mt-16 grid gap-10 lg:grid-cols-2">
+        <div className="mt-12 grid gap-10 sm:mt-16 lg:grid-cols-2">
           <section aria-labelledby="techniques-heading">
             <div className="mb-5 flex items-center gap-3 border-b border-border/70 pb-4">
               <Target className="size-5 text-[var(--weapon-accent)]" weight="bold" />
@@ -155,7 +155,7 @@ export default async function WeaponPage({ params }: WeaponPageProps) {
           </section>
         </div>
 
-        <section aria-labelledby="arsenal-heading" className="mt-16 border-t border-border/70 pt-8">
+        <section aria-labelledby="arsenal-heading" className="mt-12 border-t border-border/70 pt-8 sm:mt-16">
           <div className="mb-4 flex items-center justify-between gap-4">
             <h2 id="arsenal-heading" className="text-xs font-bold uppercase tracking-[0.14em]">Full arsenal</h2>
             <Link href="/weapons" className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:text-primary">View weapon index →</Link>

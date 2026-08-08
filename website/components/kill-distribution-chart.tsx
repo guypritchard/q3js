@@ -89,7 +89,7 @@ export function KillDistributionChart({
 
   return (
     <section aria-labelledby="activity-chart-heading" className="border border-border/60 bg-card/45">
-      <div className="grid gap-4 border-b border-border/60 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:p-6">
+      <div className="grid gap-4 border-b border-border/60 p-4 sm:p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:p-6">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary">Recorded combat activity</p>
           <h2 id="activity-chart-heading" className="mt-2 font-mono text-2xl font-bold uppercase tracking-[0.035em]">
@@ -101,7 +101,7 @@ export function KillDistributionChart({
         </div>
 
         {activePoint && (
-          <div className="min-w-52 border-l-2 border-primary bg-background/45 px-4 py-3 md:text-right" aria-live="polite">
+          <div className="min-w-0 border-l-2 border-primary bg-background/45 px-4 py-3 md:min-w-52 md:text-right" aria-live="polite">
             <p className="font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">Selected {bucketLabel}</p>
             <p className="mt-1 font-mono text-xl font-bold tabular-nums">{formatNumber(activePoint.kills)} frags</p>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -111,7 +111,7 @@ export function KillDistributionChart({
         )}
       </div>
 
-      <dl className="grid gap-2 p-5 sm:grid-cols-3 md:p-6">
+      <dl className="grid gap-2 p-4 sm:grid-cols-3 sm:p-5 md:p-6">
         <SummaryStat label="Total frags" value={formatNumber(summary.totalKills)} />
         <SummaryStat
           label={`Peak ${bucketLabel}`}
@@ -125,7 +125,7 @@ export function KillDistributionChart({
         />
       </dl>
 
-      <div className="px-5 pb-5 md:px-6 md:pb-6">
+      <div className="px-4 pb-4 sm:px-5 sm:pb-5 md:px-6 md:pb-6">
         <div className="border border-border/60 bg-background/25 p-3">
           {data.length === 0 ? (
             <div className="grid h-72 place-items-center text-sm text-muted-foreground">
@@ -192,7 +192,7 @@ export function KillDistributionChart({
           )}
         </div>
         <p className="mt-3 font-mono text-xs text-muted-foreground">
-          Times shown in {timeZone}. Hover or focus a bar for its exact total.
+          Times shown in {timeZone}. Tap, hover, or focus a bar for its exact total.
         </p>
       </div>
     </section>

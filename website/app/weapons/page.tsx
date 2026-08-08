@@ -33,8 +33,8 @@ export default function WeaponsPage() {
     <div className="min-h-screen bg-background text-foreground">
       <JsonLd data={structuredData} />
       <SiteHeader />
-      <main className="mx-auto w-full max-w-5xl px-4 pb-20 pt-10 md:pt-14">
-        <header className="border-b border-border/70 pb-9">
+      <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-7 sm:pb-20 sm:pt-10 md:pt-14">
+        <header className="border-b border-border/70 pb-7 sm:pb-9">
           <p className="text-xs uppercase tracking-[0.22em] text-primary">Q3JS // Arsenal database</p>
           <h1 className="mt-3 max-w-3xl text-3xl font-black uppercase leading-tight tracking-[0.03em] md:text-5xl">
             Quake III Arena weapons
@@ -45,7 +45,7 @@ export default function WeaponsPage() {
         </header>
 
         <section aria-labelledby="weapon-list-heading" className="mt-8">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-col items-start gap-1.5 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
             <h2 id="weapon-list-heading" className="text-xs font-bold uppercase tracking-[0.16em]">Select weapon</h2>
             <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Base arena loadout // 01—09</span>
           </div>
@@ -55,7 +55,7 @@ export default function WeaponsPage() {
               <Link
                 key={weapon.slug}
                 href={`/weapons/${weapon.slug}`}
-                className="arena-card group flex min-h-56 flex-col border border-border/70 bg-card hover:border-[var(--weapon-accent)]"
+                className="arena-card group flex min-h-0 flex-col border border-border/70 bg-card hover:border-[var(--weapon-accent)] sm:min-h-56"
                 style={{ "--weapon-accent": weapon.accent } as React.CSSProperties}
               >
                 <div className="flex items-center justify-between border-b border-border/70 px-5 py-3 text-[10px] uppercase tracking-[0.14em]">

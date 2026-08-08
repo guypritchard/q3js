@@ -48,7 +48,7 @@ function Stat({
       <dt className="font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">{label}</dt>
       <dd className={cn(
         "mt-1 font-bold tabular-nums",
-        compact ? "whitespace-nowrap font-mono text-xl leading-6 tracking-[0.025em]" : "truncate font-mono text-xl tracking-[0.025em]",
+        compact ? "font-mono text-lg leading-6 tracking-[0.015em] min-[400px]:whitespace-nowrap min-[400px]:text-xl min-[400px]:tracking-[0.025em]" : "truncate font-mono text-xl tracking-[0.025em]",
       )}>{value}</dd>
     </div>
   );
@@ -57,7 +57,7 @@ function Stat({
 function WeaponBreakdown({ kills, weapons }: Readonly<{ kills: number; weapons: ProfileWeaponResponse[] }>) {
   const maximum = Math.max(...weapons.map((weapon) => weapon.kills), 1);
   return (
-    <section aria-labelledby="weapons-heading" className="border border-border/60 bg-card/45 p-5 md:p-6">
+    <section aria-labelledby="weapons-heading" className="border border-border/60 bg-card/45 p-4 sm:p-5 md:p-6">
       <div className="flex items-baseline justify-between gap-4">
         <h2 id="weapons-heading" className="font-mono text-xl font-bold uppercase tracking-[0.03em]">Weapons</h2>
         <span className="font-mono text-xs uppercase text-muted-foreground">{kills} total kills</span>
@@ -91,7 +91,7 @@ function Rivals({
   title,
 }: Readonly<{ empty: string; players: ProfileRivalResponse[]; title: string }>) {
   return (
-    <section className="border border-border/60 bg-card/45 p-5 md:p-6">
+    <section className="border border-border/60 bg-card/45 p-4 sm:p-5 md:p-6">
       <h2 className="font-mono text-xl font-bold uppercase tracking-[0.03em]">{title}</h2>
       {players.length ? (
         <ol className="mt-4 divide-y divide-border/40">
@@ -104,7 +104,7 @@ function Rivals({
               >
                 <Q3ColoredText text={player.playerName} />
               </Link>
-              <span className="font-mono text-muted-foreground">{player.kills} kills</span>
+              <span className="whitespace-nowrap font-mono text-xs text-muted-foreground sm:text-sm">{player.kills} kills</span>
             </li>
           ))}
         </ol>
@@ -131,7 +131,7 @@ export function ProfilePage({
   const description = `${plainName}'s Q3JS player profile: ${profile.kills} kills and ${profile.deaths} deaths.`;
   const activePeriod = periods.find((option) => option.value === period) ?? periods[0];
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 pb-20 pt-8 md:pt-12">
+    <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-7 sm:pb-20 sm:pt-8 md:pt-12">
       <JsonLd
         data={{
           "@context": "https://schema.org",
@@ -183,14 +183,14 @@ export function ProfilePage({
         <Stat compact label="Last online" value={formatRelativeTime(profile.lastOnline)} />
       </dl>
 
-      <nav aria-label="Player activity period" className="mt-4 flex flex-wrap gap-1 border border-border/60 bg-card/45 p-1">
+      <nav aria-label="Player activity period" className="mt-4 grid grid-cols-2 gap-1 border border-border/60 bg-card/45 p-1 min-[440px]:flex min-[440px]:flex-wrap">
         {periods.map((option) => (
           <Link
             key={option.value}
             href={profileHref(profile.playerName, option.value, timeZone)}
             aria-current={option.value === activePeriod.value ? "page" : undefined}
             className={cn(
-              "px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground",
+              "min-h-10 px-3 py-2 text-center text-xs font-medium text-muted-foreground hover:text-foreground min-[440px]:min-h-0",
               option.value === activePeriod.value && "bg-secondary text-foreground",
             )}
           >
@@ -209,7 +209,7 @@ export function ProfilePage({
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <section className="border border-border/60 bg-card/35 p-5 md:p-6">
+        <section className="border border-border/60 bg-card/35 p-4 sm:p-5 md:p-6">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Trophy className="size-4" />
             <h2 className="font-mono text-xs uppercase tracking-[0.12em]">Favorite map</h2>
@@ -219,7 +219,7 @@ export function ProfilePage({
             {profile.favoriteMap ? `${profile.favoriteMap.kills} kills recorded here.` : "No kills recorded."}
           </p>
         </section>
-        <section className="border border-border/60 bg-card/35 p-5 md:p-6">
+        <section className="border border-border/60 bg-card/35 p-4 sm:p-5 md:p-6">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Crosshair className="size-4" />
             <h2 className="font-mono text-xs uppercase tracking-[0.12em]">Favorite weapon</h2>

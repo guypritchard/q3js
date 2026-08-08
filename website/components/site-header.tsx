@@ -2,23 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { DiscordLogo, GithubLogo, XLogo } from "@phosphor-icons/react/dist/ssr";
 import { MasterStatus } from "@/components/master-status";
+import { MobileSiteMenu } from "@/components/mobile-site-menu";
+import { navItems } from "@/lib/site-navigation";
 import { siteConfig } from "@/lib/seo";
-
-const navItems = [
-  { label: "Servers", href: "/#servers" },
-  { label: "Scoreboard", href: "/scoreboard" },
-  { label: "Weapons", href: "/weapons" },
-  { label: "Run a server", href: "/guide" },
-];
 
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-5 px-4">
-        <Link href="/" className="mr-auto flex items-center gap-2.5" aria-label="Q3JS home">
+      <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-3 px-3 sm:gap-5 sm:px-4">
+        <Link href="/" className="mr-auto flex min-w-0 items-center gap-2.5" aria-label="Q3JS home">
           <Image src="/quake3.svg" alt="" width={24} height={24} className="size-6" priority />
           <span className="font-mono text-xl font-black uppercase tracking-[0.04em]">Q3JS</span>
-          <span className="font-mono text-xs text-muted-foreground">0.0.1</span>
+          <span className="hidden font-mono text-xs text-muted-foreground min-[380px]:inline">0.0.1</span>
         </Link>
 
         <div className="hidden items-center gap-5 md:flex">
@@ -73,6 +68,7 @@ export function SiteHeader() {
         >
           <DiscordLogo className="size-5" weight="fill" />
         </a>
+        <MobileSiteMenu />
       </div>
     </header>
   );

@@ -33,7 +33,7 @@ function PreviewQuery() {
   const activePeriod = periods.find((option) => option.value === period) ?? periods[0];
 
   return (
-    <section aria-labelledby="top-fraggers-heading" className="arena-card my-10 border border-border/60 bg-card/35 p-5 md:p-6">
+    <section aria-labelledby="top-fraggers-heading" className="arena-card my-8 border border-border/60 bg-card/35 p-4 sm:my-10 sm:p-5 md:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="mb-2 font-mono text-xs uppercase tracking-[0.16em] text-primary">01 / Global frag feed</p>
@@ -43,14 +43,14 @@ function PreviewQuery() {
           </div>
           <p className="mt-2 text-sm text-muted-foreground">Global frag leaders for the selected period.</p>
         </div>
-        <div className="flex flex-wrap gap-1 bg-background/35 p-1" aria-label="Top fragger period">
+        <div className="grid w-full grid-cols-2 gap-1 bg-background/35 p-1 min-[440px]:flex min-[440px]:w-auto min-[440px]:flex-wrap" aria-label="Top fragger period">
           {periods.map((option) => (
             <button
               key={option.value}
               type="button"
               onClick={() => setPeriod(option.value)}
               className={cn(
-                "px-3 py-2 text-xs text-muted-foreground hover:text-foreground",
+                "min-h-10 px-2 py-2 text-xs text-muted-foreground hover:text-foreground min-[440px]:min-h-0 min-[440px]:px-3",
                 period === option.value && "bg-secondary text-foreground",
               )}
             >
@@ -65,7 +65,7 @@ function PreviewQuery() {
           {scoreboard.entries.map((entry, index) => (
             <li
               key={`${entry.playerName}-${index}`}
-              className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 py-3 text-sm"
+              className="grid grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-2 py-3 text-sm sm:grid-cols-[2rem_minmax(0,1fr)_auto] sm:gap-3"
             >
               <span className={cn(
                 "font-mono text-xs text-muted-foreground",
@@ -84,7 +84,7 @@ function PreviewQuery() {
                   Last online {formatRelativeTime(entry.lastOnline)}
                 </p>
               </div>
-              <span className="font-mono font-semibold tabular-nums">{fragLabel(entry.kills)}</span>
+              <span className="text-right font-mono text-xs font-semibold tabular-nums sm:text-sm">{fragLabel(entry.kills)}</span>
             </li>
           ))}
         </ol>
@@ -107,7 +107,7 @@ function PreviewQuery() {
 function ScoreboardPreviewPending() {
   return (
     <section
-      className="arena-card my-10 border border-border/60 bg-card/35 p-5 md:p-6"
+      className="arena-card my-8 border border-border/60 bg-card/35 p-4 sm:my-10 sm:p-5 md:p-6"
       aria-busy="true"
       aria-label="Loading top fraggers"
     >
@@ -120,14 +120,14 @@ function ScoreboardPreviewPending() {
           </div>
           <p className="mt-2 text-sm text-muted-foreground">Global frag leaders for the selected period.</p>
         </div>
-        <div className="flex flex-wrap gap-1 bg-background/35 p-1" aria-hidden="true">
+        <div className="grid w-full grid-cols-2 gap-1 bg-background/35 p-1 min-[440px]:flex min-[440px]:w-auto min-[440px]:flex-wrap" aria-hidden="true">
           {periods.map((option, index) => (
             <button
               key={option.value}
               type="button"
               disabled
               className={cn(
-                "px-3 py-2 text-xs text-muted-foreground",
+                "min-h-10 px-2 py-2 text-xs text-muted-foreground min-[440px]:min-h-0 min-[440px]:px-3",
                 index === 0 && "bg-secondary text-foreground",
               )}
             >
@@ -139,7 +139,7 @@ function ScoreboardPreviewPending() {
 
       <ol className="mt-5 divide-y divide-border/40" aria-hidden="true">
         {[1, 2, 3].map((rank) => (
-          <li key={rank} className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 py-3">
+          <li key={rank} className="grid grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-2 py-3 sm:grid-cols-[2rem_minmax(0,1fr)_auto] sm:gap-3">
             <span className="font-mono text-xs font-bold text-primary">#{rank}</span>
             <div>
               <Skeleton className="h-3 w-28 max-w-[70%]" />
