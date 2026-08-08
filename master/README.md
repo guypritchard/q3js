@@ -9,6 +9,8 @@ The public API is compatible with the previous Q3JS server registry:
 
 - `PUT /api/servers/heartbeat` registers or refreshes a server.
 - `GET /api/servers` returns live servers with their latest status and players.
+- `PUT /api/proxies/status` stores the latest proxy connection count and player
+  roster for a registered server.
 - `GET /api/status` reports application status.
 - `POST /api/events` accepts authenticated join, leave, and kill events from
   packaged game servers.
@@ -60,6 +62,33 @@ provide the same value to both processes:
 ```shell
 export Q3JS_EVENT_CLIENT_SECRET="$(openssl rand -hex 32)"
 ```
+
+## Proxy status reporting
+
+`PUT /api/proxies/status` does not use the event client secret. The master
+accepts an update only when `host` and `proxyPort` identify a registered server
+and the request's direct source IP matches an address resolved from that
+registered host. Forwarded IP headers are intentionally ignored for this check.
+
+```json
+{
+  "host": "game.example.com",
+  "proxyPort": 27961,
+  "connections": 3,
+  "players": [
+    {
+      "ip": "203.0.113.10",
+      "name": "Ranger",
+      "countryCode": "US"
+    }
+  ]
+}
+```
+
+The country code is optional. When omitted, the master attempts to resolve it
+from the player's IP using the configured GeoIP database. Each accepted update
+atomically replaces the proxy's prior snapshot. Removing a stale server also
+removes its proxy snapshot and player rows.
 
 ## Admin authentication
 
