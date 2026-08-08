@@ -171,6 +171,16 @@ export type TopFraggerResponse = {
     frags: number;
 };
 
+export type VoiceTokenRequest = {
+    serverId: string;
+    participantName: string;
+};
+
+export type VoiceTokenResponse = {
+    server_url: string;
+    participant_token: string;
+};
+
 export type WeaponLeaderResponse = {
     playerName: string;
     kills: number;
@@ -501,6 +511,37 @@ export type StatusResponses = {
 };
 
 export type StatusResponse2 = StatusResponses[keyof StatusResponses];
+
+export type CreateVoiceTokenData = {
+    body: VoiceTokenRequest;
+    path?: never;
+    query?: never;
+    url: '/api/voice/token';
+};
+
+export type CreateVoiceTokenErrors = {
+    /**
+     * The request is invalid
+     */
+    400: unknown;
+    /**
+     * The game server is not currently listed
+     */
+    404: unknown;
+    /**
+     * Voice chat is not configured
+     */
+    503: unknown;
+};
+
+export type CreateVoiceTokenResponses = {
+    /**
+     * A microphone-only room token for the selected live server
+     */
+    201: VoiceTokenResponse;
+};
+
+export type CreateVoiceTokenResponse = CreateVoiceTokenResponses[keyof CreateVoiceTokenResponses];
 
 export type GetWeaponUsageData = {
     body?: never;

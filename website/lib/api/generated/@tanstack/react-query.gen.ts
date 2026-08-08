@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { getProfile, getProfileDistribution, getProfileSitemap, getRequesterCountry, getScoreboard, getScoreboardDistribution, getStats, getWeaponUsage, heartbeat, ingest, type Options, searchProfiles, servers, status } from '../sdk.gen';
-import type { GetProfileData, GetProfileDistributionData, GetProfileDistributionResponse, GetProfileResponse, GetProfileSitemapData, GetProfileSitemapResponse, GetRequesterCountryData, GetRequesterCountryResponse, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionResponse, GetScoreboardResponse, GetStatsData, GetStatsResponse, GetWeaponUsageData, GetWeaponUsageResponse, HeartbeatData, HeartbeatResponse, IngestData, IngestResponse, SearchProfilesData, SearchProfilesResponse, ServersData, ServersResponse, StatusData, StatusResponse2 } from '../types.gen';
+import { createVoiceToken, getProfile, getProfileDistribution, getProfileSitemap, getRequesterCountry, getScoreboard, getScoreboardDistribution, getStats, getWeaponUsage, heartbeat, ingest, type Options, searchProfiles, servers, status } from '../sdk.gen';
+import type { CreateVoiceTokenData, CreateVoiceTokenResponse, GetProfileData, GetProfileDistributionData, GetProfileDistributionResponse, GetProfileResponse, GetProfileSitemapData, GetProfileSitemapResponse, GetRequesterCountryData, GetRequesterCountryResponse, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionResponse, GetScoreboardResponse, GetStatsData, GetStatsResponse, GetWeaponUsageData, GetWeaponUsageResponse, HeartbeatData, HeartbeatResponse, IngestData, IngestResponse, SearchProfilesData, SearchProfilesResponse, ServersData, ServersResponse, StatusData, StatusResponse2 } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -346,6 +346,26 @@ export const statusOptions = (options?: Options<StatusData>) => queryOptions<Sta
     },
     queryKey: statusQueryKey(options)
 });
+
+export const createVoiceTokenMutationKey = (options?: Partial<Options<CreateVoiceTokenData>>) => createMutationKey('createVoiceToken', options);
+
+/**
+ * Create a LiveKit voice-room token
+ */
+export const createVoiceTokenMutation = (options?: Partial<Options<CreateVoiceTokenData>>): UseMutationOptions<CreateVoiceTokenResponse, DefaultError, Options<CreateVoiceTokenData>> => {
+    const mutationOptions: UseMutationOptions<CreateVoiceTokenResponse, DefaultError, Options<CreateVoiceTokenData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createVoiceToken({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        },
+        mutationKey: createVoiceTokenMutationKey(options)
+    };
+    return mutationOptions;
+};
 
 export const getWeaponUsageQueryKey = (options: Options<GetWeaponUsageData>) => createQueryKey('getWeaponUsage', options, false, ['Weapons']);
 

@@ -15,6 +15,12 @@ pnpm --dir website dev
 
 Then open [http://localhost:3000](http://localhost:3000). The game server sends heartbeats to the master, so it should appear in the server browser automatically.
 
+Joining a server can also join its LiveKit voice room. Voice is opt-in in the
+player-name dialog, supports microphone selection, and remains muted until the
+player holds `K`. The website requests its microphone-only room token from the
+master API, so configure the LiveKit URL and credentials on the master service
+as described in `master/README.md`.
+
 Copy `.env.example` to `.env.local` to override local endpoints. `NEXT_PUBLIC_Q3JS_MASTER_URL` selects the HTTP master API. In a production HTTPS deployment, `NEXT_PUBLIC_Q3JS_INSECURE_PLAY_URL` can point insecure game servers at a separate HTTP play page so browsers do not reject their `ws://` connection as mixed content.
 
 ## SEO and analytics

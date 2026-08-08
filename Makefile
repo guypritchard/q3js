@@ -7,7 +7,7 @@ master:
 	@./master/mvnw -f master/pom.xml package
 
 master-run:
-	@./master/mvnw -f master/pom.xml quarkus:dev
+	@cd master && ./mvnw quarkus:dev
 
 server:
 	@./game/server/build.sh

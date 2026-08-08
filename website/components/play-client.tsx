@@ -5,6 +5,7 @@ import { ArrowClockwise, Play } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameCanvas } from "@/components/game-canvas";
 import { Button } from "@/components/ui/button";
+import { VoiceChat } from "@/components/voice-chat";
 import { usePlayerName } from "@/hooks/use-player-name";
 import {
   classifyPlayError,
@@ -103,6 +104,7 @@ export interface SelectedServer {
 interface PlayClientProps {
   selectedServer?: SelectedServer;
   initialPlayerName?: string;
+  voiceEnabled?: boolean;
 }
 
 interface PlayTelemetrySession {
@@ -143,7 +145,7 @@ function progressLabel(progress: Q3ClientProgress | undefined): string {
   }
 }
 
-export function PlayClient({ selectedServer, initialPlayerName }: PlayClientProps) {
+export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = false }: PlayClientProps) {
   const { playerName, setPlayerName } = usePlayerName(initialPlayerName);
   const [session, setSession] = useState<Session>();
   const [progress, setProgress] = useState<Q3ClientProgress>();
@@ -618,6 +620,13 @@ export function PlayClient({ selectedServer, initialPlayerName }: PlayClientProp
         className="absolute inset-0 block size-full bg-black outline-none"
         onClientReady={handleClientReady}
       />
+
+      {voiceEnabled && selectedServer && (
+        <VoiceChat
+          participantName={session.playerName}
+          serverId={selectedServer.id}
+        />
+      )}
 
       {progress?.phase !== "ready" && !error && (
         <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center bg-black/85 p-6 text-center">

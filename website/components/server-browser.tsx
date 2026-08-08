@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   ArrowClockwise,
   DiceFive,
   LockKey,
   MagnifyingGlass,
+  Microphone,
   SealCheck,
   Users,
 } from "@phosphor-icons/react";
@@ -22,21 +23,36 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePlayerName } from "@/hooks/use-player-name";
 import { createAnalyticsId, trackAnalyticsEvent } from "@/lib/analytics";
 import type { ListedServer } from "@/lib/master-server";
 import { masterServerQueryOptions } from "@/lib/master-server-query";
+import {
+  storedVoiceDeviceId,
+  storedVoiceEnabled,
+  storeVoicePreferences,
+} from "@/lib/voice-preferences";
 
 type ServerFilter = "featured" | "active" | "all" | "open";
 type JoinEntryPoint = "quick_play" | "server_card";
+
+const DEFAULT_VOICE_DEVICE = "default";
 
 function joinHref(
   server: ListedServer,
   playerName: string,
   entryPoint: JoinEntryPoint,
   handoffId: string,
+  voiceEnabled: boolean,
 ): string {
   const parameters = new URLSearchParams({
     host: server.host,
@@ -52,6 +68,7 @@ function joinHref(
     humanPlayers: String(humanPlayerCount(server)),
     entryPoint,
     handoffId,
+    voice: voiceEnabled ? "1" : "0",
   });
   if (server.fsGame) parameters.set("fsGame", server.fsGame);
   const insecurePlayUrl = process.env.NEXT_PUBLIC_Q3JS_INSECURE_PLAY_URL?.replace(/\/$/, "") ?? "";
@@ -105,6 +122,62 @@ function PlayerNameDialog({
   entryPoint?: JoinEntryPoint;
 }>) {
   const { playerName, randomizePlayerName, setPlayerName } = usePlayerName();
+  const [voiceEnabled, setVoiceEnabled] = useState(
+    () => typeof window !== "undefined" && storedVoiceEnabled(),
+  );
+  const [voiceDeviceId, setVoiceDeviceId] = useState(
+    () => typeof window !== "undefined" ? storedVoiceDeviceId() ?? "" : "",
+  );
+  const [voiceDevices, setVoiceDevices] = useState<MediaDeviceInfo[]>([]);
+  const [voiceSetupState, setVoiceSetupState] = useState<"idle" | "configuring" | "ready" | "error">(
+    () => typeof window !== "undefined" && storedVoiceEnabled() && storedVoiceDeviceId() ? "ready" : "idle",
+  );
+  const [voiceSetupError, setVoiceSetupError] = useState<string>();
+
+  const prepareVoice = useCallback(async (preferredDeviceId?: string) => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setVoiceSetupState("error");
+      setVoiceSetupError("This browser does not support microphone access.");
+      return;
+    }
+
+    setVoiceSetupState("configuring");
+    setVoiceSetupError(undefined);
+    let stream: MediaStream | undefined;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: preferredDeviceId ? { deviceId: { exact: preferredDeviceId } } : true,
+        video: false,
+      });
+      const activeDeviceId = stream.getAudioTracks()[0]?.getSettings().deviceId;
+      const devices = (await navigator.mediaDevices.enumerateDevices())
+        .filter((device) => device.kind === "audioinput");
+      const selectedDeviceId = devices.some((device) => device.deviceId === preferredDeviceId)
+        ? preferredDeviceId
+        : activeDeviceId || devices[0]?.deviceId || "";
+      setVoiceDevices(devices);
+      setVoiceDeviceId(selectedDeviceId ?? "");
+      setVoiceSetupState("ready");
+    } catch (setupError) {
+      setVoiceSetupState("error");
+      setVoiceSetupError(
+        setupError instanceof DOMException && setupError.name === "NotAllowedError"
+          ? "Microphone permission was denied. Allow access or join without voice."
+          : "The selected microphone could not be opened.",
+      );
+    } finally {
+      stream?.getTracks().forEach((track) => track.stop());
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    if (navigator.mediaDevices?.enumerateDevices) {
+      void navigator.mediaDevices.enumerateDevices().then((devices) => {
+        setVoiceDevices(devices.filter((device) => device.kind === "audioinput"));
+      }).catch(() => undefined);
+    }
+  }, [open]);
 
   const join = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -113,6 +186,7 @@ function PlayerNameDialog({
     const name = playerName.trim() || "Player";
     const handoffId = createAnalyticsId();
     setPlayerName(name);
+    storeVoicePreferences(voiceEnabled, voiceEnabled ? voiceDeviceId : undefined);
     trackAnalyticsEvent("server_join_submitted", {
       join_handoff_id: handoffId,
       server_id: server.id,
@@ -121,25 +195,26 @@ function PlayerNameDialog({
       server_official: server.official,
       human_players_visible: humanPlayerCount(server),
       join_entry_point: entryPoint,
+      voice_enabled: voiceEnabled,
     });
-    window.location.assign(joinHref(server, name, entryPoint, handoffId));
+    window.location.assign(joinHref(server, name, entryPoint, handoffId, voiceEnabled));
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] min-w-0 overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Join server</DialogTitle>
           <DialogDescription>
-            Choose your player name before joining <span className="font-semibold text-foreground">{server?.name}</span>.
+            Choose your player name before joining <span className="break-words font-semibold text-foreground">{server?.name}</span>.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={join}>
+        <form onSubmit={join} className="min-w-0">
           <label htmlFor="join-player-name" className="block font-mono text-xs uppercase tracking-[0.1em] text-muted-foreground">
             Player name
           </label>
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
             <input
               id="join-player-name"
               autoFocus
@@ -161,8 +236,91 @@ function PlayerNameDialog({
             </Button>
           </div>
 
+          <div className="mt-5 min-w-0 border border-border bg-background/35 p-3">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={voiceEnabled}
+                onChange={(event) => {
+                  const enabled = event.target.checked;
+                  setVoiceEnabled(enabled);
+                  setVoiceSetupError(undefined);
+                  if (enabled) {
+                    setVoiceSetupState(voiceDeviceId ? "ready" : "idle");
+                  } else {
+                    setVoiceSetupState("idle");
+                  }
+                }}
+                className="mt-0.5 size-4 accent-primary"
+              />
+              <span className="min-w-0 overflow-hidden">
+                <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-foreground">
+                  <Microphone className="size-4 shrink-0" aria-hidden="true" />
+                  Join server voice chat
+                </span>
+                <span className="mt-1 block text-xs leading-4 text-muted-foreground">
+                  Voice is push-to-talk. Your microphone stays muted unless you hold K.
+                </span>
+              </span>
+            </label>
+
+            {voiceEnabled && (
+              <div className="mt-3 min-w-0 border-t border-border/60 pt-3">
+                <label htmlFor="join-voice-device" className="block font-mono text-xs uppercase tracking-[0.1em] text-muted-foreground">
+                  Microphone
+                </label>
+                <div className="mt-2 grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                  <Select
+                    value={voiceDeviceId || DEFAULT_VOICE_DEVICE}
+                    onValueChange={(value) => {
+                      const selectedDeviceId = value === DEFAULT_VOICE_DEVICE ? "" : value;
+                      setVoiceDeviceId(selectedDeviceId);
+                      void prepareVoice(selectedDeviceId || undefined);
+                    }}
+                  >
+                    <SelectTrigger id="join-voice-device" className="w-full min-w-0">
+                      <SelectValue placeholder="Default microphone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={DEFAULT_VOICE_DEVICE}>Default microphone</SelectItem>
+                      {voiceDevices.filter((device) => device.deviceId).map((device, index) => (
+                        <SelectItem key={device.deviceId} value={device.deviceId}>
+                          {device.label || `Microphone ${index + 1}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full whitespace-nowrap sm:w-auto"
+                    disabled={voiceSetupState === "configuring"}
+                    onClick={() => void prepareVoice(voiceDeviceId || undefined)}
+                  >
+                    {voiceSetupState === "configuring" ? "Opening mic…" : "Test access"}
+                  </Button>
+                </div>
+                {voiceSetupState === "ready" && (
+                  <p className="mt-2 text-xs text-green-500">Microphone ready. Hold K in game to transmit.</p>
+                )}
+                {voiceSetupState === "idle" && (
+                  <p className="mt-2 text-xs text-muted-foreground">Select a microphone, then test access.</p>
+                )}
+                {voiceSetupError && (
+                  <p role="alert" className="mt-2 text-xs leading-4 text-primary">{voiceSetupError}</p>
+                )}
+              </div>
+            )}
+          </div>
+
           <DialogFooter className="mt-5">
-            <Button type="submit" size="lg" className="w-full" disabled={!server}>
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full"
+              disabled={!server || voiceSetupState === "configuring" || (voiceEnabled && voiceSetupState === "error")}
+            >
               Join arena
             </Button>
           </DialogFooter>
