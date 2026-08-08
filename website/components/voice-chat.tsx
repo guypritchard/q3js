@@ -58,25 +58,53 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
     });
     roomRef.current = room;
     let cancelled = false;
-    const audioElements = new Set<HTMLMediaElement>();
+    const audioElements = new Map<RemoteTrack, HTMLMediaElement>();
+
+    const removeAudioUnlockListeners = () => {
+      window.removeEventListener("pointerdown", unlockAudioFromGesture, true);
+      window.removeEventListener("keydown", unlockAudioFromGesture, true);
+    };
+    const unlockAudioFromGesture = () => {
+      void room.startAudio()
+        .then(() => {
+          if (!cancelled) setPlaybackBlocked(false);
+          removeAudioUnlockListeners();
+        })
+        .catch(() => {
+          if (!cancelled) setPlaybackBlocked(true);
+        });
+    };
+
+    window.addEventListener("pointerdown", unlockAudioFromGesture, true);
+    window.addEventListener("keydown", unlockAudioFromGesture, true);
 
     const updateParticipantCount = () => {
       setParticipantCount(room.remoteParticipants.size + 1);
     };
     const attachRemoteAudio = (track: RemoteTrack) => {
       if (track.kind !== Track.Kind.Audio) return;
+      if (audioElements.has(track)) return;
       const element = track.attach();
       element.autoplay = true;
-      element.style.display = "none";
+      element.muted = false;
+      element.volume = 1;
+      element.hidden = true;
       element.dataset.q3jsVoice = "true";
       document.body.appendChild(element);
-      audioElements.add(element);
+      audioElements.set(track, element);
+      void element.play()
+        .then(() => {
+          if (!cancelled) setPlaybackBlocked(false);
+        })
+        .catch(() => {
+          if (!cancelled) setPlaybackBlocked(true);
+        });
     };
     const detachRemoteAudio = (track: RemoteTrack) => {
       track.detach().forEach((element) => {
-        audioElements.delete(element);
         element.remove();
       });
+      audioElements.delete(track);
     };
     const updatePlaybackState = () => setPlaybackBlocked(!room.canPlaybackAudio);
 
@@ -101,6 +129,12 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
           return;
         }
 
+        room.remoteParticipants.forEach((participant) => {
+          participant.audioTrackPublications.forEach((publication) => {
+            if (publication.track) attachRemoteAudio(publication.track);
+          });
+        });
+
         const deviceId = storedVoiceDeviceId();
         const microphone = await createLocalAudioTrack({
           ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
@@ -119,7 +153,6 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
           source: Track.Source.Microphone,
         });
         updateParticipantCount();
-        await room.startAudio().catch(() => undefined);
         updatePlaybackState();
         setVoiceState("ready");
       } catch (connectError) {
@@ -139,6 +172,7 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
       pressedRef.current = false;
       const microphone = microphoneRef.current;
       microphoneRef.current = undefined;
+      removeAudioUnlockListeners();
       void microphone?.mute().catch(() => undefined);
       microphone?.stop();
       audioElements.forEach((element) => element.remove());
