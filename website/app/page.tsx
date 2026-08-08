@@ -67,21 +67,21 @@ export default function Home() {
       <JsonLd data={homeStructuredData} />
       <SiteHeader />
       <InviteFriendsDialog />
-      <main className="mx-auto w-full max-w-5xl px-4 pb-20 pt-10 md:pt-14">
-        <section aria-labelledby="hero-heading" className="mb-14 py-6 text-center sm:py-8">
+      <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-7 sm:pb-20 sm:pt-10 md:pt-14">
+        <section aria-labelledby="hero-heading" className="mb-10 py-5 text-center sm:mb-14 sm:py-8">
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-primary">
             Quake 3 in browser
           </p>
           <h1
             id="hero-heading"
-            className="mx-auto mt-3 max-w-4xl font-mono text-3xl font-bold uppercase leading-tight tracking-[0.035em] md:text-4xl"
+            className="mx-auto mt-3 max-w-4xl font-mono text-[1.75rem] font-bold uppercase leading-[1.15] tracking-[0.025em] sm:text-3xl sm:tracking-[0.035em] md:text-4xl"
           >
             Play Quake III Multiplayer in Your Browser
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
             No install step. Pick a server and jump straight into a live Quake 3 match.
           </p>
-          <div className="mx-auto mt-6 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="mx-auto mt-6 grid max-w-2xl gap-2 min-[380px]:grid-cols-2 sm:grid-cols-3 sm:gap-3">
             <Link
               href="/#servers"
               className="inline-flex h-10 items-center justify-center bg-primary px-4 font-mono text-sm font-bold uppercase tracking-[0.05em] text-primary-foreground hover:bg-primary/80"
@@ -98,7 +98,7 @@ export default function Home() {
               href={siteConfig.supportUrl}
               target="_blank"
               rel="noreferrer"
-              className="col-span-2 inline-flex h-10 items-center justify-center gap-2 bg-primary px-4 font-mono text-sm font-bold uppercase tracking-[0.05em] text-primary-foreground transition-colors hover:bg-primary/80 sm:col-span-1"
+              className="inline-flex h-10 items-center justify-center gap-2 bg-primary px-4 font-mono text-sm font-bold uppercase tracking-[0.05em] text-primary-foreground transition-colors hover:bg-primary/80 min-[380px]:col-span-2 sm:col-span-1"
             >
               <Coffee className="size-4" weight="fill" aria-hidden="true" />
               Support Q3JS

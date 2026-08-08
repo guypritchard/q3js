@@ -21,19 +21,19 @@ function WeaponUsageContent({ slug }: Readonly<{ slug: string }>) {
   return (
     <div className="border border-border/70 bg-card">
       <dl className="grid sm:grid-cols-3">
-        <div className="border-b border-border/70 p-5 sm:border-b-0 sm:border-r">
+        <div className="border-b border-border/70 p-4 sm:border-b-0 sm:border-r sm:p-5">
           <dt className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-muted-foreground">
             <Skull className="size-4 text-primary" /> Recorded kills
           </dt>
           <dd className="mt-3 text-3xl font-bold tabular-nums">{formatNumber(data.kills)}</dd>
         </div>
-        <div className="border-b border-border/70 p-5 sm:border-b-0 sm:border-r">
+        <div className="border-b border-border/70 p-4 sm:border-b-0 sm:border-r sm:p-5">
           <dt className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-muted-foreground">
             <Users className="size-4 text-primary" /> Fraggers
           </dt>
           <dd className="mt-3 text-3xl font-bold tabular-nums">{formatNumber(data.uniquePlayers)}</dd>
         </div>
-        <div className="p-5">
+        <div className="p-4 sm:p-5">
           <dt className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-muted-foreground">
             <Crosshair className="size-4 text-primary" /> Share of weapon kills
           </dt>
@@ -48,19 +48,19 @@ function WeaponUsageContent({ slug }: Readonly<{ slug: string }>) {
       </dl>
 
       <div className="border-t border-border/70">
-        <div className="flex items-center justify-between border-b border-border/70 px-5 py-3">
+        <div className="flex items-center justify-between gap-3 border-b border-border/70 px-4 py-3 sm:px-5">
           <h3 className="text-xs font-bold uppercase tracking-[0.14em]">Top operators</h3>
           <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Q3JS lifetime</span>
         </div>
         {data.leaders.length ? (
           <ol>
             {data.leaders.map((leader, index) => (
-              <li key={leader.playerName} className="grid grid-cols-[2rem_1fr_auto] items-center gap-3 border-b border-border/50 px-5 py-3 last:border-b-0">
+              <li key={leader.playerName} className="grid grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-2 border-b border-border/50 px-4 py-3 last:border-b-0 sm:grid-cols-[2rem_minmax(0,1fr)_auto] sm:gap-3 sm:px-5">
                 <span className="text-xs text-muted-foreground">{String(index + 1).padStart(2, "0")}</span>
                 <Link href={`/players/${encodeURIComponent(leader.playerName)}`} className="min-w-0 truncate font-bold hover:text-primary">
                   <Q3ColoredText text={leader.playerName} />
                 </Link>
-                <span className="text-sm tabular-nums text-muted-foreground">{formatNumber(leader.kills)} kills</span>
+                <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground sm:text-sm">{formatNumber(leader.kills)} kills</span>
               </li>
             ))}
           </ol>

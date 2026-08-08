@@ -4,8 +4,10 @@ import type { Q3Asset, Q3Client, Q3ClientOptions, Q3ClientProgress } from "@q3js
 import { ArrowClockwise, Play } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameCanvas } from "@/components/game-canvas";
+import { MobileControls } from "@/components/mobile-controls";
 import { Button } from "@/components/ui/button";
 import { VoiceChat } from "@/components/voice-chat";
+import { useMobileGame } from "@/hooks/use-mobile-game";
 import { usePlayerName } from "@/hooks/use-player-name";
 import {
   classifyPlayError,
@@ -150,6 +152,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
   const [session, setSession] = useState<Session>();
   const [progress, setProgress] = useState<Q3ClientProgress>();
   const [error, setError] = useState<string>();
+  const [gameClient, setGameClient] = useState<Q3Client>();
   const [autoStartSuppressed, setAutoStartSuppressed] = useState(false);
   const gameShellRef = useRef<HTMLElement>(null);
   const autoStartRef = useRef(false);
@@ -158,6 +161,14 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
   const clientRef = useRef<Q3Client | undefined>(undefined);
   const connectionPollRef = useRef<number | undefined>(undefined);
   const heartbeatRef = useRef<number | undefined>(undefined);
+  const {
+    isTouchDevice,
+    isLandscape,
+    hasSeenLandscape,
+    isViewportReady,
+    canRequestFullscreen,
+    requestLandscapeFullscreen,
+  } = useMobileGame(gameShellRef);
 
   const serverAnalyticsContext = useMemo<AnalyticsParameters>(() => ({
     server_id: selectedServer?.id ?? "default",
@@ -290,6 +301,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
   }, [trackPlayEvent]);
 
   const handleClientError = useCallback((clientError: Error) => {
+    setGameClient(undefined);
     setError(clientError.message);
     const telemetry = telemetryRef.current;
     if (!telemetry || telemetry.ended) return;
@@ -316,6 +328,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
 
   const handleClientReady = useCallback((client: Q3Client) => {
     clientRef.current = client;
+    setGameClient(client);
     if (connectionPollRef.current !== undefined) {
       window.clearInterval(connectionPollRef.current);
     }
@@ -428,14 +441,23 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
         countryCode: session.countryCode,
       },
       assets: session.assets,
+      ...(isTouchDevice ? {
+        cvars: {
+          in_nograb: 1,
+          in_joystickUseAnalog: 1,
+          j_forward: -1,
+          j_side: 1,
+        },
+      } : {}),
       onProgress: handleProgress,
       onConsole: (_level, message) => console.info(`[Q3JS] ${message}`),
       onError: handleClientError,
     };
-  }, [handleClientError, handleProgress, session]);
+  }, [handleClientError, handleProgress, isTouchDevice, session]);
 
   const start = useCallback(async () => {
     finishPlaySession("restart");
+    setGameClient(undefined);
     setError(undefined);
     setProgress(undefined);
     progressRef.current = undefined;
@@ -539,6 +561,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       void document.exitFullscreen().catch(() => undefined);
     }
     finishPlaySession("user_exit");
+    setGameClient(undefined);
     setSession(undefined);
     setProgress(undefined);
     setError(undefined);
@@ -608,6 +631,9 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
   const loadedBytes = progress?.loadedBytes ?? 0;
   const totalBytes = progress?.totalBytes ?? 0;
   const percent = totalBytes > 0 ? Math.min(100, Math.round((loadedBytes / totalBytes) * 100)) : 0;
+  const waitingForLandscape = isTouchDevice && (!isViewportReady || !hasSeenLandscape);
+  const portraitBlocked = isTouchDevice && hasSeenLandscape && !isLandscape;
+  const showMobileControls = isTouchDevice && progress?.phase === "ready" && gameClient && !portraitBlocked;
 
   return (
     <section
@@ -615,11 +641,22 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       aria-label="Q3JS client"
       className="absolute inset-0 size-full overflow-hidden bg-black"
     >
-      <GameCanvas
-        options={options!}
-        className="absolute inset-0 block size-full bg-black outline-none"
-        onClientReady={handleClientReady}
-      />
+      {!waitingForLandscape && (
+        <GameCanvas
+          options={options!}
+          inputMode={isTouchDevice ? "mobile" : "desktop"}
+          className="absolute inset-0 block size-full bg-black outline-none"
+          onClientReady={handleClientReady}
+        />
+      )}
+
+      {showMobileControls && (
+        <MobileControls
+          client={gameClient}
+          canRequestFullscreen={canRequestFullscreen}
+          onRequestFullscreen={() => void requestLandscapeFullscreen()}
+        />
+      )}
 
       {voiceEnabled && selectedServer && (
         <VoiceChat
@@ -639,6 +676,29 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
               <p className="mt-2 text-xs text-muted-foreground">
                 {formatBytes(loadedBytes)} / {formatBytes(totalBytes)}
               </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {(waitingForLandscape || portraitBlocked) && !error && (
+        <div className="absolute inset-0 z-30 grid place-items-center bg-black p-6 text-center text-white">
+          <div className="max-w-sm">
+            <p className="text-xs font-black uppercase tracking-[0.32em] text-white/55">
+              Landscape required
+            </p>
+            <h2 className="mt-4 text-3xl font-black uppercase tracking-[0.1em]">
+              Rotate your phone
+            </h2>
+            <p className="mt-4 text-sm leading-6 text-white/70">
+              {hasSeenLandscape
+                ? "Rotate back to landscape to continue playing."
+                : "Mobile play starts in landscape so the controls have enough room."}
+            </p>
+            {canRequestFullscreen && (
+              <Button variant="outline" className="mt-6 border-white/25 bg-white/10 text-white" onClick={() => void requestLandscapeFullscreen()}>
+                Enter fullscreen
+              </Button>
             )}
           </div>
         </div>

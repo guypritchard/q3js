@@ -39,7 +39,7 @@ export function ScoreboardDistributionPage({
   const description = `Global Q3JS frag activity across ${activePeriod.description}.`;
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 pb-20 pt-8 md:pt-12">
+    <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-7 sm:pb-20 sm:pt-8 md:pt-12">
       <JsonLd
         data={{
           "@context": "https://schema.org",
@@ -76,14 +76,14 @@ export function ScoreboardDistributionPage({
         </Button>
       </header>
 
-      <nav aria-label="Activity period" className="mt-8 flex flex-wrap gap-1 border border-border/60 bg-card/45 p-1">
+      <nav aria-label="Activity period" className="mt-8 grid grid-cols-2 gap-1 border border-border/60 bg-card/45 p-1 min-[440px]:flex min-[440px]:flex-wrap">
         {periods.map((option) => (
           <Link
             key={option.value}
             href={distributionHref(option.value, timeZone)}
             aria-current={option.value === activePeriod.value ? "page" : undefined}
             className={cn(
-              "px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground",
+              "min-h-10 px-3 py-2 text-center text-xs font-medium text-muted-foreground hover:text-foreground min-[440px]:min-h-0",
               option.value === activePeriod.value && "bg-secondary text-foreground",
             )}
           >

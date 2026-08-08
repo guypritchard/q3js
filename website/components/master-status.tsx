@@ -5,15 +5,17 @@ import { QueryBoundary } from "@/components/query-boundary";
 import { masterStatusQueryOptions } from "@/lib/master-server-query";
 
 function StatusBadge({ state }: Readonly<{ state: "checking" | "offline" | "online" }>) {
+  const label = state === "checking" ? "Checking master" : `Master ${state}`;
   return (
     <span
-      className="inline-flex items-center gap-2 text-xs text-muted-foreground"
+      className="inline-flex shrink-0 items-center gap-2 text-xs text-muted-foreground"
       aria-live="polite"
+      aria-label={label}
     >
       <span
         className={`size-1.5 rounded-full ${state === "online" ? "bg-green-500" : "bg-muted-foreground"} ${state === "checking" ? "motion-safe:animate-pulse" : ""}`}
       />
-      {state === "checking" ? "Checking master" : `Master ${state}`}
+      <span className="hidden min-[430px]:inline">{label}</span>
     </span>
   );
 }

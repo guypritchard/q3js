@@ -67,7 +67,7 @@ export function ScoreboardPage({
   const description = `Global Q3JS frag rankings for ${activePeriod.label.toLowerCase()}.`;
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 pb-20 pt-8 md:pt-12">
+    <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-7 sm:pb-20 sm:pt-8 md:pt-12">
       <JsonLd
         data={{
           "@context": "https://schema.org",
@@ -104,14 +104,14 @@ export function ScoreboardPage({
         </div>
 
         <div className="flex flex-col items-start gap-2 md:items-end">
-          <nav aria-label="Scoreboard period" className="flex flex-wrap gap-1 border border-border/60 bg-card/45 p-1">
+          <nav aria-label="Scoreboard period" className="grid w-full grid-cols-2 gap-1 border border-border/60 bg-card/45 p-1 min-[440px]:flex min-[440px]:w-auto min-[440px]:flex-wrap">
             {periods.map((period) => (
               <Link
                 key={period.value}
                 href={scoreboardHref({ period: period.value, search, timeZone })}
                 aria-current={scoreboard.period === period.response ? "page" : undefined}
                 className={cn(
-                  "px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground",
+                  "min-h-10 px-3 py-2 text-center text-xs font-medium text-muted-foreground hover:text-foreground min-[440px]:min-h-0",
                   scoreboard.period === period.response && "bg-secondary text-foreground",
                 )}
               >
@@ -160,13 +160,13 @@ export function ScoreboardPage({
       </form>
 
       {scoreboard.entries.length ? (
-        <div className="mt-4 overflow-x-auto border border-border/60 bg-card/35">
-          <table className="w-full min-w-[34rem] text-left text-sm">
+        <div className="mt-4 min-w-0 overflow-hidden border border-border/60 bg-card/35">
+          <table className="w-full table-fixed text-left text-sm">
             <thead className="bg-card/70 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
               <tr>
-                <th scope="col" className="w-20 px-5 py-3 font-medium">Rank</th>
-                <th scope="col" className="px-3 py-3 font-medium">Player</th>
-                <th scope="col" className="w-28 px-5 py-3 text-right font-medium">Frags</th>
+                <th scope="col" className="w-14 px-3 py-3 font-medium sm:w-20 sm:px-5">Rank</th>
+                <th scope="col" className="px-2 py-3 font-medium sm:px-3">Player</th>
+                <th scope="col" className="w-20 px-3 py-3 text-right font-medium sm:w-28 sm:px-5">Frags</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
@@ -175,23 +175,23 @@ export function ScoreboardPage({
                 return (
                   <tr key={`${entry.playerName}-${rank}`}>
                     <td className={cn(
-                      "px-5 py-4 font-mono tabular-nums text-muted-foreground",
+                      "px-3 py-4 font-mono text-xs tabular-nums text-muted-foreground sm:px-5 sm:text-sm",
                       rank <= 3 && "font-bold text-primary",
                     )}>
                       #{rank}
                     </td>
-                    <td className="min-w-0 px-3 py-4">
+                    <td className="min-w-0 overflow-hidden px-2 py-4 sm:px-3">
                       <Link
                         href={`/players/${encodeURIComponent(entry.playerName)}`}
                         className="inline-block max-w-full truncate font-semibold hover:text-primary"
                       >
                         <Q3ColoredText text={entry.playerName} />
                       </Link>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="mt-1 truncate text-[11px] text-muted-foreground sm:text-xs">
                         Last online {formatRelativeTime(entry.lastOnline)}
                       </p>
                     </td>
-                    <td className="px-5 py-4 text-right font-mono font-semibold tabular-nums">
+                    <td className="px-3 py-4 text-right font-mono text-xs font-semibold tabular-nums sm:px-5 sm:text-sm">
                       {formatNumber(entry.kills)}
                     </td>
                   </tr>
@@ -209,10 +209,10 @@ export function ScoreboardPage({
         </div>
       )}
 
-      <div className="mt-4 flex items-center justify-between gap-4 font-mono text-xs text-muted-foreground">
+      <div className="mt-4 flex flex-col items-stretch gap-3 font-mono text-xs text-muted-foreground min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
         <span>Page {scoreboard.page} of {scoreboard.totalPages}</span>
-        <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm" className={cn(!scoreboard.hasPreviousPage && "pointer-events-none opacity-40")}>
+        <div className="grid grid-cols-2 gap-2 min-[400px]:flex">
+          <Button asChild variant="outline" size="sm" className={cn("w-full min-[400px]:w-auto", !scoreboard.hasPreviousPage && "pointer-events-none opacity-40")}>
             <Link
               href={scoreboardHref({
                 page: scoreboard.page - 1,
@@ -226,7 +226,7 @@ export function ScoreboardPage({
               <CaretLeft /> Previous
             </Link>
           </Button>
-          <Button asChild variant="outline" size="sm" className={cn(!scoreboard.hasNextPage && "pointer-events-none opacity-40")}>
+          <Button asChild variant="outline" size="sm" className={cn("w-full min-[400px]:w-auto", !scoreboard.hasNextPage && "pointer-events-none opacity-40")}>
             <Link
               href={scoreboardHref({
                 page: scoreboard.page + 1,

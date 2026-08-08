@@ -62,6 +62,7 @@ html {
 
 body {
   margin: 0;
+  overflow-x: clip;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-terminal);
@@ -142,6 +143,16 @@ input:focus-visible {
 @media (min-width: 1024px) {
   .weapon-viewer {
     min-height: 500px;
+  }
+}
+
+@media (max-width: 639px) {
+  html {
+    font-size: 16px;
+  }
+
+  .weapon-viewer {
+    min-height: 310px;
   }
 }
 

@@ -5,7 +5,7 @@ import { siteConfig } from "@/lib/seo";
 export function Footer() {
   return (
     <footer className="border-t border-border/70">
-      <div className="mx-auto grid w-full max-w-5xl gap-4 px-4 py-6 text-sm leading-6 text-muted-foreground md:grid-cols-[1fr_auto]">
+      <div className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-7 text-sm leading-6 text-muted-foreground md:grid-cols-[1fr_auto] md:gap-4 md:py-6">
         <div>
           <p className="mb-1 font-mono text-xs uppercase tracking-[0.14em] text-primary">Q3JS // Browser arena</p>
           <p className="max-w-3xl">
@@ -25,7 +25,7 @@ export function Footer() {
             .
           </p>
         </div>
-        <div className="flex flex-col items-start md:items-end">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-2 border-t border-border/60 pt-5 md:flex md:flex-col md:items-end md:gap-0 md:border-0 md:pt-0">
           <a href={siteConfig.supportUrl} target="_blank" rel="noreferrer" className="hover:text-foreground">
             Support Q3JS
           </a>
