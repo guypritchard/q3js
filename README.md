@@ -55,6 +55,10 @@ Q3JS brings the ioquake3 engine to the browser and surrounds it with everything 
 > [!IMPORTANT]
 > Q3JS does not include or download proprietary Quake III Arena game data. You must provide your own legally obtained PK3 files.
 
+## Versioning
+
+The current Q3JS release is stored in the repository-root [`VERSION`](VERSION) file so every component, build script, and deployment workflow can read the same language-independent value. Keep component manifest versions synchronized with that file when preparing a release.
+
 ## Architecture
 
 ```mermaid

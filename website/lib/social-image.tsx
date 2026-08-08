@@ -29,7 +29,7 @@ export function createSocialImage(): ImageResponse {
       >
         <div style={{ alignItems: "center", display: "flex", gap: 22 }}>
           <div style={{ fontSize: 58, fontWeight: 900, letterSpacing: -4 }}>Q3JS</div>
-          <div style={{ color: "#999", fontFamily: "monospace", fontSize: 19 }}>0.0.1</div>
+          <div style={{ color: "#999", fontFamily: "monospace", fontSize: 19 }}>1.0.0</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
           <div
