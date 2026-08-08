@@ -71,6 +71,11 @@ public class ServerService {
         return playerCounts().players();
     }
 
+    public boolean isListedServer(String serverId) {
+        return servers().stream()
+            .anyMatch(server -> serverId.equals(server.host() + ":" + server.proxyPort()));
+    }
+
     public PlayerCounts playerCounts() {
         int players = 0;
         int bots = 0;

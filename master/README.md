@@ -20,6 +20,8 @@ The public API is compatible with the previous Q3JS server registry:
   24 hours, and the all-time recorded frag count.
 - `GET /api/country` resolves the requester's public IP address to a country so
   browser clients can include it in their Quake userinfo.
+- `POST /api/voice/token` issues a microphone-only LiveKit token for the voice
+  room belonging to a currently listed game server.
 - `GET /q/health` reports Quarkus health checks.
 - `GET /q/openapi` returns the generated OpenAPI document.
 - `GET /q/swagger-ui` opens the interactive Swagger UI.
@@ -65,6 +67,36 @@ successful response, while a missing heartbeat removes the server after five
 minutes. These values are configured with `q3js.master.refresh-every`,
 `q3js.master.prune-every`, `q3js.master.heartbeat-ttl`, and
 `q3js.master.server-status-timeout`.
+
+## Voice chat
+
+The master signs LiveKit room tokens; API credentials remain server-side. Set
+the following variables on the master service:
+
+```shell
+export Q3JS_LIVEKIT_URL=https://staging.livekit.q3js.com
+export Q3JS_LIVEKIT_API_KEY=replace-with-the-livekit-api-key
+export Q3JS_LIVEKIT_API_SECRET=replace-with-the-livekit-api-secret
+export Q3JS_LIVEKIT_TOKEN_TTL=6h
+```
+
+For local development, copy `.env.example` to `.env` inside the `master`
+directory and run `make master-run` from the repository root. That target starts
+Maven with `master` as its working directory so Quarkus automatically loads
+`master/.env`. The standard `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` names are
+also accepted as fallbacks.
+
+Development defaults to `https://staging.livekit.q3js.com` for signaling. The
+deployed LiveKit stack should advertise its own TURN service; the current
+staging infrastructure endpoints are `https://staging.turn.q3js.com` for TURN
+and `https://staging.whip.q3js.com/whip` for WHIP ingress. The website does not
+connect to either origin directly: LiveKit sends authenticated ICE/TURN details
+to room clients, while WHIP is for ingest rather than two-way room chat.
+
+Room names are stable hashes of the listed server's `host:proxyPort`. The token
+endpoint rejects servers that are not currently in the master registry and
+grants only room subscription plus microphone publication; camera, screen
+share, and data publication are disabled.
 
 ## jOOQ code generation
 

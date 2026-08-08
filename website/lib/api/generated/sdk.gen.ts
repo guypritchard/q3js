@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetProfileData, GetProfileDistributionData, GetProfileDistributionErrors, GetProfileDistributionResponses, GetProfileErrors, GetProfileResponses, GetProfileSitemapData, GetProfileSitemapResponses, GetRequesterCountryData, GetRequesterCountryResponses, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionErrors, GetScoreboardDistributionResponses, GetScoreboardErrors, GetScoreboardResponses, GetStatsData, GetStatsResponses, GetWeaponUsageData, GetWeaponUsageErrors, GetWeaponUsageResponses, HeartbeatData, HeartbeatErrors, HeartbeatResponses, IngestData, IngestErrors, IngestResponses, SearchProfilesData, SearchProfilesErrors, SearchProfilesResponses, ServersData, ServersResponses, StatusData, StatusResponses } from './types.gen';
+import type { CreateVoiceTokenData, CreateVoiceTokenErrors, CreateVoiceTokenResponses, GetProfileData, GetProfileDistributionData, GetProfileDistributionErrors, GetProfileDistributionResponses, GetProfileErrors, GetProfileResponses, GetProfileSitemapData, GetProfileSitemapResponses, GetRequesterCountryData, GetRequesterCountryResponses, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionErrors, GetScoreboardDistributionResponses, GetScoreboardErrors, GetScoreboardResponses, GetStatsData, GetStatsResponses, GetWeaponUsageData, GetWeaponUsageErrors, GetWeaponUsageResponses, HeartbeatData, HeartbeatErrors, HeartbeatResponses, IngestData, IngestErrors, IngestResponses, SearchProfilesData, SearchProfilesErrors, SearchProfilesResponses, ServersData, ServersResponses, StatusData, StatusResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -92,6 +92,18 @@ export const getStats = <ThrowOnError extends boolean = true>(options?: Options<
  * Get master server status
  */
 export const status = <ThrowOnError extends boolean = true>(options?: Options<StatusData, ThrowOnError>): RequestResult<StatusResponses, unknown, ThrowOnError> => (options?.client ?? client).get<StatusResponses, unknown, ThrowOnError>({ url: '/api/status', ...options });
+
+/**
+ * Create a LiveKit voice-room token
+ */
+export const createVoiceToken = <ThrowOnError extends boolean = true>(options: Options<CreateVoiceTokenData, ThrowOnError>): RequestResult<CreateVoiceTokenResponses, CreateVoiceTokenErrors, ThrowOnError> => (options.client ?? client).post<CreateVoiceTokenResponses, CreateVoiceTokenErrors, ThrowOnError>({
+    url: '/api/voice/token',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * Get all-time usage for a weapon

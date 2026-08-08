@@ -72,6 +72,7 @@ export default async function PlayPage({ searchParams }: { searchParams: Promise
       <PlayClient
         selectedServer={selectedServer(parameters)}
         initialPlayerName={parameter(parameters, "name")}
+        voiceEnabled={parameter(parameters, "voice") === "1"}
       />
     </main>
   );
