@@ -65,3 +65,34 @@ test("registers the packaged server with the master", async () => {
     },
   });
 });
+
+test("registers community servers without an official secret", async () => {
+  let receivedSecret = "not-called";
+  const server = createServer((request, response) => {
+    receivedSecret = request.headers["x-q3js-client-secret"];
+    request.resume();
+    request.on("end", () => {
+      response.writeHead(204);
+      response.end();
+    });
+  });
+  await listen(server);
+  const address = server.address();
+
+  const heartbeat = new MasterHeartbeat({
+    masterBaseUrl: "http://127.0.0.1:" + address.port,
+    eventClientSecret: undefined,
+    intervalMs: 60_000,
+    timeoutMs: 2_000,
+    targetHost: "community.example.com",
+    proxyPort: 27961,
+    targetPort: 27960,
+    secure: false,
+  });
+
+  await heartbeat.start();
+  heartbeat.stop();
+  await close(server);
+
+  assert.equal(receivedSecret, undefined);
+});

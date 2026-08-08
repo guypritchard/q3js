@@ -53,15 +53,17 @@ test("rejects weak event client secrets", () => {
   );
 });
 
-test("requires an explicit event secret for remote ingestion endpoints", () => {
-  assert.throws(
-    () => loadConfig({ Q3JS_MASTER_URL: "https://master.example.com" }, []),
-    /required when Q3JS_EVENT_URL is not local/,
-  );
-  assert.throws(
-    () => loadConfig({ Q3JS_EVENT_URL: "https://events.example.com/api/events" }, []),
-    /required when Q3JS_EVENT_URL is not local/,
-  );
+test("allows anonymous community registration with remote masters", () => {
+  const fromMaster = loadConfig({ Q3JS_MASTER_URL: "https://master.example.com" }, []);
+  const fromEventUrl = loadConfig({ Q3JS_EVENT_URL: "https://events.example.com/api/events" }, []);
+
+  assert.equal(fromMaster.eventClientSecret, undefined);
+  assert.equal(fromEventUrl.eventClientSecret, undefined);
+  assert.equal(eventConfigContents(fromMaster), [
+    "set sv_killpost_url \"\"",
+    "set sv_killpost_client_secret \"\"",
+    "",
+  ].join("\n"));
 });
 
 test("writes the ioq3 event endpoint and secret cvars", () => {

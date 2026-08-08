@@ -12,7 +12,7 @@ export interface ServerConfig {
   gatewayPort: number;
   masterBaseUrl: string;
   eventIngestionUrl: string;
-  eventClientSecret: string;
+  eventClientSecret: string | undefined;
   heartbeatIntervalMs: number;
   heartbeatTimeoutMs: number;
   publishHost: string;
@@ -63,16 +63,16 @@ function httpUrl(environment: NodeJS.ProcessEnv, name: string, fallback: string)
   return parsed.href;
 }
 
-function eventClientSecret(environment: NodeJS.ProcessEnv, eventIngestionUrl: string): string {
+function eventClientSecret(environment: NodeJS.ProcessEnv, eventIngestionUrl: string): string | undefined {
   const configured = environment.Q3JS_EVENT_CLIENT_SECRET?.trim();
   const eventHostname = new URL(eventIngestionUrl).hostname;
   const localEndpoint = eventHostname === "localhost"
     || eventHostname === "127.0.0.1"
     || eventHostname === "[::1]";
-  if (!configured && !localEndpoint) {
-    throw new Error("Q3JS_EVENT_CLIENT_SECRET is required when Q3JS_EVENT_URL is not local.");
+  const value = configured || (localEndpoint ? DEVELOPMENT_EVENT_CLIENT_SECRET : undefined);
+  if (!value) {
+    return undefined;
   }
-  const value = configured || DEVELOPMENT_EVENT_CLIENT_SECRET;
   if (!/^[A-Za-z0-9._~-]{32,512}$/.test(value)) {
     throw new Error("Q3JS_EVENT_CLIENT_SECRET must contain 32 to 512 URL-safe characters.");
   }
@@ -147,6 +147,14 @@ export function loadConfig(
 }
 
 export function eventConfigContents(config: Pick<ServerConfig, "eventClientSecret" | "eventIngestionUrl">): string {
+  if (!config.eventClientSecret) {
+    return [
+      "set sv_killpost_url \"\"",
+      "set sv_killpost_client_secret \"\"",
+      "",
+    ].join("\n");
+  }
+
   return [
     `set sv_killpost_url "${config.eventIngestionUrl}"`,
     `set sv_killpost_client_secret "${config.eventClientSecret}"`,

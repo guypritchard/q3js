@@ -1,6 +1,6 @@
 export interface MasterHeartbeatOptions {
   masterBaseUrl: string;
-  eventClientSecret: string;
+  eventClientSecret: string | undefined;
   intervalMs: number;
   timeoutMs: number;
   targetHost: string;
@@ -50,12 +50,15 @@ export class MasterHeartbeat {
 
     try {
       const endpoint = new URL("/api/servers/heartbeat", this.#options.masterBaseUrl);
+      const headers: Record<string, string> = {
+        "content-type": "application/json",
+      };
+      if (this.#options.eventClientSecret) {
+        headers["X-Q3JS-Client-Secret"] = this.#options.eventClientSecret;
+      }
       const response = await fetch(endpoint, {
         method: "PUT",
-        headers: {
-          "content-type": "application/json",
-          "X-Q3JS-Client-Secret": this.#options.eventClientSecret,
-        },
+        headers,
         body: JSON.stringify({
           targetHost: this.#options.targetHost,
           proxyPort: this.#options.proxyPort,

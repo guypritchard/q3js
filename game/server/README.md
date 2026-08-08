@@ -33,10 +33,12 @@ Runtime variables:
 - `Q3JS_MASTER_URL`: master HTTP base URL, defaults `http://localhost:8080`
 - `Q3JS_EVENT_URL`: authenticated event-ingestion endpoint, defaults to
   `/api/events` on `Q3JS_MASTER_URL`
-- `Q3JS_EVENT_CLIENT_SECRET`: shared event-ingestion secret. Local masters use
-  the same development-only fallback as the master application. It is required
-  when `Q3JS_MASTER_URL` is remote; `openssl rand -hex 32` generates one. The
-  server also sends it with heartbeats so matching servers are marked official.
+- `Q3JS_EVENT_CLIENT_SECRET`: optional shared event-ingestion secret. Local
+  development uses the same fallback as the master application. Community
+  servers omit it: they register as unofficial and event reporting is disabled.
+  Project-managed servers provide the master application's secret to enable
+  authenticated events and official status. `openssl rand -hex 32` generates
+  a suitable secret for operators running their own master.
 - `Q3JS_PUBLISH_HOST`, `Q3JS_PUBLISH_PORT`: browser-reachable gateway address,
   defaults `localhost` and `Q3JS_GATEWAY_PORT`
 - `Q3JS_SECURE`: publish the gateway as `wss` instead of `ws`, defaults `false`
@@ -66,13 +68,17 @@ docker run --rm \
   -p 27961:27961/tcp \
   -v /path/to/baseq3:/data/baseq3:ro \
   -v q3js-server-state:/state \
-  -e Q3JS_MASTER_URL=https://master.example.com \
-  -e Q3JS_EVENT_CLIENT_SECRET=replace-with-a-production-secret \
-  -e Q3JS_PUBLISH_HOST=quake.example.com \
-  -e Q3JS_SECURE=true \
+  -e Q3JS_MASTER_URL=https://master.q3js.com \
+  -e Q3JS_PUBLISH_HOST=YOUR_PUBLIC_IP_OR_HOSTNAME \
+  -e Q3JS_PUBLISH_PORT=27961 \
+  -e Q3JS_SECURE=false \
   -e 'Q3JS_SERVER_CONFIG=seta sv_hostname "Q3JS Arena"; seta sv_maxclients "16"; seta g_gametype "0"; seta fraglimit "20"; seta timelimit "15"; map q3dm17' \
-  q3js-server
+  lukaklacar/q3js-server:1.0.0
 ```
+
+This public example registers an unofficial community server. Operators of the
+Q3JS production master add `Q3JS_EVENT_CLIENT_SECRET` separately; community
+operators do not need or receive that private credential.
 
 In Dokploy, attach the PK3 volume to `/data/baseq3`. The PK3 files must be at
 the root of that volume; no build arguments or download URLs are required.

@@ -13,7 +13,7 @@ export function SiteHeader() {
         <Link href="/" className="mr-auto flex min-w-0 items-center gap-2.5" aria-label="Q3JS home">
           <Image src="/quake3.svg" alt="" width={24} height={24} className="size-6" priority />
           <span className="font-mono text-xl font-black uppercase tracking-[0.04em]">Q3JS</span>
-          <span className="hidden font-mono text-xs text-muted-foreground min-[380px]:inline">0.0.1</span>
+          <span className="hidden font-mono text-xs text-muted-foreground min-[380px]:inline">1.0.0</span>
         </Link>
 
         <div className="hidden items-center gap-5 md:flex">
