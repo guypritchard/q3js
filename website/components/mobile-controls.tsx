@@ -120,7 +120,7 @@ function MovementStick({ client }: { client: Q3Client }) {
     >
       <div className="pointer-events-none absolute inset-[22%] rounded-full border border-dashed border-white/15" />
       <div
-        className="pointer-events-none absolute left-1/2 top-1/2 size-[38%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/25 bg-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_10px_24px_rgba(0,0,0,.24)]"
+        className="pointer-events-none absolute left-1/2 top-1/2 size-[38%] rounded-full border border-white/25 bg-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_10px_24px_rgba(0,0,0,.24)]"
         style={{ transform: `translate(calc(-50% + ${stickPosition.x}px), calc(-50% + ${stickPosition.y}px))` }}
       />
     </div>
