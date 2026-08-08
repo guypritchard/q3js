@@ -52,7 +52,7 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
   const roomRef = useRef<Room | undefined>(undefined);
   const microphoneRef = useRef<LocalAudioTrack | undefined>(undefined);
   const pressedRef = useRef(false);
-  const chatActiveRef = useRef(false);
+  const textInputActiveRef = useRef(false);
 
   const stopTalking = useCallback(() => {
     pressedRef.current = false;
@@ -210,7 +210,7 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
       if (
         event.code !== "KeyK"
         || event.repeat
-        || chatActiveRef.current
+        || textInputActiveRef.current
         || isEditableTarget(event.target)
       ) return;
       event.preventDefault();
@@ -235,16 +235,16 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
     const endTalking = (event: KeyboardEvent) => {
       if (
         event.code !== "KeyK"
-        || chatActiveRef.current
+        || textInputActiveRef.current
         || isEditableTarget(event.target)
       ) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       stopTalking();
     };
-    const handleChatActiveChange = (event: Event) => {
+    const handleTextInputActiveChange = (event: Event) => {
       const active = event instanceof CustomEvent && event.detail === true;
-      chatActiveRef.current = active;
+      textInputActiveRef.current = active;
       if (active) stopTalking();
     };
     const handleVisibility = () => {
@@ -253,13 +253,13 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
 
     window.addEventListener("keydown", startTalking, true);
     window.addEventListener("keyup", endTalking, true);
-    window.addEventListener("q3js:chat-active-change", handleChatActiveChange);
+    window.addEventListener("q3js:text-input-active-change", handleTextInputActiveChange);
     window.addEventListener("blur", stopTalking);
     document.addEventListener("visibilitychange", handleVisibility);
     return () => {
       window.removeEventListener("keydown", startTalking, true);
       window.removeEventListener("keyup", endTalking, true);
-      window.removeEventListener("q3js:chat-active-change", handleChatActiveChange);
+      window.removeEventListener("q3js:text-input-active-change", handleTextInputActiveChange);
       window.removeEventListener("blur", stopTalking);
       document.removeEventListener("visibilitychange", handleVisibility);
       stopTalking();

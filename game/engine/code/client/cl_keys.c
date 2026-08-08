@@ -1452,14 +1452,15 @@ Key_SetCatcher
 void Key_SetCatcher( int catcher ) {
 	// If the catcher state is changing, clear all key states
 	if( catcher != keyCatchers ) {
-		qboolean messageStateChanged =
-			( catcher & KEYCATCH_MESSAGE ) != ( keyCatchers & KEYCATCH_MESSAGE );
+		const int textInputCatchers = KEYCATCH_CONSOLE | KEYCATCH_MESSAGE;
+		qboolean textInputStateChanged =
+			( catcher & textInputCatchers ) != ( keyCatchers & textInputCatchers );
 
 		Key_ClearStates( );
 		keyCatchers = catcher;
 
-		if( messageStateChanged ) {
-			Q3JS_NotifyChatActive( catcher & KEYCATCH_MESSAGE );
+		if( textInputStateChanged ) {
+			Q3JS_NotifyTextInputActive( catcher & textInputCatchers );
 		}
 		return;
 	}

@@ -616,7 +616,7 @@ void CL_InitUI( void );
 void CL_ShutdownUI( void );
 int Key_GetCatcher( void );
 void Key_SetCatcher( int catcher );
-void Q3JS_NotifyChatActive( int active );
+void Q3JS_NotifyTextInputActive( int active );
 void LAN_LoadCachedServers( void );
 void LAN_SaveServersToCache( void );
 
