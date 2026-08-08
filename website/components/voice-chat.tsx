@@ -16,6 +16,12 @@ import { storedVoiceDeviceId } from "@/lib/voice-preferences";
 
 type VoiceState = "connecting" | "ready" | "talking" | "error";
 
+interface VoiceParticipant {
+  id: string;
+  local: boolean;
+  name: string;
+}
+
 interface VoiceChatProps {
   participantName: string;
   serverId: string;
@@ -38,7 +44,9 @@ function voiceErrorMessage(error: unknown): string {
 
 export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
   const [voiceState, setVoiceState] = useState<VoiceState>("connecting");
-  const [participantCount, setParticipantCount] = useState(1);
+  const [participants, setParticipants] = useState<VoiceParticipant[]>([
+    { id: "local", local: true, name: participantName },
+  ]);
   const [playbackBlocked, setPlaybackBlocked] = useState(false);
   const [error, setError] = useState<string>();
   const roomRef = useRef<Room | undefined>(undefined);
@@ -78,8 +86,20 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
     window.addEventListener("pointerdown", unlockAudioFromGesture, true);
     window.addEventListener("keydown", unlockAudioFromGesture, true);
 
-    const updateParticipantCount = () => {
-      setParticipantCount(room.remoteParticipants.size + 1);
+    const updateParticipants = () => {
+      const localParticipant = room.localParticipant;
+      setParticipants([
+        {
+          id: localParticipant.identity || "local",
+          local: true,
+          name: localParticipant.name?.trim() || participantName,
+        },
+        ...Array.from(room.remoteParticipants.values()).map((participant) => ({
+          id: participant.identity,
+          local: false,
+          name: participant.name?.trim() || participant.identity,
+        })),
+      ]);
     };
     const attachRemoteAudio = (track: RemoteTrack) => {
       if (track.kind !== Track.Kind.Audio) return;
@@ -110,8 +130,9 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
 
     room.on(RoomEvent.TrackSubscribed, attachRemoteAudio);
     room.on(RoomEvent.TrackUnsubscribed, detachRemoteAudio);
-    room.on(RoomEvent.ParticipantConnected, updateParticipantCount);
-    room.on(RoomEvent.ParticipantDisconnected, updateParticipantCount);
+    room.on(RoomEvent.ParticipantConnected, updateParticipants);
+    room.on(RoomEvent.ParticipantDisconnected, updateParticipants);
+    room.on(RoomEvent.ParticipantNameChanged, updateParticipants);
     room.on(RoomEvent.AudioPlaybackStatusChanged, updatePlaybackState);
 
     const connect = async () => {
@@ -152,7 +173,7 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
         await room.localParticipant.publishTrack(microphone, {
           source: Track.Source.Microphone,
         });
-        updateParticipantCount();
+        updateParticipants();
         updatePlaybackState();
         setVoiceState("ready");
       } catch (connectError) {
@@ -250,9 +271,21 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
           {voiceState === "error" && "Voice unavailable"}
         </span>
         {voiceState !== "error" && (
-          <span className="text-white/55">{participantCount} in room</span>
+          <span className="text-white/55">{participants.length} in room</span>
         )}
       </div>
+
+      {voiceState !== "error" && participants.length > 0 && (
+        <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-white/15 pt-2 font-mono text-xs normal-case">
+          {participants.map((participant) => (
+            <li key={participant.id} className="flex min-w-0 items-center gap-1.5 text-white/75">
+              <span className="size-1.5 shrink-0 bg-green-400" aria-hidden="true" />
+              <span className="max-w-40 truncate">{participant.name}</span>
+              {participant.local && <span className="text-white/40">(you)</span>}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {error && <p className="mt-1 text-xs normal-case leading-4 text-white/65">{error}</p>}
       {playbackBlocked && voiceState !== "error" && (
