@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 export interface GameCanvasProps {
   options: Omit<Q3ClientOptions, "canvas">;
   className?: string;
+  inputMode?: "desktop" | "mobile";
   onClientReady?: (client: Q3Client) => void;
   onPointerLockChange?: (captured: boolean) => void;
 }
@@ -17,6 +18,7 @@ export interface GameCanvasProps {
 export function GameCanvas({
   options,
   className,
+  inputMode = "desktop",
   onClientReady,
   onPointerLockChange,
 }: GameCanvasProps) {
@@ -33,9 +35,11 @@ export function GameCanvas({
     let client: Q3Client | undefined;
     const resize = () => {
       const bounds = canvas.getBoundingClientRect();
-      const scale = Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
-        ? window.devicePixelRatio
-        : 1;
+      const scale = inputMode === "mobile"
+        ? 2
+        : Number.isFinite(window.devicePixelRatio) && window.devicePixelRatio > 0
+          ? window.devicePixelRatio
+          : 1;
       if (client) {
         client.resize(bounds.width, bounds.height, scale);
       } else {
@@ -76,13 +80,14 @@ export function GameCanvas({
       document.removeEventListener("fullscreenchange", resize);
       void client?.dispose();
     };
-  }, [onClientReady, options]);
+  }, [inputMode, onClientReady, options]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (
       !canvas
       || !clientReady
+      || inputMode === "mobile"
       || typeof canvas.requestPointerLock !== "function"
     ) {
       return;
@@ -111,7 +116,7 @@ export function GameCanvas({
         }
       }
     };
-  }, [clientReady, onPointerLockChange]);
+  }, [clientReady, inputMode, onPointerLockChange]);
 
   return (
     <canvas
