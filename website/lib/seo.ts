@@ -46,12 +46,19 @@ export function absoluteUrl(path: string): string {
 
 export function buildPageMetadata({
   description,
+  image = socialImage,
   keywords = siteConfig.keywords,
   path,
   robots,
   title,
 }: {
   description: string;
+  image?: {
+    url: string;
+    width: number;
+    height: number;
+    alt: string;
+  };
   keywords?: readonly string[];
   path: string;
   robots?: Metadata["robots"];
@@ -70,14 +77,14 @@ export function buildPageMetadata({
       siteName: siteConfig.name,
       title: pageTitle,
       description,
-      images: [socialImage],
+      images: [image],
     },
     twitter: {
       card: "summary_large_image",
       creator: siteConfig.author.xHandle,
       title: pageTitle,
       description,
-      images: ["/twitter-image"],
+      images: [image.url],
     },
     robots,
   };
