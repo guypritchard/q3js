@@ -1,8 +1,9 @@
 package com.q3js.master.playerconnection.controller;
 
 import com.q3js.master.event.security.EventAuthenticator;
-import com.q3js.master.playerconnection.domain.PlayerConnectionPage;
-import com.q3js.master.playerconnection.domain.StoredPlayerConnection;
+import com.q3js.master.playerconnection.domain.PlayerAddressName;
+import com.q3js.master.playerconnection.domain.PlayerAddressPage;
+import com.q3js.master.playerconnection.domain.StoredPlayerAddress;
 import com.q3js.master.playerconnection.dto.PlayerConnectionRequest;
 import com.q3js.master.playerconnection.service.PlayerConnectionService;
 
@@ -33,22 +34,24 @@ class PlayerConnectionControllerTest {
     @Test
     void listsConnectionsForAuthenticatedAdmins() {
         var receivedAt = OffsetDateTime.parse("2026-08-09T20:00:00Z");
-        when(service.connections(1, 50, "Ranger")).thenReturn(new PlayerConnectionPage(
+        when(service.addresses(1, 50, "Ranger")).thenReturn(new PlayerAddressPage(
             1,
             50,
             1,
             1,
             false,
             false,
-            List.of(new StoredPlayerConnection(
-                7,
-                "10.0.0.1",
+            List.of(new StoredPlayerAddress(
                 "203.0.113.7",
-                "^1Ranger",
+                List.of(new PlayerAddressName("^1Ranger", 3, receivedAt.minusDays(1), receivedAt)),
+                "10.0.0.1",
                 Map.of("name", "^1Ranger", "rate", "25000"),
                 "game.example.com",
                 27961,
-                receivedAt
+                3,
+                receivedAt.minusDays(1),
+                receivedAt,
+                null
             ))
         ));
 
@@ -59,10 +62,11 @@ class PlayerConnectionControllerTest {
             .then()
             .statusCode(200)
             .body("totalEntries", equalTo(1))
-            .body("entries[0].clientIp", equalTo("203.0.113.7"))
+            .body("entries[0].ipAddress", equalTo("203.0.113.7"))
+            .body("entries[0].names[0].playerName", equalTo("^1Ranger"))
             .body("entries[0].userinfo.rate", equalTo("25000"));
 
-        verify(service).connections(1, 50, "Ranger");
+        verify(service).addresses(1, 50, "Ranger");
     }
 
     @Test

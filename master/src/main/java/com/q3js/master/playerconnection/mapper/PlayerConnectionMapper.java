@@ -1,16 +1,17 @@
 package com.q3js.master.playerconnection.mapper;
 
-import com.q3js.master.playerconnection.domain.PlayerConnectionPage;
-import com.q3js.master.playerconnection.domain.StoredPlayerConnection;
-import com.q3js.master.playerconnection.dto.PlayerConnectionPageResponse;
-import com.q3js.master.playerconnection.dto.PlayerConnectionResponse;
+import com.q3js.master.playerconnection.domain.PlayerAddressPage;
+import com.q3js.master.playerconnection.domain.StoredPlayerAddress;
+import com.q3js.master.playerconnection.dto.PlayerAddressNameResponse;
+import com.q3js.master.playerconnection.dto.PlayerAddressPageResponse;
+import com.q3js.master.playerconnection.dto.PlayerAddressResponse;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class PlayerConnectionMapper {
-    public PlayerConnectionPageResponse response(PlayerConnectionPage page) {
-        return new PlayerConnectionPageResponse(
+    public PlayerAddressPageResponse response(PlayerAddressPage page) {
+        return new PlayerAddressPageResponse(
             page.page(),
             page.pageSize(),
             page.totalEntries(),
@@ -21,16 +22,23 @@ public class PlayerConnectionMapper {
         );
     }
 
-    private PlayerConnectionResponse response(StoredPlayerConnection connection) {
-        return new PlayerConnectionResponse(
-            connection.id(),
-            connection.sourceIp(),
-            connection.clientIp(),
-            connection.playerName(),
-            connection.userinfo(),
-            connection.serverHost(),
-            connection.serverPort(),
-            connection.receivedAt()
+    private PlayerAddressResponse response(StoredPlayerAddress address) {
+        return new PlayerAddressResponse(
+            address.ipAddress(),
+            address.names().stream().map(name -> new PlayerAddressNameResponse(
+                name.playerName(),
+                name.connectionCount(),
+                name.firstSeenAt(),
+                name.lastSeenAt()
+            )).toList(),
+            address.sourceIp(),
+            address.userinfo(),
+            address.serverHost(),
+            address.serverPort(),
+            address.connectionCount(),
+            address.firstSeenAt(),
+            address.lastSeenAt(),
+            address.bannedAt()
         );
     }
 }

@@ -5,10 +5,9 @@ import com.q3js.master.ban.dto.BanRequest;
 import com.q3js.master.ban.repository.BanRepository;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.BadRequestException;
-
-import java.net.InetAddress;
 import java.util.List;
+
+import static com.q3js.master.country.service.IpAddressNormalizer.normalize;
 
 @ApplicationScoped
 public class BanService {
@@ -23,22 +22,10 @@ public class BanService {
     }
 
     public Ban ban(BanRequest request) {
-        return repository.upsert(normalizedIp(request.ipAddress()), request.playerName());
+        return repository.ban(normalize(request.ipAddress()));
     }
 
     public void unban(String ipAddress) {
-        repository.delete(normalizedIp(ipAddress));
-    }
-
-    private static String normalizedIp(String supplied) {
-        String ipAddress = supplied == null ? "" : supplied.trim();
-        if (!ipAddress.matches("[0-9A-Fa-f:.]+")) {
-            throw new BadRequestException("IP address is invalid.");
-        }
-        try {
-            return InetAddress.getByName(ipAddress).getHostAddress();
-        } catch (Exception ignored) {
-            throw new BadRequestException("IP address is invalid.");
-        }
+        repository.unban(normalize(ipAddress));
     }
 }

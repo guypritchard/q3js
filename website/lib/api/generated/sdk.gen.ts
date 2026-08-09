@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { BanPlayerData, BanPlayerErrors, BanPlayerResponses, CreateVoiceTokenData, CreateVoiceTokenErrors, CreateVoiceTokenResponses, GetAdminBansData, GetAdminBansErrors, GetAdminBansResponses, GetBansData, GetBansErrors, GetBansResponses, GetPlayerConnectionsData, GetPlayerConnectionsErrors, GetPlayerConnectionsResponses, GetProfileData, GetProfileDistributionData, GetProfileDistributionErrors, GetProfileDistributionResponses, GetProfileErrors, GetProfileResponses, GetProfileSitemapData, GetProfileSitemapResponses, GetRequesterCountryData, GetRequesterCountryResponses, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionErrors, GetScoreboardDistributionResponses, GetScoreboardErrors, GetScoreboardResponses, GetStatsData, GetStatsResponses, GetWeaponUsageData, GetWeaponUsageErrors, GetWeaponUsageResponses, HeartbeatData, HeartbeatErrors, HeartbeatResponses, IngestData, IngestErrors, IngestPlayerConnectionData, IngestPlayerConnectionErrors, IngestPlayerConnectionResponses, IngestResponses, LoginAdminData, LoginAdminErrors, LoginAdminResponses, SearchProfilesData, SearchProfilesErrors, SearchProfilesResponses, ServersData, ServersResponses, StatusData, StatusResponses, UnbanPlayerData, UnbanPlayerErrors, UnbanPlayerResponses } from './types.gen';
+import type { BanPlayerData, BanPlayerErrors, BanPlayerResponses, CreateVoiceTokenData, CreateVoiceTokenErrors, CreateVoiceTokenResponses, GetAdminBansData, GetAdminBansErrors, GetAdminBansResponses, GetBansData, GetBansErrors, GetBansResponses, GetPlayerAddressesData, GetPlayerAddressesErrors, GetPlayerAddressesResponses, GetProfileData, GetProfileDistributionData, GetProfileDistributionErrors, GetProfileDistributionResponses, GetProfileErrors, GetProfileResponses, GetProfileSitemapData, GetProfileSitemapResponses, GetRequesterCountryData, GetRequesterCountryResponses, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionErrors, GetScoreboardDistributionResponses, GetScoreboardErrors, GetScoreboardResponses, GetStatsData, GetStatsResponses, GetWeaponUsageData, GetWeaponUsageErrors, GetWeaponUsageResponses, HeartbeatData, HeartbeatErrors, HeartbeatResponses, IngestData, IngestErrors, IngestPlayerConnectionData, IngestPlayerConnectionErrors, IngestPlayerConnectionResponses, IngestResponses, LoginAdminData, LoginAdminErrors, LoginAdminResponses, SearchProfilesData, SearchProfilesErrors, SearchProfilesResponses, ServersData, ServersResponses, StatusData, StatusResponses, UnbanPlayerData, UnbanPlayerErrors, UnbanPlayerResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -89,9 +89,9 @@ export const ingest = <ThrowOnError extends boolean = true>(options: Options<Ing
 });
 
 /**
- * List recorded player connections
+ * List known player IP addresses
  */
-export const getPlayerConnections = <ThrowOnError extends boolean = true>(options?: Options<GetPlayerConnectionsData, ThrowOnError>): RequestResult<GetPlayerConnectionsResponses, GetPlayerConnectionsErrors, ThrowOnError> => (options?.client ?? client).get<GetPlayerConnectionsResponses, GetPlayerConnectionsErrors, ThrowOnError>({
+export const getPlayerAddresses = <ThrowOnError extends boolean = true>(options?: Options<GetPlayerAddressesData, ThrowOnError>): RequestResult<GetPlayerAddressesResponses, GetPlayerAddressesErrors, ThrowOnError> => (options?.client ?? client).get<GetPlayerAddressesResponses, GetPlayerAddressesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/player-connections',
     ...options

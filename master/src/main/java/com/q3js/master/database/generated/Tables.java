@@ -4,9 +4,9 @@
 package com.q3js.master.database.generated;
 
 
-import com.q3js.master.database.generated.tables.BannedIps;
 import com.q3js.master.database.generated.tables.Events;
-import com.q3js.master.database.generated.tables.PlayerConnections;
+import com.q3js.master.database.generated.tables.PlayerAddressNames;
+import com.q3js.master.database.generated.tables.PlayerAddresses;
 import com.q3js.master.database.generated.tables.PlayerPageVisits;
 import com.q3js.master.database.generated.tables.Servers;
 
@@ -18,19 +18,19 @@ import com.q3js.master.database.generated.tables.Servers;
 public class Tables {
 
     /**
-     * The table <code>banned_ips</code>.
-     */
-    public static final BannedIps BANNED_IPS = BannedIps.BANNED_IPS;
-
-    /**
      * The table <code>events</code>.
      */
     public static final Events EVENTS = Events.EVENTS;
 
     /**
-     * The table <code>player_connections</code>.
+     * The table <code>player_address_names</code>.
      */
-    public static final PlayerConnections PLAYER_CONNECTIONS = PlayerConnections.PLAYER_CONNECTIONS;
+    public static final PlayerAddressNames PLAYER_ADDRESS_NAMES = PlayerAddressNames.PLAYER_ADDRESS_NAMES;
+
+    /**
+     * The table <code>player_addresses</code>.
+     */
+    public static final PlayerAddresses PLAYER_ADDRESSES = PlayerAddresses.PLAYER_ADDRESSES;
 
     /**
      * The table <code>player_page_visits</code>.

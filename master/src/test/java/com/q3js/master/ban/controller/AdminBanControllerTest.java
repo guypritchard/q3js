@@ -28,7 +28,7 @@ class AdminBanControllerTest {
 
     @Test
     void listsBansForAuthenticatedAdmins() {
-        when(service.bans()).thenReturn(List.of(new Ban("203.0.113.7", "^1Ranger", BANNED_AT)));
+        when(service.bans()).thenReturn(List.of(new Ban("203.0.113.7", BANNED_AT)));
 
         given()
             .auth().oauth2(adminToken())
@@ -40,8 +40,8 @@ class AdminBanControllerTest {
 
     @Test
     void letsAuthenticatedAdminsBanAPlayerIp() {
-        var request = new BanRequest("203.0.113.7", "^1Ranger");
-        when(service.ban(request)).thenReturn(new Ban("203.0.113.7", "^1Ranger", BANNED_AT));
+        var request = new BanRequest("203.0.113.7");
+        when(service.ban(request)).thenReturn(new Ban("203.0.113.7", BANNED_AT));
 
         given()
             .auth().oauth2(adminToken())
@@ -50,8 +50,7 @@ class AdminBanControllerTest {
             .when().post("/api/admin/bans")
             .then()
             .statusCode(200)
-            .body("ipAddress", equalTo("203.0.113.7"))
-            .body("playerName", equalTo("^1Ranger"));
+            .body("ipAddress", equalTo("203.0.113.7"));
 
         verify(service).ban(request);
     }
@@ -61,7 +60,7 @@ class AdminBanControllerTest {
         given()
             .auth().oauth2(adminToken())
             .contentType("application/json")
-            .body(Map.of("ipAddress", "not-an-ip", "playerName", "Ranger"))
+            .body(Map.of("ipAddress", "not-an-ip"))
             .when().post("/api/admin/bans")
             .then().statusCode(400);
 

@@ -7,13 +7,13 @@ import java.util.List;
 @Schema(requiredProperties = {
     "page", "pageSize", "totalEntries", "totalPages", "hasPreviousPage", "hasNextPage", "entries"
 })
-public record PlayerConnectionPageResponse(
+public record PlayerAddressPageResponse(
     int page,
     int pageSize,
     int totalEntries,
     int totalPages,
     boolean hasPreviousPage,
     boolean hasNextPage,
-    List<PlayerConnectionResponse> entries
+    List<PlayerAddressResponse> entries
 ) {
 }

@@ -12,6 +12,8 @@ import org.jooq.tools.jdbc.MockExecuteContext;
 import org.jooq.tools.jdbc.MockResult;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PlayerConnectionRepositoryTest {
     @Test
-    void insertsPlayerConnections() throws Exception {
+    void upsertsAddressesAndNamesForPlayerConnections() throws Exception {
         var provider = new RecordingProvider();
         var repository = new PlayerConnectionRepository(
             DSL.using(new MockConnection(provider), SQLDialect.POSTGRES),
@@ -37,30 +39,32 @@ class PlayerConnectionRepositoryTest {
             "10.0.0.1"
         );
 
-        assertEquals(1, provider.executeCount);
-        assertTrue(provider.sql.toLowerCase().contains("insert into \"player_connections\""));
-        assertEquals("10.0.0.1", provider.bindings[0]);
-        assertEquals("203.0.113.7", provider.bindings[1]);
-        assertEquals("^1Ranger", provider.bindings[2]);
+        assertEquals(2, provider.sql.size());
+        assertTrue(provider.sql.get(0).toLowerCase().contains("insert into \"player_addresses\""));
+        assertTrue(provider.sql.get(0).toLowerCase().contains("on conflict"));
+        assertEquals("203.0.113.7", provider.bindings.get(0)[0]);
+        assertEquals("10.0.0.1", provider.bindings.get(0)[1]);
         assertEquals(
             Map.of("name", "^1Ranger", "rate", "25000"),
-            new ObjectMapper().readValue(String.valueOf(provider.bindings[3]), Map.class)
+            new ObjectMapper().readValue(String.valueOf(provider.bindings.get(0)[2]), Map.class)
         );
-        assertEquals("game.example.com", provider.bindings[4]);
-        assertEquals(27961, provider.bindings[5]);
+        assertEquals("game.example.com", provider.bindings.get(0)[3]);
+        assertEquals(27961, provider.bindings.get(0)[4]);
+
+        assertTrue(provider.sql.get(1).toLowerCase().contains("insert into \"player_address_names\""));
+        assertEquals("203.0.113.7", provider.bindings.get(1)[0]);
+        assertEquals("^1Ranger", provider.bindings.get(1)[1]);
     }
 
     private static final class RecordingProvider implements MockDataProvider {
         private final DSLContext dsl = DSL.using(SQLDialect.POSTGRES);
-        private int executeCount;
-        private String sql;
-        private Object[] bindings;
+        private final List<String> sql = new ArrayList<>();
+        private final List<Object[]> bindings = new ArrayList<>();
 
         @Override
         public MockResult[] execute(MockExecuteContext context) {
-            executeCount++;
-            sql = context.sql();
-            bindings = context.bindings();
+            sql.add(context.sql());
+            bindings.add(context.bindings());
             return new MockResult[]{new MockResult(1, dsl.newResult())};
         }
     }

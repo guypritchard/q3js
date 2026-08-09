@@ -3,8 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { banPlayer, createVoiceToken, getAdminBans, getBans, getPlayerConnections, getProfile, getProfileDistribution, getProfileSitemap, getRequesterCountry, getScoreboard, getScoreboardDistribution, getStats, getWeaponUsage, heartbeat, ingest, ingestPlayerConnection, loginAdmin, type Options, searchProfiles, servers, status, unbanPlayer } from '../sdk.gen';
-import type { BanPlayerData, BanPlayerResponse, CreateVoiceTokenData, CreateVoiceTokenResponse, GetAdminBansData, GetAdminBansResponse, GetBansData, GetBansResponse, GetPlayerConnectionsData, GetPlayerConnectionsResponse, GetProfileData, GetProfileDistributionData, GetProfileDistributionResponse, GetProfileResponse, GetProfileSitemapData, GetProfileSitemapResponse, GetRequesterCountryData, GetRequesterCountryResponse, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionResponse, GetScoreboardResponse, GetStatsData, GetStatsResponse, GetWeaponUsageData, GetWeaponUsageResponse, HeartbeatData, HeartbeatResponse, IngestData, IngestPlayerConnectionData, IngestPlayerConnectionResponse, IngestResponse, LoginAdminData, LoginAdminResponse, SearchProfilesData, SearchProfilesResponse, ServersData, ServersResponse, StatusData, StatusResponse2, UnbanPlayerData, UnbanPlayerResponse } from '../types.gen';
+import { banPlayer, createVoiceToken, getAdminBans, getBans, getPlayerAddresses, getProfile, getProfileDistribution, getProfileSitemap, getRequesterCountry, getScoreboard, getScoreboardDistribution, getStats, getWeaponUsage, heartbeat, ingest, ingestPlayerConnection, loginAdmin, type Options, searchProfiles, servers, status, unbanPlayer } from '../sdk.gen';
+import type { BanPlayerData, BanPlayerResponse, CreateVoiceTokenData, CreateVoiceTokenResponse, GetAdminBansData, GetAdminBansResponse, GetBansData, GetBansResponse, GetPlayerAddressesData, GetPlayerAddressesResponse, GetProfileData, GetProfileDistributionData, GetProfileDistributionResponse, GetProfileResponse, GetProfileSitemapData, GetProfileSitemapResponse, GetRequesterCountryData, GetRequesterCountryResponse, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionResponse, GetScoreboardResponse, GetStatsData, GetStatsResponse, GetWeaponUsageData, GetWeaponUsageResponse, HeartbeatData, HeartbeatResponse, IngestData, IngestPlayerConnectionData, IngestPlayerConnectionResponse, IngestResponse, LoginAdminData, LoginAdminResponse, SearchProfilesData, SearchProfilesResponse, ServersData, ServersResponse, StatusData, StatusResponse2, UnbanPlayerData, UnbanPlayerResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -202,14 +202,14 @@ export const ingestMutation = (options?: Partial<Options<IngestData>>): UseMutat
     return mutationOptions;
 };
 
-export const getPlayerConnectionsQueryKey = (options?: Options<GetPlayerConnectionsData>) => createQueryKey('getPlayerConnections', options, false, ['Player connections']);
+export const getPlayerAddressesQueryKey = (options?: Options<GetPlayerAddressesData>) => createQueryKey('getPlayerAddresses', options, false, ['Player connections']);
 
 /**
- * List recorded player connections
+ * List known player IP addresses
  */
-export const getPlayerConnectionsOptions = (options?: Options<GetPlayerConnectionsData>) => queryOptions<GetPlayerConnectionsResponse, DefaultError, GetPlayerConnectionsResponse, ReturnType<typeof getPlayerConnectionsQueryKey>>({
+export const getPlayerAddressesOptions = (options?: Options<GetPlayerAddressesData>) => queryOptions<GetPlayerAddressesResponse, DefaultError, GetPlayerAddressesResponse, ReturnType<typeof getPlayerAddressesQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getPlayerConnections({
+        const { data } = await getPlayerAddresses({
             ...options,
             ...queryKey[0],
             signal,
@@ -217,7 +217,7 @@ export const getPlayerConnectionsOptions = (options?: Options<GetPlayerConnectio
         });
         return data;
     },
-    queryKey: getPlayerConnectionsQueryKey(options)
+    queryKey: getPlayerAddressesQueryKey(options)
 });
 
 const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'headers' | 'path' | 'query'>>(queryKey: QueryKey<Options>, page: K) => {
@@ -249,24 +249,24 @@ const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'hea
     return params as unknown as typeof page;
 };
 
-export const getPlayerConnectionsInfiniteQueryKey = (options?: Options<GetPlayerConnectionsData>): QueryKey<Options<GetPlayerConnectionsData>> => createQueryKey('getPlayerConnections', options, true);
+export const getPlayerAddressesInfiniteQueryKey = (options?: Options<GetPlayerAddressesData>): QueryKey<Options<GetPlayerAddressesData>> => createQueryKey('getPlayerAddresses', options, true);
 
 /**
- * List recorded player connections
+ * List known player IP addresses
  */
-export const getPlayerConnectionsInfiniteOptions = (options?: Options<GetPlayerConnectionsData>) => {
-    const opts = infiniteQueryOptions<GetPlayerConnectionsResponse, DefaultError, InfiniteData<GetPlayerConnectionsResponse>, QueryKey<Options<GetPlayerConnectionsData>>, number | Pick<QueryKey<Options<GetPlayerConnectionsData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+export const getPlayerAddressesInfiniteOptions = (options?: Options<GetPlayerAddressesData>) => {
+    const opts = infiniteQueryOptions<GetPlayerAddressesResponse, DefaultError, InfiniteData<GetPlayerAddressesResponse>, QueryKey<Options<GetPlayerAddressesData>>, number | Pick<QueryKey<Options<GetPlayerAddressesData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
     // @ts-ignore
     {
         queryFn: async ({ pageParam, queryKey, signal }) => {
             // @ts-ignore
-            const page: Pick<QueryKey<Options<GetPlayerConnectionsData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+            const page: Pick<QueryKey<Options<GetPlayerAddressesData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
                 query: {
                     page: pageParam
                 }
             };
             const params = createInfiniteParams(queryKey, page);
-            const { data } = await getPlayerConnections({
+            const { data } = await getPlayerAddresses({
                 ...options,
                 ...params,
                 signal,
@@ -274,7 +274,7 @@ export const getPlayerConnectionsInfiniteOptions = (options?: Options<GetPlayerC
             });
             return data;
         },
-        queryKey: getPlayerConnectionsInfiniteQueryKey(options)
+        queryKey: getPlayerAddressesInfiniteQueryKey(options)
     });
     return opts as Omit<typeof opts, 'initialData'>;
 };

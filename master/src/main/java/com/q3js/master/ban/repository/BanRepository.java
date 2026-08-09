@@ -5,10 +5,12 @@ import com.q3js.master.ban.domain.Ban;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
-import static com.q3js.master.database.generated.Tables.BANNED_IPS;
+import static com.q3js.master.database.generated.Tables.PLAYER_ADDRESSES;
 
 @ApplicationScoped
 public class BanRepository {
@@ -19,35 +21,40 @@ public class BanRepository {
     }
 
     public List<Ban> findAll() {
-        return dsl.selectFrom(BANNED_IPS)
-            .orderBy(BANNED_IPS.BANNED_AT.desc(), BANNED_IPS.IP_ADDRESS.asc())
+        return dsl.select(PLAYER_ADDRESSES.IP_ADDRESS, PLAYER_ADDRESSES.BANNED_AT)
+            .from(PLAYER_ADDRESSES)
+            .where(PLAYER_ADDRESSES.BANNED_AT.isNotNull())
+            .orderBy(PLAYER_ADDRESSES.BANNED_AT.desc(), PLAYER_ADDRESSES.IP_ADDRESS.asc())
             .fetch(record -> new Ban(
-                record.getIpAddress(),
-                record.getPlayerName(),
-                record.getBannedAt()
+                record.get(PLAYER_ADDRESSES.IP_ADDRESS),
+                record.get(PLAYER_ADDRESSES.BANNED_AT)
             ));
     }
 
     @Transactional
-    public Ban upsert(String ipAddress, String playerName) {
-        var record = dsl.insertInto(BANNED_IPS)
-            .set(BANNED_IPS.IP_ADDRESS, ipAddress)
-            .set(BANNED_IPS.PLAYER_NAME, playerName)
-            .onConflict(BANNED_IPS.IP_ADDRESS)
+    public Ban ban(String ipAddress) {
+        var record = dsl.insertInto(PLAYER_ADDRESSES)
+            .set(PLAYER_ADDRESSES.IP_ADDRESS, ipAddress)
+            .set(PLAYER_ADDRESSES.BANNED_AT, DSL.currentOffsetDateTime())
+            .onConflict(PLAYER_ADDRESSES.IP_ADDRESS)
             .doUpdate()
-            .set(BANNED_IPS.PLAYER_NAME, playerName)
-            .returning()
+            .set(
+                PLAYER_ADDRESSES.BANNED_AT,
+                DSL.coalesce(PLAYER_ADDRESSES.BANNED_AT, DSL.currentOffsetDateTime())
+            )
+            .returning(PLAYER_ADDRESSES.IP_ADDRESS, PLAYER_ADDRESSES.BANNED_AT)
             .fetchOne();
         if (record == null) {
             throw new IllegalStateException("Ban was not persisted.");
         }
-        return new Ban(record.getIpAddress(), record.getPlayerName(), record.getBannedAt());
+        return new Ban(record.get(PLAYER_ADDRESSES.IP_ADDRESS), record.get(PLAYER_ADDRESSES.BANNED_AT));
     }
 
     @Transactional
-    public void delete(String ipAddress) {
-        dsl.deleteFrom(BANNED_IPS)
-            .where(BANNED_IPS.IP_ADDRESS.eq(ipAddress))
+    public void unban(String ipAddress) {
+        dsl.update(PLAYER_ADDRESSES)
+            .set(PLAYER_ADDRESSES.BANNED_AT, (OffsetDateTime) null)
+            .where(PLAYER_ADDRESSES.IP_ADDRESS.eq(ipAddress))
             .execute();
     }
 }

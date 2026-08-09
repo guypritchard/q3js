@@ -19,12 +19,10 @@ export type AuthTokenResponse = {
 
 export type BanRequest = {
     ipAddress: string;
-    playerName: string;
 };
 
 export type BanResponse = {
     ipAddress: string;
-    playerName?: string;
     bannedAt: OffsetDateTime;
 };
 
@@ -66,14 +64,36 @@ export type KillDistributionPointResponse = {
 
 export type OffsetDateTime = string;
 
-export type PlayerConnectionPageResponse = {
+export type PlayerAddressNameResponse = {
+    playerName: string;
+    connectionCount: number;
+    firstSeenAt: OffsetDateTime;
+    lastSeenAt: OffsetDateTime;
+};
+
+export type PlayerAddressPageResponse = {
     page: number;
     pageSize: number;
     totalEntries: number;
     totalPages: number;
     hasPreviousPage: boolean;
     hasNextPage: boolean;
-    entries: Array<PlayerConnectionResponse>;
+    entries: Array<PlayerAddressResponse>;
+};
+
+export type PlayerAddressResponse = {
+    ipAddress: string;
+    names: Array<PlayerAddressNameResponse>;
+    sourceIp?: string;
+    userinfo: {
+        [key: string]: string;
+    };
+    serverHost?: string;
+    serverPort?: number;
+    connectionCount: number;
+    firstSeenAt?: OffsetDateTime;
+    lastSeenAt?: OffsetDateTime;
+    bannedAt?: OffsetDateTime;
 };
 
 export type PlayerConnectionRequest = {
@@ -84,19 +104,6 @@ export type PlayerConnectionRequest = {
     };
     serverHost: string;
     serverPort: number;
-};
-
-export type PlayerConnectionResponse = {
-    id: number;
-    sourceIp?: string;
-    clientIp: string;
-    playerName: string;
-    userinfo: {
-        [key: string]: string;
-    };
-    serverHost: string;
-    serverPort: number;
-    receivedAt: OffsetDateTime;
 };
 
 export type ProfileMapResponse = {
@@ -448,7 +455,7 @@ export type IngestResponses = {
 
 export type IngestResponse = IngestResponses[keyof IngestResponses];
 
-export type GetPlayerConnectionsData = {
+export type GetPlayerAddressesData = {
     body?: never;
     path?: never;
     query?: {
@@ -468,7 +475,7 @@ export type GetPlayerConnectionsData = {
     url: '/api/player-connections';
 };
 
-export type GetPlayerConnectionsErrors = {
+export type GetPlayerAddressesErrors = {
     /**
      * Pagination or search parameters are invalid
      */
@@ -483,14 +490,14 @@ export type GetPlayerConnectionsErrors = {
     403: unknown;
 };
 
-export type GetPlayerConnectionsResponses = {
+export type GetPlayerAddressesResponses = {
     /**
-     * Paginated player connections
+     * Paginated player addresses with known names
      */
-    200: PlayerConnectionPageResponse;
+    200: PlayerAddressPageResponse;
 };
 
-export type GetPlayerConnectionsResponse = GetPlayerConnectionsResponses[keyof GetPlayerConnectionsResponses];
+export type GetPlayerAddressesResponse = GetPlayerAddressesResponses[keyof GetPlayerAddressesResponses];
 
 export type IngestPlayerConnectionData = {
     body: PlayerConnectionRequest;

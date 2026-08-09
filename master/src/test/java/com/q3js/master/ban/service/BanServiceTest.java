@@ -16,11 +16,11 @@ class BanServiceTest {
         var repository = mock(BanRepository.class);
         var service = new BanService(repository);
 
-        service.ban(new BanRequest("2001:db8::7", "Ranger"));
+        service.ban(new BanRequest("2001:db8::7"));
         service.unban("2001:0db8:0:0:0:0:0:7");
 
-        verify(repository).upsert("2001:db8:0:0:0:0:0:7", "Ranger");
-        verify(repository).delete("2001:db8:0:0:0:0:0:7");
+        verify(repository).ban("2001:db8::7");
+        verify(repository).unban("2001:db8::7");
     }
 
     @Test
@@ -28,5 +28,15 @@ class BanServiceTest {
         var service = new BanService(mock(BanRepository.class));
 
         assertThrows(BadRequestException.class, () -> service.unban("999.999.999.999"));
+    }
+
+    @Test
+    void collapsesIpv4MappedAddresses() {
+        var repository = mock(BanRepository.class);
+        var service = new BanService(repository);
+
+        service.ban(new BanRequest("::ffff:203.0.113.7"));
+
+        verify(repository).ban("203.0.113.7");
     }
 }

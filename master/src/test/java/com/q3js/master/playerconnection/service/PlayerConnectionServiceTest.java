@@ -1,7 +1,7 @@
 package com.q3js.master.playerconnection.service;
 
 import com.q3js.master.playerconnection.domain.PlayerConnection;
-import com.q3js.master.playerconnection.domain.StoredPlayerConnection;
+import com.q3js.master.playerconnection.domain.StoredPlayerAddress;
 import com.q3js.master.playerconnection.dto.PlayerConnectionRequest;
 import com.q3js.master.playerconnection.repository.PlayerConnectionRepository;
 
@@ -26,11 +26,11 @@ class PlayerConnectionServiceTest {
     void returnsClampedConnectionPages() {
         var repository = mock(PlayerConnectionRepository.class);
         var service = new PlayerConnectionService(repository);
-        var entries = List.of(mock(StoredPlayerConnection.class));
+        var entries = List.of(mock(StoredPlayerAddress.class));
         when(repository.count("Ranger")).thenReturn(51);
         when(repository.find("Ranger", 25, 50)).thenReturn(entries);
 
-        var page = service.connections(99, 25, "Ranger");
+        var page = service.addresses(99, 25, "Ranger");
 
         assertEquals(3, page.page());
         assertEquals(25, page.pageSize());

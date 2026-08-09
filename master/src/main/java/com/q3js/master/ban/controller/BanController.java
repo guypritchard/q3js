@@ -46,7 +46,7 @@ public class BanController {
         }
 
         return service.bans().stream()
-            .map(ban -> new BanResponse(ban.ipAddress(), ban.playerName(), ban.bannedAt()))
+            .map(ban -> new BanResponse(ban.ipAddress(), ban.bannedAt()))
             .toList();
     }
 }
