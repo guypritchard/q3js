@@ -3,6 +3,7 @@ import { createSocket } from "node:dgram";
 import { test } from "node:test";
 import { WebSocket } from "ws";
 import { Gateway } from "../dist/app/gateway.mjs";
+import { compressHuffman, decompressHuffman } from "../dist/app/huffman.mjs";
 
 function listenUdp(socket) {
   return new Promise((resolve, reject) => {
@@ -53,6 +54,55 @@ test("gateway forwards binary WebSocket messages through UDP", async () => {
   webSocket.send(Buffer.from("q3js"));
   const message = await within(response, "gateway response");
   assert.equal(Buffer.from(message).toString(), "q3js");
+
+  webSocket.close();
+  await within(new Promise((resolve) => webSocket.once("close", resolve)), "WebSocket close");
+  await within(gateway.stop(), "gateway stop");
+  udp.close();
+});
+
+test("gateway adds the trusted forwarded client IP to connect userinfo", async () => {
+  const udp = createSocket("udp4");
+  await within(listenUdp(udp), "UDP bind");
+  const udpAddress = udp.address();
+
+  const gateway = new Gateway({
+    host: "127.0.0.1",
+    port: 0,
+    targetHost: "127.0.0.1",
+    targetPort: udpAddress.port,
+    maxConnections: 2,
+    maxPacketBytes: 65535,
+    trustedProxyHops: 1,
+    idleTimeoutMs: 5000,
+    ready: () => true,
+  });
+  await within(gateway.start(), "gateway start");
+
+  const webSocket = new WebSocket(`ws://127.0.0.1:${gateway.address().port}/ws`, {
+    headers: { "x-forwarded-for": "192.0.2.10, 203.0.113.7" },
+  });
+  await within(new Promise((resolve, reject) => {
+    webSocket.once("open", resolve);
+    webSocket.once("error", reject);
+  }), "WebSocket open");
+
+  const info = "\\name\\Ranger\\clientip\\198.51.100.99\\protocol\\71"
+    + "\\qport\\12345\\challenge\\67890";
+  const packet = Buffer.concat([
+    Buffer.from("\xff\xff\xff\xffconnect ", "latin1"),
+    compressHuffman(Buffer.from(`\"${info}\"`, "latin1")),
+  ]);
+  const forwarded = within(
+    new Promise((resolve) => udp.once("message", resolve)),
+    "forwarded connect packet",
+  );
+  webSocket.send(packet);
+
+  const message = await forwarded;
+  const decoded = decompressHuffman(message.subarray(12)).toString("latin1");
+  assert.match(decoded, /\\clientip\\203\.0\.113\.7(?:\\|\")/);
+  assert.doesNotMatch(decoded, /198\.51\.100\.99/);
 
   webSocket.close();
   await within(new Promise((resolve) => webSocket.once("close", resolve)), "WebSocket close");

@@ -35,6 +35,15 @@ test("allows the complete game-server config to come from the environment", () =
   assert.equal(loadConfig({}, []).serverConfig, undefined);
 });
 
+test("configures trusted reverse-proxy hops for client IP forwarding", () => {
+  assert.equal(loadConfig({}, []).trustedProxyHops, 0);
+  assert.equal(loadConfig({ Q3JS_TRUST_PROXY_HOPS: "2" }, []).trustedProxyHops, 2);
+  assert.throws(
+    () => loadConfig({ Q3JS_TRUST_PROXY_HOPS: "17" }, []),
+    /Q3JS_TRUST_PROXY_HOPS must be an integer between 0 and 16/,
+  );
+});
+
 test("rejects unsafe or oversized game-server config", () => {
   assert.throws(
     () => loadConfig({ Q3JS_SERVER_CONFIG: "seta sv_hostname bad\0name" }, []),
