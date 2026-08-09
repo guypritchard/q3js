@@ -75,6 +75,6 @@ public class AdminBanController {
     }
 
     private static BanResponse response(com.q3js.master.ban.domain.Ban ban) {
-        return new BanResponse(ban.ipAddress(), ban.playerName(), ban.bannedAt());
+        return new BanResponse(ban.ipAddress(), ban.bannedAt());
     }
 }

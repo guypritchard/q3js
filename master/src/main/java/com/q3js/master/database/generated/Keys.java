@@ -4,17 +4,18 @@
 package com.q3js.master.database.generated;
 
 
-import com.q3js.master.database.generated.tables.BannedIps;
 import com.q3js.master.database.generated.tables.Events;
-import com.q3js.master.database.generated.tables.PlayerConnections;
+import com.q3js.master.database.generated.tables.PlayerAddressNames;
+import com.q3js.master.database.generated.tables.PlayerAddresses;
 import com.q3js.master.database.generated.tables.PlayerPageVisits;
 import com.q3js.master.database.generated.tables.Servers;
-import com.q3js.master.database.generated.tables.records.BannedIpsRecord;
 import com.q3js.master.database.generated.tables.records.EventsRecord;
-import com.q3js.master.database.generated.tables.records.PlayerConnectionsRecord;
+import com.q3js.master.database.generated.tables.records.PlayerAddressNamesRecord;
+import com.q3js.master.database.generated.tables.records.PlayerAddressesRecord;
 import com.q3js.master.database.generated.tables.records.PlayerPageVisitsRecord;
 import com.q3js.master.database.generated.tables.records.ServersRecord;
 
+import org.jooq.ForeignKey;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
@@ -32,9 +33,15 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<BannedIpsRecord> BANNED_IPS_PKEY = Internal.createUniqueKey(BannedIps.BANNED_IPS, DSL.name("banned_ips_pkey"), new TableField[] { BannedIps.BANNED_IPS.IP_ADDRESS }, true);
     public static final UniqueKey<EventsRecord> EVENTS_PKEY1 = Internal.createUniqueKey(Events.EVENTS, DSL.name("events_pkey1"), new TableField[] { Events.EVENTS.ID }, true);
-    public static final UniqueKey<PlayerConnectionsRecord> PLAYER_CONNECTIONS_PKEY = Internal.createUniqueKey(PlayerConnections.PLAYER_CONNECTIONS, DSL.name("player_connections_pkey"), new TableField[] { PlayerConnections.PLAYER_CONNECTIONS.ID }, true);
+    public static final UniqueKey<PlayerAddressNamesRecord> PLAYER_ADDRESS_NAMES_PKEY = Internal.createUniqueKey(PlayerAddressNames.PLAYER_ADDRESS_NAMES, DSL.name("player_address_names_pkey"), new TableField[] { PlayerAddressNames.PLAYER_ADDRESS_NAMES.IP_ADDRESS, PlayerAddressNames.PLAYER_ADDRESS_NAMES.PLAYER_NAME }, true);
+    public static final UniqueKey<PlayerAddressesRecord> PLAYER_ADDRESSES_PKEY = Internal.createUniqueKey(PlayerAddresses.PLAYER_ADDRESSES, DSL.name("player_addresses_pkey"), new TableField[] { PlayerAddresses.PLAYER_ADDRESSES.IP_ADDRESS }, true);
     public static final UniqueKey<PlayerPageVisitsRecord> PLAYER_PAGE_VISITS_PKEY = Internal.createUniqueKey(PlayerPageVisits.PLAYER_PAGE_VISITS, DSL.name("player_page_visits_pkey"), new TableField[] { PlayerPageVisits.PLAYER_PAGE_VISITS.ID }, true);
     public static final UniqueKey<ServersRecord> SERVERS_PKEY = Internal.createUniqueKey(Servers.SERVERS, DSL.name("servers_pkey"), new TableField[] { Servers.SERVERS.HOST, Servers.SERVERS.PROXY_PORT }, true);
+
+    // -------------------------------------------------------------------------
+    // FOREIGN KEY definitions
+    // -------------------------------------------------------------------------
+
+    public static final ForeignKey<PlayerAddressNamesRecord, PlayerAddressesRecord> PLAYER_ADDRESS_NAMES__PLAYER_ADDRESS_NAMES_IP_ADDRESS_FKEY = Internal.createForeignKey(PlayerAddressNames.PLAYER_ADDRESS_NAMES, DSL.name("player_address_names_ip_address_fkey"), new TableField[] { PlayerAddressNames.PLAYER_ADDRESS_NAMES.IP_ADDRESS }, Keys.PLAYER_ADDRESSES_PKEY, new TableField[] { PlayerAddresses.PLAYER_ADDRESSES.IP_ADDRESS }, true);
 }

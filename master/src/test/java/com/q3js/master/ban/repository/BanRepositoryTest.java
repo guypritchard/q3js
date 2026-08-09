@@ -1,6 +1,7 @@
 package com.q3js.master.ban.repository;
 
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.jooq.tools.jdbc.MockConnection;
@@ -11,53 +12,48 @@ import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
 
-import static com.q3js.master.database.generated.Tables.BANNED_IPS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BanRepositoryTest {
+    private static final Field<String> IP_ADDRESS = DSL.field(DSL.name("player_addresses", "ip_address"), String.class);
+    private static final Field<OffsetDateTime> BANNED_AT =
+        DSL.field(DSL.name("player_addresses", "banned_at"), OffsetDateTime.class);
+
     @Test
-    void returnsStoredBansNewestFirst() {
+    void returnsBannedAddressesNewestFirst() {
         var provider = new BanProvider();
-        var repository = new BanRepository(
-            DSL.using(new MockConnection(provider), SQLDialect.POSTGRES)
-        );
+        var repository = new BanRepository(DSL.using(new MockConnection(provider), SQLDialect.POSTGRES));
 
         var bans = repository.findAll();
 
         assertEquals(1, bans.size());
         assertEquals("2001:db8::7", bans.get(0).ipAddress());
-        assertEquals("^1Ranger", bans.get(0).playerName());
-        assertTrue(provider.sql.toLowerCase().contains("order by"));
+        assertTrue(provider.sql.toLowerCase().contains("where"));
         assertTrue(provider.sql.toLowerCase().contains("banned_at"));
     }
 
     @Test
-    void upsertsBansByIpAddress() {
+    void bansAnAddressInThePlayerAddressRecord() {
         var provider = new BanProvider();
-        var repository = new BanRepository(
-            DSL.using(new MockConnection(provider), SQLDialect.POSTGRES)
-        );
+        var repository = new BanRepository(DSL.using(new MockConnection(provider), SQLDialect.POSTGRES));
 
-        var ban = repository.upsert("2001:db8::7", "^1Ranger");
+        var ban = repository.ban("2001:db8::7");
 
         assertEquals("2001:db8::7", ban.ipAddress());
-        assertEquals("^1Ranger", ban.playerName());
-        assertTrue(provider.sql.toLowerCase().contains("insert into"));
+        assertTrue(provider.sql.toLowerCase().contains("insert into \"player_addresses\""));
         assertTrue(provider.sql.toLowerCase().contains("on conflict"));
     }
 
     @Test
-    void deletesBansByIpAddress() {
+    void unbansWithoutDeletingThePlayerAddress() {
         var provider = new BanProvider();
-        var repository = new BanRepository(
-            DSL.using(new MockConnection(provider), SQLDialect.POSTGRES)
-        );
+        var repository = new BanRepository(DSL.using(new MockConnection(provider), SQLDialect.POSTGRES));
 
-        repository.delete("203.0.113.7");
+        repository.unban("203.0.113.7");
 
-        assertTrue(provider.sql.toLowerCase().contains("delete from"));
-        assertEquals("203.0.113.7", provider.bindings[0]);
+        assertTrue(provider.sql.toLowerCase().contains("update \"player_addresses\""));
+        assertEquals("203.0.113.7", provider.bindings[1]);
     }
 
     private static final class BanProvider implements MockDataProvider {
@@ -69,14 +65,9 @@ class BanRepositoryTest {
         public MockResult[] execute(MockExecuteContext context) {
             sql = context.sql();
             bindings = context.bindings();
-            var result = dsl.newResult(BANNED_IPS.fields());
-            result.add(dsl.newRecord(
-                BANNED_IPS.IP_ADDRESS,
-                BANNED_IPS.PLAYER_NAME,
-                BANNED_IPS.BANNED_AT
-            ).values(
+            var result = dsl.newResult(IP_ADDRESS, BANNED_AT);
+            result.add(dsl.newRecord(IP_ADDRESS, BANNED_AT).values(
                 "2001:db8::7",
-                "^1Ranger",
                 OffsetDateTime.parse("2026-08-09T20:00:00Z")
             ));
             return new MockResult[]{new MockResult(1, result)};

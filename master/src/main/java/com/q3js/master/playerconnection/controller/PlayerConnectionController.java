@@ -2,7 +2,7 @@ package com.q3js.master.playerconnection.controller;
 
 import com.q3js.master.event.security.EventAuthenticator;
 import com.q3js.master.playerconnection.dto.PlayerConnectionRequest;
-import com.q3js.master.playerconnection.dto.PlayerConnectionPageResponse;
+import com.q3js.master.playerconnection.dto.PlayerAddressPageResponse;
 import com.q3js.master.playerconnection.mapper.PlayerConnectionMapper;
 import com.q3js.master.playerconnection.service.PlayerConnectionService;
 
@@ -77,17 +77,17 @@ public class PlayerConnectionController {
     @GET
     @RolesAllowed("admin")
     @SecurityRequirement(name = "jwt")
-    @Operation(operationId = "getPlayerConnections", summary = "List recorded player connections")
-    @APIResponse(responseCode = "200", description = "Paginated player connections")
+    @Operation(operationId = "getPlayerAddresses", summary = "List known player IP addresses")
+    @APIResponse(responseCode = "200", description = "Paginated player addresses with known names")
     @APIResponse(responseCode = "400", description = "Pagination or search parameters are invalid")
     @APIResponse(responseCode = "401", description = "Administrator JWT is missing or invalid")
     @APIResponse(responseCode = "403", description = "JWT does not have the admin role")
-    public PlayerConnectionPageResponse connections(
+    public PlayerAddressPageResponse addresses(
         @QueryParam("page") @Parameter(description = "One-based page number") Integer page,
         @QueryParam("pageSize") @Parameter(description = "Entries per page, from 1 to 100") Integer pageSize,
         @QueryParam("search") @Parameter(description = "Player name, client IP, or server host") String search
     ) {
-        return mapper.response(service.connections(
+        return mapper.response(service.addresses(
             page(page),
             pageSize(pageSize),
             search(search)

@@ -27,7 +27,7 @@ class BanControllerTest {
     @Test
     void returnsBansToAuthenticatedGameServers() {
         when(service.bans()).thenReturn(List.of(
-            new Ban("203.0.113.7", "^1Ranger", OffsetDateTime.parse("2026-08-09T20:00:00Z"))
+            new Ban("203.0.113.7", OffsetDateTime.parse("2026-08-09T20:00:00Z"))
         ));
 
         given()
@@ -36,7 +36,6 @@ class BanControllerTest {
             .then()
             .statusCode(200)
             .body("[0].ipAddress", equalTo("203.0.113.7"))
-            .body("[0].playerName", equalTo("^1Ranger"))
             .body("[0].bannedAt", equalTo("2026-08-09T20:00:00Z"));
     }
 

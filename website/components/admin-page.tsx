@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { type FormEvent, useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import {
   ArrowClockwise,
   CaretLeft,
@@ -21,8 +21,8 @@ import {
   subscribeAdminToken,
 } from "@/lib/admin-auth";
 import { client } from "@/lib/api/client";
-import { banPlayer, getAdminBans, getPlayerConnections, loginAdmin, unbanPlayer } from "@/lib/api/generated/sdk.gen";
-import type { BanResponse, PlayerConnectionPageResponse, PlayerConnectionResponse } from "@/lib/api/generated/types.gen";
+import { banPlayer, getPlayerAddresses, loginAdmin, unbanPlayer } from "@/lib/api/generated/sdk.gen";
+import type { PlayerAddressPageResponse, PlayerAddressResponse } from "@/lib/api/generated/types.gen";
 
 function formatTimestamp(value: string): string {
   return new Intl.DateTimeFormat("en", {
@@ -31,20 +31,8 @@ function formatTimestamp(value: string): string {
   }).format(new Date(value));
 }
 
-function ipKey(value: string): string {
-  const address = value.trim().toLowerCase();
-  const mappedIpv4 = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(address);
-  if (mappedIpv4?.[1]) return mappedIpv4[1];
-  if (!address.includes(":")) return address;
-  try {
-    return new URL(`http://[${address}]`).hostname.slice(1, -1);
-  } catch {
-    return address;
-  }
-}
-
-function Userinfo({ connection }: Readonly<{ connection: PlayerConnectionResponse }>) {
-  const entries = Object.entries(connection.userinfo).sort(([first], [second]) => first.localeCompare(second));
+function Userinfo({ address }: Readonly<{ address: PlayerAddressResponse }>) {
+  const entries = Object.entries(address.userinfo).sort(([first], [second]) => first.localeCompare(second));
   return (
     <details className="group min-w-44">
       <summary className="cursor-pointer select-none text-xs font-semibold uppercase tracking-[0.05em] text-primary hover:text-foreground">
@@ -59,6 +47,26 @@ function Userinfo({ connection }: Readonly<{ connection: PlayerConnectionRespons
         ))}
       </dl>
     </details>
+  );
+}
+
+function KnownNames({ address }: Readonly<{ address: PlayerAddressResponse }>) {
+  if (address.names.length === 0) {
+    return <span className="text-xs text-muted-foreground">No recorded names</span>;
+  }
+  return (
+    <ul className="min-w-48 space-y-2">
+      {address.names.map((name, index) => (
+        <li key={name.playerName} className="flex items-baseline justify-between gap-4">
+          <span className={index === 0 ? "font-semibold" : "text-muted-foreground"}>
+            <Q3ColoredText text={name.playerName} />
+          </span>
+          <span className="whitespace-nowrap font-mono text-[11px] text-muted-foreground">
+            {name.connectionCount}×
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -100,7 +108,7 @@ function AdminLogin() {
         <p className="mt-6 font-mono text-xs uppercase tracking-[0.16em] text-primary">Restricted access</p>
         <h1 id="admin-login-title" className="mt-2 font-mono text-3xl font-black uppercase tracking-[0.035em]">Admin login</h1>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          Authenticate with the master administrator password to inspect recorded player connections.
+          Authenticate with the master administrator password to inspect player addresses and manage IP bans.
         </p>
 
         <form onSubmit={submit} className="mt-7 space-y-4">
@@ -132,8 +140,7 @@ function AdminLogin() {
 
 export function AdminPage() {
   const token = useSyncExternalStore(subscribeAdminToken, adminTokenSnapshot, adminTokenServerSnapshot);
-  const [connections, setConnections] = useState<PlayerConnectionPageResponse>();
-  const [bans, setBans] = useState<BanResponse[]>([]);
+  const [addresses, setAddresses] = useState<PlayerAddressPageResponse>();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [searchDraft, setSearchDraft] = useState("");
@@ -142,12 +149,10 @@ export function AdminPage() {
   const [changingBanIp, setChangingBanIp] = useState<string>();
   const [error, setError] = useState<string>();
   const [notice, setNotice] = useState<string>();
-  const bannedIps = useMemo(() => new Set(bans.map((ban) => ipKey(ban.ipAddress))), [bans]);
 
   const logout = useCallback(() => {
     clearAdminToken();
-    setConnections(undefined);
-    setBans([]);
+    setAddresses(undefined);
     setError(undefined);
     setNotice(undefined);
   }, []);
@@ -168,33 +173,24 @@ export function AdminPage() {
       setLoading(true);
       setError(undefined);
       try {
-        const [connectionsResult, bansResult] = await Promise.all([
-          getPlayerConnections({
-            client,
-            query: { page, pageSize: 50, search: search || undefined },
-            headers: { Authorization: `Bearer ${token}` },
-            signal: controller.signal,
-            throwOnError: false,
-          }),
-          getAdminBans({
-            client,
-            headers: { Authorization: `Bearer ${token}` },
-            signal: controller.signal,
-            throwOnError: false,
-          }),
-        ]);
+        const result = await getPlayerAddresses({
+          client,
+          query: { page, pageSize: 50, search: search || undefined },
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+          throwOnError: false,
+        });
         if (controller.signal.aborted) return;
-        if (!connectionsResult.data || !bansResult.data) {
-          const status = connectionsResult.response?.status ?? bansResult.response?.status;
+        if (!result.data) {
+          const status = result.response?.status;
           if (status === 401 || status === 403) {
             logout();
           } else {
-            setError("Could not load player connections and ban status.");
+            setError("Could not load player addresses.");
           }
           return;
         }
-        setConnections(connectionsResult.data);
-        setBans(bansResult.data);
+        setAddresses(result.data);
       } catch {
         if (!controller.signal.aborted) setError("The master server could not be reached.");
       } finally {
@@ -215,19 +211,20 @@ export function AdminPage() {
     setSearch(searchDraft.trim());
   };
 
-  const banConnection = async (connection: PlayerConnectionResponse) => {
+  const banAddress = async (address: PlayerAddressResponse) => {
+    const knownNames = address.names.map((name) => name.playerName).join(", ") || "none";
     const confirmed = window.confirm(
-      `Ban ${connection.playerName} at ${connection.clientIp}?\n\nNew WebSocket connections from this IP will be rejected after gateways refresh their ban lists.`,
+      `Ban ${address.ipAddress}?\n\nKnown names: ${knownNames}\n\nNew WebSocket connections from this IP will be rejected after gateways refresh their ban lists.`,
     );
     if (!confirmed) return;
 
-    setChangingBanIp(connection.clientIp);
+    setChangingBanIp(address.ipAddress);
     setError(undefined);
     setNotice(undefined);
     try {
       const result = await banPlayer({
         client,
-        body: { ipAddress: connection.clientIp, playerName: connection.playerName },
+        body: { ipAddress: address.ipAddress },
         headers: { Authorization: `Bearer ${token}` },
         throwOnError: false,
       });
@@ -235,15 +232,17 @@ export function AdminPage() {
         if (result.response?.status === 401 || result.response?.status === 403) {
           logout();
         } else {
-          setError(`Could not ban ${connection.playerName}.`);
+          setError(`Could not ban ${address.ipAddress}.`);
         }
         return;
       }
-      setBans((current) => {
-        const key = ipKey(result.data.ipAddress);
-        return [...current.filter((ban) => ipKey(ban.ipAddress) !== key), result.data];
-      });
-      setNotice(`${connection.playerName} (${connection.clientIp}) is now banned.`);
+      setAddresses((current) => current && ({
+        ...current,
+        entries: current.entries.map((entry) => entry.ipAddress === address.ipAddress
+          ? { ...entry, bannedAt: result.data.bannedAt }
+          : entry),
+      }));
+      setNotice(`${address.ipAddress} is now banned.`);
     } catch {
       setError("The master server could not be reached.");
     } finally {
@@ -251,19 +250,19 @@ export function AdminPage() {
     }
   };
 
-  const unbanConnection = async (connection: PlayerConnectionResponse) => {
+  const unbanAddress = async (address: PlayerAddressResponse) => {
     const confirmed = window.confirm(
-      `Unban ${connection.playerName} at ${connection.clientIp}?\n\nGateways will allow new WebSocket connections from this IP after their next ban-list refresh.`,
+      `Unban ${address.ipAddress}?\n\nGateways will allow new WebSocket connections from this IP after their next ban-list refresh.`,
     );
     if (!confirmed) return;
 
-    setChangingBanIp(connection.clientIp);
+    setChangingBanIp(address.ipAddress);
     setError(undefined);
     setNotice(undefined);
     try {
       const result = await unbanPlayer({
         client,
-        path: { ipAddress: connection.clientIp },
+        path: { ipAddress: address.ipAddress },
         headers: { Authorization: `Bearer ${token}` },
         throwOnError: false,
       });
@@ -271,13 +270,17 @@ export function AdminPage() {
         if (result.response?.status === 401 || result.response?.status === 403) {
           logout();
         } else {
-          setError(`Could not unban ${connection.playerName}.`);
+          setError(`Could not unban ${address.ipAddress}.`);
         }
         return;
       }
-      const key = ipKey(connection.clientIp);
-      setBans((current) => current.filter((ban) => ipKey(ban.ipAddress) !== key));
-      setNotice(`${connection.playerName} (${connection.clientIp}) is no longer banned.`);
+      setAddresses((current) => current && ({
+        ...current,
+        entries: current.entries.map((entry) => entry.ipAddress === address.ipAddress
+          ? { ...entry, bannedAt: undefined }
+          : entry),
+      }));
+      setNotice(`${address.ipAddress} is no longer banned.`);
     } catch {
       setError("The master server could not be reached.");
     } finally {
@@ -289,10 +292,10 @@ export function AdminPage() {
     <main className="mx-auto min-h-[calc(100vh-3.5rem)] w-full max-w-7xl px-4 pb-16 pt-8 sm:pt-10">
       <header className="flex flex-col gap-5 border-b border-border/60 pb-7 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary">Master administration / Player audit</p>
-          <h1 className="mt-2 font-mono text-3xl font-black uppercase tracking-[0.035em] md:text-4xl">Player connections</h1>
+          <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary">Master administration / Address registry</p>
+          <h1 className="mt-2 font-mono text-3xl font-black uppercase tracking-[0.035em] md:text-4xl">Player addresses</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Accepted connections reported by trusted Q3JS gateways. Userinfo is sanitized before storage.
+            One record per IP address, with every observed player name and the latest sanitized connection details.
           </p>
         </div>
         <div className="flex gap-2">
@@ -303,31 +306,33 @@ export function AdminPage() {
         </div>
       </header>
 
-      <section className="mt-6 grid gap-4 sm:grid-cols-3" aria-label="Connection summary">
+      <section className="mt-6 grid gap-4 sm:grid-cols-3" aria-label="Address summary">
         <div className="border border-border/60 bg-card/45 px-5 py-4">
-          <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground">Matching records</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums">{connections?.totalEntries ?? "—"}</p>
+          <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground">Matching addresses</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums">{addresses?.totalEntries ?? "—"}</p>
         </div>
         <div className="border border-border/60 bg-card/45 px-5 py-4">
           <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground">Page</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums">{connections ? `${connections.page} / ${connections.totalPages}` : "—"}</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums">{addresses ? `${addresses.page} / ${addresses.totalPages}` : "—"}</p>
         </div>
         <div className="border border-border/60 bg-card/45 px-5 py-4">
-          <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground">Ban enforcement</p>
-          <p className="mt-1 text-sm font-semibold text-primary">Active · {bans.length} banned IP{bans.length === 1 ? "" : "s"}</p>
+          <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground">Banned on this page</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-primary">
+            {addresses ? addresses.entries.filter((address) => address.bannedAt).length : "—"}
+          </p>
         </div>
       </section>
 
       <form onSubmit={submitSearch} className="mt-4 flex flex-col gap-2 border border-border/60 bg-card/35 p-3 sm:flex-row">
         <label className="relative min-w-0 flex-1">
-          <span className="sr-only">Search players, IP addresses, or servers</span>
+          <span className="sr-only">Search IP addresses, known names, or servers</span>
           <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="search"
             value={searchDraft}
             onChange={(event) => setSearchDraft(event.target.value)}
             maxLength={128}
-            placeholder="Search player, client IP, or server host"
+            placeholder="Search IP address, known name, or latest server"
             className="h-10 w-full bg-input pl-9 pr-3 font-mono text-sm placeholder:text-muted-foreground focus:outline-2 focus:outline-ring"
           />
         </label>
@@ -345,31 +350,46 @@ export function AdminPage() {
       {notice && <p role="status" className="mt-4 border border-border/70 bg-card/60 px-4 py-3 text-sm">{notice}</p>}
 
       <div className="mt-4 overflow-x-auto border border-border/60 bg-card/35" aria-busy={loading}>
-        <table className="w-full min-w-[1050px] text-left text-sm">
+        <table className="w-full min-w-[1120px] text-left text-sm">
           <thead className="bg-card/75 text-xs uppercase tracking-[0.08em] text-muted-foreground">
             <tr>
-              <th className="px-4 py-3 font-medium">Player</th>
-              <th className="px-4 py-3 font-medium">Client IP</th>
-              <th className="px-4 py-3 font-medium">Server</th>
-              <th className="px-4 py-3 font-medium">Connected</th>
-              <th className="px-4 py-3 font-medium">Userinfo</th>
+              <th className="px-4 py-3 font-medium">IP address</th>
+              <th className="px-4 py-3 font-medium">Known names</th>
+              <th className="px-4 py-3 font-medium">Activity</th>
+              <th className="px-4 py-3 font-medium">Latest server</th>
+              <th className="px-4 py-3 font-medium">Latest userinfo</th>
               <th className="px-4 py-3 text-right font-medium">Action</th>
             </tr>
           </thead>
           <tbody className={loading ? "divide-y divide-border/40 opacity-55" : "divide-y divide-border/40"}>
-            {connections?.entries.map((connection) => {
-              const banned = bannedIps.has(ipKey(connection.clientIp));
-              const changing = changingBanIp !== undefined && ipKey(changingBanIp) === ipKey(connection.clientIp);
+            {addresses?.entries.map((address) => {
+              const banned = Boolean(address.bannedAt);
+              const changing = changingBanIp === address.ipAddress;
               return (
-                <tr key={connection.id} className={banned ? "align-top bg-primary/5" : "align-top hover:bg-card/45"}>
-                  <td className="px-4 py-4 font-semibold"><Q3ColoredText text={connection.playerName} /></td>
-                  <td className="px-4 py-4 font-mono text-xs tabular-nums">{connection.clientIp}</td>
+                <tr key={address.ipAddress} className={banned ? "align-top bg-primary/5" : "align-top hover:bg-card/45"}>
                   <td className="px-4 py-4">
-                    <span className="font-medium">{connection.serverHost}:{connection.serverPort}</span>
-                    {connection.sourceIp && <span className="mt-1 block text-xs text-muted-foreground">Reporter {connection.sourceIp}</span>}
+                    <span className="font-mono text-xs font-semibold tabular-nums">{address.ipAddress}</span>
+                    {banned && (
+                      <span className="mt-2 block w-fit border border-primary/50 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
+                        Banned
+                      </span>
+                    )}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-4 text-xs text-muted-foreground">{formatTimestamp(connection.receivedAt)}</td>
-                  <td className="px-4 py-4"><Userinfo connection={connection} /></td>
+                  <td className="px-4 py-4"><KnownNames address={address} /></td>
+                  <td className="px-4 py-4">
+                    <span className="font-semibold tabular-nums">{address.connectionCount} connection{address.connectionCount === 1 ? "" : "s"}</span>
+                    <span className="mt-1 block whitespace-nowrap text-xs text-muted-foreground">
+                      Last {address.lastSeenAt ? formatTimestamp(address.lastSeenAt) : "never seen"}
+                    </span>
+                    {address.firstSeenAt && <span className="mt-1 block whitespace-nowrap text-[11px] text-muted-foreground">First {formatTimestamp(address.firstSeenAt)}</span>}
+                  </td>
+                  <td className="px-4 py-4">
+                    {address.serverHost && address.serverPort
+                      ? <span className="font-medium">{address.serverHost}:{address.serverPort}</span>
+                      : <span className="text-xs text-muted-foreground">No connection recorded</span>}
+                    {address.sourceIp && <span className="mt-1 block text-xs text-muted-foreground">Reporter {address.sourceIp}</span>}
+                  </td>
+                  <td className="px-4 py-4"><Userinfo address={address} /></td>
                   <td className="px-4 py-4 text-right">
                     <Button
                       type="button"
@@ -377,7 +397,7 @@ export function AdminPage() {
                       variant={banned ? "outline" : "destructive"}
                       disabled={changingBanIp !== undefined}
                       title={banned ? "Remove this IP ban" : "Ban this IP address"}
-                      onClick={() => void (banned ? unbanConnection(connection) : banConnection(connection))}
+                      onClick={() => void (banned ? unbanAddress(address) : banAddress(address))}
                     >
                       {banned ? <ShieldCheck /> : <Prohibit />} {changing ? banned ? "Unbanning..." : "Banning..." : banned ? "Unban" : "Ban"}
                     </Button>
@@ -387,23 +407,23 @@ export function AdminPage() {
             })}
           </tbody>
         </table>
-        {!loading && connections && connections.entries.length === 0 && (
+        {!loading && addresses && addresses.entries.length === 0 && (
           <div className="px-6 py-14 text-center">
-            <p className="font-semibold">No player connections found.</p>
+            <p className="font-semibold">No player addresses found.</p>
             <p className="mt-2 text-sm text-muted-foreground">Try clearing the search or wait for a player to connect.</p>
           </div>
         )}
-        {loading && !connections && <div className="px-6 py-14 text-center text-sm text-muted-foreground">Loading player connections...</div>}
+        {loading && !addresses && <div className="px-6 py-14 text-center text-sm text-muted-foreground">Loading player addresses...</div>}
       </div>
 
-      {connections && (
+      {addresses && (
         <div className="mt-4 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-          <span>Page {connections.page} of {connections.totalPages}</span>
+          <span>Page {addresses.page} of {addresses.totalPages}</span>
           <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" disabled={!connections.hasPreviousPage || loading} onClick={() => setPage(connections.page - 1)}>
+            <Button type="button" variant="outline" size="sm" disabled={!addresses.hasPreviousPage || loading} onClick={() => setPage(addresses.page - 1)}>
               <CaretLeft /> Previous
             </Button>
-            <Button type="button" variant="outline" size="sm" disabled={!connections.hasNextPage || loading} onClick={() => setPage(connections.page + 1)}>
+            <Button type="button" variant="outline" size="sm" disabled={!addresses.hasNextPage || loading} onClick={() => setPage(addresses.page + 1)}>
               Next <CaretRight />
             </Button>
           </div>

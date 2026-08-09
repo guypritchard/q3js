@@ -4,9 +4,9 @@
 package com.q3js.master.database.generated;
 
 
-import com.q3js.master.database.generated.tables.BannedIps;
 import com.q3js.master.database.generated.tables.Events;
-import com.q3js.master.database.generated.tables.PlayerConnections;
+import com.q3js.master.database.generated.tables.PlayerAddressNames;
+import com.q3js.master.database.generated.tables.PlayerAddresses;
 import com.q3js.master.database.generated.tables.PlayerPageVisits;
 import com.q3js.master.database.generated.tables.Servers;
 
@@ -33,19 +33,19 @@ public class DefaultSchema extends SchemaImpl {
     public static final DefaultSchema DEFAULT_SCHEMA = new DefaultSchema();
 
     /**
-     * The table <code>banned_ips</code>.
-     */
-    public final BannedIps BANNED_IPS = BannedIps.BANNED_IPS;
-
-    /**
      * The table <code>events</code>.
      */
     public final Events EVENTS = Events.EVENTS;
 
     /**
-     * The table <code>player_connections</code>.
+     * The table <code>player_address_names</code>.
      */
-    public final PlayerConnections PLAYER_CONNECTIONS = PlayerConnections.PLAYER_CONNECTIONS;
+    public final PlayerAddressNames PLAYER_ADDRESS_NAMES = PlayerAddressNames.PLAYER_ADDRESS_NAMES;
+
+    /**
+     * The table <code>player_addresses</code>.
+     */
+    public final PlayerAddresses PLAYER_ADDRESSES = PlayerAddresses.PLAYER_ADDRESSES;
 
     /**
      * The table <code>player_page_visits</code>.
@@ -80,9 +80,9 @@ public class DefaultSchema extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
-            BannedIps.BANNED_IPS,
             Events.EVENTS,
-            PlayerConnections.PLAYER_CONNECTIONS,
+            PlayerAddressNames.PLAYER_ADDRESS_NAMES,
+            PlayerAddresses.PLAYER_ADDRESSES,
             PlayerPageVisits.PLAYER_PAGE_VISITS,
             Servers.SERVERS
         );

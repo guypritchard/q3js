@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.jooq.Check;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.Index;
@@ -29,6 +30,7 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -94,6 +96,11 @@ public class Servers extends TableImpl<ServersRecord> {
      */
     public final TableField<ServersRecord, Boolean> OFFICIAL = createField(DSL.name("official"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("false"), SQLDataType.BOOLEAN)), this, "");
 
+    /**
+     * The column <code>servers.transport</code>.
+     */
+    public final TableField<ServersRecord, String> TRANSPORT = createField(DSL.name("transport"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field(DSL.raw("'websocket'::text"), SQLDataType.CLOB)), this, "");
+
     private Servers(Name alias, Table<ServersRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -136,6 +143,13 @@ public class Servers extends TableImpl<ServersRecord> {
     @Override
     public UniqueKey<ServersRecord> getPrimaryKey() {
         return Keys.SERVERS_PKEY;
+    }
+
+    @Override
+    public List<Check<ServersRecord>> getChecks() {
+        return Arrays.asList(
+            Internal.createCheck(this, DSL.name("servers_transport_check"), "((transport = ANY (ARRAY['websocket'::text, 'webtransport'::text])))", true)
+        );
     }
 
     @Override

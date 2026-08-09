@@ -7,7 +7,6 @@ import java.time.OffsetDateTime;
 @Schema(requiredProperties = {"ipAddress", "bannedAt"})
 public record BanResponse(
     String ipAddress,
-    String playerName,
     OffsetDateTime bannedAt
 ) {
 }
