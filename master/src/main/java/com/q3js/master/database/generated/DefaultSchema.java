@@ -6,6 +6,7 @@ package com.q3js.master.database.generated;
 
 import com.q3js.master.database.generated.tables.BannedIps;
 import com.q3js.master.database.generated.tables.Events;
+import com.q3js.master.database.generated.tables.PlayerConnections;
 import com.q3js.master.database.generated.tables.PlayerPageVisits;
 import com.q3js.master.database.generated.tables.Servers;
 
@@ -42,6 +43,11 @@ public class DefaultSchema extends SchemaImpl {
     public final Events EVENTS = Events.EVENTS;
 
     /**
+     * The table <code>player_connections</code>.
+     */
+    public final PlayerConnections PLAYER_CONNECTIONS = PlayerConnections.PLAYER_CONNECTIONS;
+
+    /**
      * The table <code>player_page_visits</code>.
      */
     public final PlayerPageVisits PLAYER_PAGE_VISITS = PlayerPageVisits.PLAYER_PAGE_VISITS;
@@ -76,6 +82,7 @@ public class DefaultSchema extends SchemaImpl {
         return Arrays.asList(
             BannedIps.BANNED_IPS,
             Events.EVENTS,
+            PlayerConnections.PLAYER_CONNECTIONS,
             PlayerPageVisits.PLAYER_PAGE_VISITS,
             Servers.SERVERS
         );

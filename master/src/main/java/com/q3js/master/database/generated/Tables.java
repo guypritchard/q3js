@@ -6,6 +6,7 @@ package com.q3js.master.database.generated;
 
 import com.q3js.master.database.generated.tables.BannedIps;
 import com.q3js.master.database.generated.tables.Events;
+import com.q3js.master.database.generated.tables.PlayerConnections;
 import com.q3js.master.database.generated.tables.PlayerPageVisits;
 import com.q3js.master.database.generated.tables.Servers;
 
@@ -25,6 +26,11 @@ public class Tables {
      * The table <code>events</code>.
      */
     public static final Events EVENTS = Events.EVENTS;
+
+    /**
+     * The table <code>player_connections</code>.
+     */
+    public static final PlayerConnections PLAYER_CONNECTIONS = PlayerConnections.PLAYER_CONNECTIONS;
 
     /**
      * The table <code>player_page_visits</code>.

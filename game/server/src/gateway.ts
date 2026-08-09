@@ -1,7 +1,14 @@
 import { createSocket } from "node:dgram";
-import { createServer, type Server as HttpServer } from "node:http";
-import type { AddressInfo } from "node:net";
+import { createServer, type IncomingMessage, type Server as HttpServer } from "node:http";
+import { isIP, type AddressInfo } from "node:net";
 import { WebSocket, WebSocketServer } from "ws";
+import { decompressHuffman } from "./huffman.js";
+
+export interface PlayerConnection {
+  clientIp: string;
+  playerName: string;
+  userinfo: Readonly<Record<string, string>>;
+}
 
 export interface GatewayOptions {
   host: string;
@@ -11,11 +18,91 @@ export interface GatewayOptions {
   maxConnections: number;
   maxPacketBytes: number;
   maxBufferedBytes?: number;
+  trustedProxyHops?: number;
   idleTimeoutMs: number;
   ready: () => boolean;
+  playerConnected?: (connection: PlayerConnection) => void | Promise<void>;
 }
 
 const DISCONNECT_PACKET = Buffer.from("\xff\xff\xff\xffdisconnect\n", "latin1");
+const CONNECT_HEADER = Buffer.from("\xff\xff\xff\xffconnect ", "latin1");
+const CONNECT_RESPONSE = Buffer.from("\xff\xff\xff\xffconnectResponse", "latin1");
+const MAX_INFO_STRING_BYTES = 1024;
+const PRIVATE_USERINFO_KEYS = new Set(["clientip", "ip", "password", "rconpassword"]);
+
+function normalizeIpAddress(address: string): string {
+  const mappedIpv4 = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(address);
+  return mappedIpv4?.[1] ?? address;
+}
+
+function clientIpAddress(request: IncomingMessage, trustedProxyHops: number): string {
+  const peerAddress = request.socket.remoteAddress;
+  if (!peerAddress) {
+    throw new Error("WebSocket peer address is unavailable.");
+  }
+  if (trustedProxyHops === 0) {
+    return normalizeIpAddress(peerAddress);
+  }
+
+  const forwardedHeader = request.headers["x-forwarded-for"];
+  const forwarded = (Array.isArray(forwardedHeader) ? forwardedHeader.join(",") : forwardedHeader)
+    ?.split(",")
+    .map((address) => normalizeIpAddress(address.trim()));
+  const clientIndex = (forwarded?.length ?? 0) - trustedProxyHops;
+  const address = forwarded?.[clientIndex];
+  if (!address || isIP(address) === 0) {
+    throw new Error("A trusted proxy did not provide a valid X-Forwarded-For chain.");
+  }
+  return address;
+}
+
+/** Read and sanitize userinfo from an ioquake3 connect packet without changing it. */
+export function readConnectUserinfo(
+  packet: Buffer,
+): { playerName: string; userinfo: Readonly<Record<string, string>> } | undefined {
+  if (packet.byteLength < CONNECT_HEADER.byteLength
+    || !packet.subarray(0, CONNECT_HEADER.byteLength).equals(CONNECT_HEADER)) {
+    return undefined;
+  }
+
+  const decoded = decompressHuffman(
+    packet.subarray(CONNECT_HEADER.byteLength),
+    MAX_INFO_STRING_BYTES + 2,
+  ).toString("latin1");
+  if (decoded.length < 3 || decoded[0] !== "\"" || decoded.at(-1) !== "\"") {
+    throw new Error("Invalid Quake connect command.");
+  }
+
+  const info = decoded.slice(1, -1);
+  if (info.length >= MAX_INFO_STRING_BYTES) {
+    throw new Error("Quake connect userinfo exceeds the engine limit.");
+  }
+  const parts = info.split("\\");
+  if (parts[0] !== "" || parts.length % 2 === 0) {
+    throw new Error("Invalid Quake userinfo pairs.");
+  }
+
+  const userinfo = Object.create(null) as Record<string, string>;
+  let playerName: string | undefined;
+  for (let index = 1; index < parts.length; index += 2) {
+    const key = parts[index];
+    const value = parts[index + 1];
+    if (!key || value === undefined) {
+      throw new Error("Invalid Quake userinfo pair.");
+    }
+    const normalizedKey = key.toLowerCase();
+    if (normalizedKey === "name") {
+      playerName = value;
+    }
+    if (!PRIVATE_USERINFO_KEYS.has(normalizedKey)) {
+      userinfo[normalizedKey] = value;
+    }
+  }
+  if (!playerName) {
+    throw new Error("Quake connect userinfo is missing the player name.");
+  }
+  return { playerName, userinfo };
+}
 
 export class Gateway {
   readonly #options: GatewayOptions;
@@ -59,7 +146,16 @@ export class Gateway {
         this.#webSocketServer.emit("connection", webSocket, request);
       });
     });
-    this.#webSocketServer.on("connection", (webSocket) => this.#handleConnection(webSocket));
+    this.#webSocketServer.on("connection", (webSocket, request) => {
+      try {
+        this.#handleConnection(
+          webSocket,
+          clientIpAddress(request, this.#options.trustedProxyHops ?? 0),
+        );
+      } catch {
+        webSocket.close(1008, "Client IP unavailable");
+      }
+    });
   }
 
   async start(): Promise<void> {
@@ -97,11 +193,13 @@ export class Gateway {
     await Promise.all([httpClosed, webSocketsClosed]);
   }
 
-  #handleConnection(webSocket: WebSocket): void {
+  #handleConnection(webSocket: WebSocket, clientIp: string): void {
     this.#clients.add(webSocket);
     const udp = createSocket("udp4");
     let closed = false;
     let sentToTarget = false;
+    let connectionReported = false;
+    let pendingConnection: PlayerConnection | undefined;
     let idleTimer: NodeJS.Timeout;
 
     const refreshIdleTimer = (): void => {
@@ -141,6 +239,17 @@ export class Gateway {
     udp.on("message", (message) => {
       refreshIdleTimer();
       if (
+        !connectionReported
+        && pendingConnection
+        && message.subarray(0, CONNECT_RESPONSE.byteLength).equals(CONNECT_RESPONSE)
+      ) {
+        connectionReported = true;
+        const connection = pendingConnection;
+        pendingConnection = undefined;
+        void Promise.resolve(this.#options.playerConnected?.(connection))
+          .catch((error: unknown) => console.warn("Player connection callback failed:", error));
+      }
+      if (
         webSocket.readyState === WebSocket.OPEN
         && webSocket.bufferedAmount <= (this.#options.maxBufferedBytes ?? 1_000_000)
       ) {
@@ -164,6 +273,16 @@ export class Gateway {
       if (message.byteLength > this.#options.maxPacketBytes) {
         webSocket.close(1009, "Packet too large");
         return;
+      }
+      if (!connectionReported && this.#options.playerConnected) {
+        try {
+          const connect = readConnectUserinfo(message);
+          if (connect) {
+            pendingConnection = { clientIp, ...connect };
+          }
+        } catch (error) {
+          console.warn("Could not read Quake connect userinfo:", error);
+        }
       }
       refreshIdleTimer();
       sentToTarget = true;

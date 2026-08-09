@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateVoiceTokenData, CreateVoiceTokenErrors, CreateVoiceTokenResponses, GetProfileData, GetProfileDistributionData, GetProfileDistributionErrors, GetProfileDistributionResponses, GetProfileErrors, GetProfileResponses, GetProfileSitemapData, GetProfileSitemapResponses, GetRequesterCountryData, GetRequesterCountryResponses, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionErrors, GetScoreboardDistributionResponses, GetScoreboardErrors, GetScoreboardResponses, GetStatsData, GetStatsResponses, GetWeaponUsageData, GetWeaponUsageErrors, GetWeaponUsageResponses, HeartbeatData, HeartbeatErrors, HeartbeatResponses, IngestData, IngestErrors, IngestResponses, SearchProfilesData, SearchProfilesErrors, SearchProfilesResponses, ServersData, ServersResponses, StatusData, StatusResponses } from './types.gen';
+import type { CreateVoiceTokenData, CreateVoiceTokenErrors, CreateVoiceTokenResponses, GetPlayerConnectionsData, GetPlayerConnectionsErrors, GetPlayerConnectionsResponses, GetProfileData, GetProfileDistributionData, GetProfileDistributionErrors, GetProfileDistributionResponses, GetProfileErrors, GetProfileResponses, GetProfileSitemapData, GetProfileSitemapResponses, GetRequesterCountryData, GetRequesterCountryResponses, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionErrors, GetScoreboardDistributionResponses, GetScoreboardErrors, GetScoreboardResponses, GetStatsData, GetStatsResponses, GetWeaponUsageData, GetWeaponUsageErrors, GetWeaponUsageResponses, HeartbeatData, HeartbeatErrors, HeartbeatResponses, IngestData, IngestErrors, IngestPlayerConnectionData, IngestPlayerConnectionErrors, IngestPlayerConnectionResponses, IngestResponses, LoginAdminData, LoginAdminErrors, LoginAdminResponses, SearchProfilesData, SearchProfilesErrors, SearchProfilesResponses, ServersData, ServersResponses, StatusData, StatusResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -19,6 +19,18 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
+ * Authenticate the administrator
+ */
+export const loginAdmin = <ThrowOnError extends boolean = true>(options: Options<LoginAdminData, ThrowOnError>): RequestResult<LoginAdminResponses, LoginAdminErrors, ThrowOnError> => (options.client ?? client).post<LoginAdminResponses, LoginAdminErrors, ThrowOnError>({
+    url: '/api/auth/login',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Get the requester's country
  */
 export const getRequesterCountry = <ThrowOnError extends boolean = true>(options?: Options<GetRequesterCountryData, ThrowOnError>): RequestResult<GetRequesterCountryResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetRequesterCountryResponses, unknown, ThrowOnError>({ url: '/api/country', ...options });
@@ -29,6 +41,28 @@ export const getRequesterCountry = <ThrowOnError extends boolean = true>(options
 export const ingest = <ThrowOnError extends boolean = true>(options: Options<IngestData, ThrowOnError>): RequestResult<IngestResponses, IngestErrors, ThrowOnError> => (options.client ?? client).post<IngestResponses, IngestErrors, ThrowOnError>({
     security: [{ name: 'X-Q3JS-Client-Secret', type: 'apiKey' }],
     url: '/api/events',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List recorded player connections
+ */
+export const getPlayerConnections = <ThrowOnError extends boolean = true>(options?: Options<GetPlayerConnectionsData, ThrowOnError>): RequestResult<GetPlayerConnectionsResponses, GetPlayerConnectionsErrors, ThrowOnError> => (options?.client ?? client).get<GetPlayerConnectionsResponses, GetPlayerConnectionsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/player-connections',
+    ...options
+});
+
+/**
+ * Store a decoded player connection
+ */
+export const ingestPlayerConnection = <ThrowOnError extends boolean = true>(options: Options<IngestPlayerConnectionData, ThrowOnError>): RequestResult<IngestPlayerConnectionResponses, IngestPlayerConnectionErrors, ThrowOnError> => (options.client ?? client).post<IngestPlayerConnectionResponses, IngestPlayerConnectionErrors, ThrowOnError>({
+    security: [{ name: 'X-Q3JS-Client-Secret', type: 'apiKey' }],
+    url: '/api/player-connections',
     ...options,
     headers: {
         'Content-Type': 'application/json',

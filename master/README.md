@@ -12,6 +12,10 @@ The public API is compatible with the previous Q3JS server registry:
 - `GET /api/status` reports application status.
 - `POST /api/events` accepts authenticated join, leave, and kill events from
   packaged game servers.
+- `POST /api/player-connections` accepts authenticated player name, sanitized
+  userinfo, client IP, and server identity records from packaged gateways.
+- `GET /api/player-connections` gives JWT-authenticated administrators a
+  searchable, paginated view of those connection records.
 - `GET /api/players` searches player profiles by Quake handle.
 - `GET /api/players/{playerName}` returns detailed player statistics.
 - `GET /api/scoreboard` returns searchable and paginated global frag rankings.
@@ -50,12 +54,12 @@ make master-run
 Run a packaged Q3JS server separately with `make server-run`. Its local defaults
 publish `localhost:27961` to this master at `http://localhost:8080`.
 
-Event ingestion requires the `X-Q3JS-Client-Secret` header. Heartbeats may use
-the same header; matching servers are persisted as official, while missing or
-invalid secrets remain registered as community servers. The master in dev or
-test mode and a packaged server targeting localhost share a development-only
-fallback. A deployed master requires an explicit secret; generate one and
-provide the same value to both processes:
+Event and player-connection ingestion require the `X-Q3JS-Client-Secret`
+header. Heartbeats may use the same header; matching servers are persisted as
+official, while missing or invalid secrets remain registered as community
+servers. The master in dev or test mode and a packaged server targeting
+localhost share a development-only fallback. A deployed master requires an
+explicit secret; generate one and provide the same value to both processes:
 
 ```shell
 export Q3JS_EVENT_CLIENT_SECRET="$(openssl rand -hex 32)"

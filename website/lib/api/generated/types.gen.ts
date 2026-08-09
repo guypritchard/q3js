@@ -4,6 +4,19 @@ export type ClientOptions = {
     baseUrl: 'http://localhost:8080' | 'http://0.0.0.0:8080' | (string & {});
 };
 
+export type AdminLoginRequest = {
+    password: string;
+};
+
+export type AuthTokenResponse = {
+    access_token: string;
+    token_type: string;
+    /**
+     * Token lifetime in seconds
+     */
+    expires_in: number;
+};
+
 export type CountryResponse = {
     ip: string;
     countryCode?: string | null;
@@ -41,6 +54,39 @@ export type KillDistributionPointResponse = {
 };
 
 export type OffsetDateTime = string;
+
+export type PlayerConnectionPageResponse = {
+    page: number;
+    pageSize: number;
+    totalEntries: number;
+    totalPages: number;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
+    entries: Array<PlayerConnectionResponse>;
+};
+
+export type PlayerConnectionRequest = {
+    clientIp: string;
+    playerName: string;
+    userinfo: {
+        [key: string]: string;
+    };
+    serverHost: string;
+    serverPort: number;
+};
+
+export type PlayerConnectionResponse = {
+    id: number;
+    sourceIp?: string;
+    clientIp: string;
+    playerName: string;
+    userinfo: {
+        [key: string]: string;
+    };
+    serverHost: string;
+    serverPort: number;
+    receivedAt: OffsetDateTime;
+};
 
 export type ProfileMapResponse = {
     mapName: string;
@@ -195,6 +241,33 @@ export type WeaponUsageResponse = {
     leaders: Array<WeaponLeaderResponse>;
 };
 
+export type LoginAdminData = {
+    body: AdminLoginRequest;
+    path?: never;
+    query?: never;
+    url: '/api/auth/login';
+};
+
+export type LoginAdminErrors = {
+    /**
+     * The request is invalid
+     */
+    400: unknown;
+    /**
+     * The admin password is invalid
+     */
+    401: unknown;
+};
+
+export type LoginAdminResponses = {
+    /**
+     * A signed admin JWT bearer token
+     */
+    200: AuthTokenResponse;
+};
+
+export type LoginAdminResponse = LoginAdminResponses[keyof LoginAdminResponses];
+
 export type GetRequesterCountryData = {
     body?: never;
     path?: never;
@@ -243,6 +316,83 @@ export type IngestResponses = {
 };
 
 export type IngestResponse = IngestResponses[keyof IngestResponses];
+
+export type GetPlayerConnectionsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * One-based page number
+         */
+        page?: number;
+        /**
+         * Entries per page, from 1 to 100
+         */
+        pageSize?: number;
+        /**
+         * Player name, client IP, or server host
+         */
+        search?: string;
+    };
+    url: '/api/player-connections';
+};
+
+export type GetPlayerConnectionsErrors = {
+    /**
+     * Pagination or search parameters are invalid
+     */
+    400: unknown;
+    /**
+     * Administrator JWT is missing or invalid
+     */
+    401: unknown;
+    /**
+     * JWT does not have the admin role
+     */
+    403: unknown;
+};
+
+export type GetPlayerConnectionsResponses = {
+    /**
+     * Paginated player connections
+     */
+    200: PlayerConnectionPageResponse;
+};
+
+export type GetPlayerConnectionsResponse = GetPlayerConnectionsResponses[keyof GetPlayerConnectionsResponses];
+
+export type IngestPlayerConnectionData = {
+    body: PlayerConnectionRequest;
+    headers: {
+        /**
+         * Shared game-server event secret
+         */
+        'X-Q3JS-Client-Secret': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/player-connections';
+};
+
+export type IngestPlayerConnectionErrors = {
+    /**
+     * Player connection payload is invalid
+     */
+    400: unknown;
+    /**
+     * Client secret is missing or invalid
+     */
+    401: unknown;
+};
+
+export type IngestPlayerConnectionResponses = {
+    /**
+     * Player connection persisted
+     */
+    204: void;
+};
+
+export type IngestPlayerConnectionResponse = IngestPlayerConnectionResponses[keyof IngestPlayerConnectionResponses];
 
 export type SearchProfilesData = {
     body?: never;
