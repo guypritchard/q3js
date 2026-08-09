@@ -2,6 +2,7 @@ import { loadConfig } from "./config.js";
 import { GameServer } from "./game-server.js";
 import { Gateway } from "./gateway.js";
 import { MasterHeartbeat } from "./master-heartbeat.js";
+import { PlayerConnectionReporter } from "./player-connection-reporter.js";
 
 async function main(): Promise<void> {
   const config = loadConfig();
@@ -16,6 +17,13 @@ async function main(): Promise<void> {
     targetPort: config.gamePort,
     secure: config.secure,
   });
+  const playerConnectionReporter = new PlayerConnectionReporter({
+    masterBaseUrl: config.masterBaseUrl,
+    clientSecret: config.eventClientSecret,
+    timeoutMs: config.heartbeatTimeoutMs,
+    serverHost: config.publishHost,
+    serverPort: config.publishPort,
+  });
   let gameReady = false;
   let stopping = false;
 
@@ -26,8 +34,10 @@ async function main(): Promise<void> {
     targetPort: config.gamePort,
     maxConnections: config.maxConnections,
     maxPacketBytes: config.maxPacketBytes,
+    trustedProxyHops: config.trustedProxyHops,
     idleTimeoutMs: config.idleTimeoutMs,
     ready: () => gameReady,
+    playerConnected: (connection) => playerConnectionReporter.report(connection),
   });
 
   let requestStop!: (exitCode: number) => void;
@@ -42,6 +52,7 @@ async function main(): Promise<void> {
     stopping = true;
     gameReady = false;
     masterHeartbeat.stop();
+    playerConnectionReporter.stop();
     await gateway.stop().catch((error: unknown) => console.error("Gateway shutdown failed:", error));
     await gameServer.stop().catch((error: unknown) => console.error("Game server shutdown failed:", error));
     process.exitCode = exitCode;

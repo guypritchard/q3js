@@ -6,10 +6,12 @@ package com.q3js.master.database.generated;
 
 import com.q3js.master.database.generated.tables.BannedIps;
 import com.q3js.master.database.generated.tables.Events;
+import com.q3js.master.database.generated.tables.PlayerConnections;
 import com.q3js.master.database.generated.tables.PlayerPageVisits;
 import com.q3js.master.database.generated.tables.Servers;
 import com.q3js.master.database.generated.tables.records.BannedIpsRecord;
 import com.q3js.master.database.generated.tables.records.EventsRecord;
+import com.q3js.master.database.generated.tables.records.PlayerConnectionsRecord;
 import com.q3js.master.database.generated.tables.records.PlayerPageVisitsRecord;
 import com.q3js.master.database.generated.tables.records.ServersRecord;
 
@@ -32,6 +34,7 @@ public class Keys {
 
     public static final UniqueKey<BannedIpsRecord> BANNED_IPS_PKEY = Internal.createUniqueKey(BannedIps.BANNED_IPS, DSL.name("banned_ips_pkey"), new TableField[] { BannedIps.BANNED_IPS.IP_ADDRESS }, true);
     public static final UniqueKey<EventsRecord> EVENTS_PKEY1 = Internal.createUniqueKey(Events.EVENTS, DSL.name("events_pkey1"), new TableField[] { Events.EVENTS.ID }, true);
+    public static final UniqueKey<PlayerConnectionsRecord> PLAYER_CONNECTIONS_PKEY = Internal.createUniqueKey(PlayerConnections.PLAYER_CONNECTIONS, DSL.name("player_connections_pkey"), new TableField[] { PlayerConnections.PLAYER_CONNECTIONS.ID }, true);
     public static final UniqueKey<PlayerPageVisitsRecord> PLAYER_PAGE_VISITS_PKEY = Internal.createUniqueKey(PlayerPageVisits.PLAYER_PAGE_VISITS, DSL.name("player_page_visits_pkey"), new TableField[] { PlayerPageVisits.PLAYER_PAGE_VISITS.ID }, true);
     public static final UniqueKey<ServersRecord> SERVERS_PKEY = Internal.createUniqueKey(Servers.SERVERS, DSL.name("servers_pkey"), new TableField[] { Servers.SERVERS.HOST, Servers.SERVERS.PROXY_PORT }, true);
 }

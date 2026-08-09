@@ -30,7 +30,9 @@ class OpenApiTest {
             .body("paths", hasKey("/api/scoreboard/distribution"))
             .body("paths", hasKey("/api/players/{playerName}/distribution"))
             .body("paths", hasKey("/api/stats"))
-            .body("paths", hasKey("/api/country"));
+            .body("paths", hasKey("/api/country"))
+            .body("paths", hasKey("/api/auth/login"))
+            .body("components.securitySchemes", hasKey("jwt"));
     }
 
     @Test

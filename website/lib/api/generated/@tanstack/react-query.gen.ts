@@ -3,8 +3,57 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { createVoiceToken, getProfile, getProfileDistribution, getProfileSitemap, getRequesterCountry, getScoreboard, getScoreboardDistribution, getStats, getWeaponUsage, heartbeat, ingest, type Options, searchProfiles, servers, status } from '../sdk.gen';
-import type { CreateVoiceTokenData, CreateVoiceTokenResponse, GetProfileData, GetProfileDistributionData, GetProfileDistributionResponse, GetProfileResponse, GetProfileSitemapData, GetProfileSitemapResponse, GetRequesterCountryData, GetRequesterCountryResponse, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionResponse, GetScoreboardResponse, GetStatsData, GetStatsResponse, GetWeaponUsageData, GetWeaponUsageResponse, HeartbeatData, HeartbeatResponse, IngestData, IngestResponse, SearchProfilesData, SearchProfilesResponse, ServersData, ServersResponse, StatusData, StatusResponse2 } from '../types.gen';
+import { createVoiceToken, getPlayerConnections, getProfile, getProfileDistribution, getProfileSitemap, getRequesterCountry, getScoreboard, getScoreboardDistribution, getStats, getWeaponUsage, heartbeat, ingest, ingestPlayerConnection, loginAdmin, type Options, searchProfiles, servers, status } from '../sdk.gen';
+import type { CreateVoiceTokenData, CreateVoiceTokenResponse, GetPlayerConnectionsData, GetPlayerConnectionsResponse, GetProfileData, GetProfileDistributionData, GetProfileDistributionResponse, GetProfileResponse, GetProfileSitemapData, GetProfileSitemapResponse, GetRequesterCountryData, GetRequesterCountryResponse, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionResponse, GetScoreboardResponse, GetStatsData, GetStatsResponse, GetWeaponUsageData, GetWeaponUsageResponse, HeartbeatData, HeartbeatResponse, IngestData, IngestPlayerConnectionData, IngestPlayerConnectionResponse, IngestResponse, LoginAdminData, LoginAdminResponse, SearchProfilesData, SearchProfilesResponse, ServersData, ServersResponse, StatusData, StatusResponse2 } from '../types.gen';
+
+export type MutationKey<TOptions extends Partial<Options>> = [
+    Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
+        _id: string;
+        tags?: ReadonlyArray<string>;
+    }
+];
+
+const createMutationKey = <TOptions extends Partial<Options>>(id: string, options?: TOptions, tags?: ReadonlyArray<string>): [
+    MutationKey<TOptions>[0]
+] => {
+    const params: MutationKey<TOptions>[0] = { _id: id, baseUrl: options?.baseUrl || (options?.client ?? client).getConfig().baseUrl };
+    if (tags) {
+        params.tags = tags;
+    }
+    if (options?.body) {
+        params.body = options.body;
+    }
+    if (options?.headers) {
+        params.headers = options.headers;
+    }
+    if (options?.path) {
+        params.path = options.path;
+    }
+    if (options?.query) {
+        params.query = options.query;
+    }
+    return [params];
+};
+
+export const loginAdminMutationKey = (options?: Partial<Options<LoginAdminData>>) => createMutationKey('loginAdmin', options);
+
+/**
+ * Authenticate the administrator
+ */
+export const loginAdminMutation = (options?: Partial<Options<LoginAdminData>>): UseMutationOptions<LoginAdminResponse, DefaultError, Options<LoginAdminData>> => {
+    const mutationOptions: UseMutationOptions<LoginAdminResponse, DefaultError, Options<LoginAdminData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await loginAdmin({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        },
+        mutationKey: loginAdminMutationKey(options)
+    };
+    return mutationOptions;
+};
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -57,35 +106,6 @@ export const getRequesterCountryOptions = (options?: Options<GetRequesterCountry
     queryKey: getRequesterCountryQueryKey(options)
 });
 
-export type MutationKey<TOptions extends Partial<Options>> = [
-    Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
-        _id: string;
-        tags?: ReadonlyArray<string>;
-    }
-];
-
-const createMutationKey = <TOptions extends Partial<Options>>(id: string, options?: TOptions, tags?: ReadonlyArray<string>): [
-    MutationKey<TOptions>[0]
-] => {
-    const params: MutationKey<TOptions>[0] = { _id: id, baseUrl: options?.baseUrl || (options?.client ?? client).getConfig().baseUrl };
-    if (tags) {
-        params.tags = tags;
-    }
-    if (options?.body) {
-        params.body = options.body;
-    }
-    if (options?.headers) {
-        params.headers = options.headers;
-    }
-    if (options?.path) {
-        params.path = options.path;
-    }
-    if (options?.query) {
-        params.query = options.query;
-    }
-    return [params];
-};
-
 export const ingestMutationKey = (options?: Partial<Options<IngestData>>) => createMutationKey('ingest', options);
 
 /**
@@ -102,6 +122,103 @@ export const ingestMutation = (options?: Partial<Options<IngestData>>): UseMutat
             return data;
         },
         mutationKey: ingestMutationKey(options)
+    };
+    return mutationOptions;
+};
+
+export const getPlayerConnectionsQueryKey = (options?: Options<GetPlayerConnectionsData>) => createQueryKey('getPlayerConnections', options, false, ['Player connections']);
+
+/**
+ * List recorded player connections
+ */
+export const getPlayerConnectionsOptions = (options?: Options<GetPlayerConnectionsData>) => queryOptions<GetPlayerConnectionsResponse, DefaultError, GetPlayerConnectionsResponse, ReturnType<typeof getPlayerConnectionsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getPlayerConnections({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getPlayerConnectionsQueryKey(options)
+});
+
+const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'headers' | 'path' | 'query'>>(queryKey: QueryKey<Options>, page: K) => {
+    const params = { ...queryKey[0] };
+    if (page.body) {
+        params.body = {
+            ...queryKey[0].body as any,
+            ...page.body as any
+        };
+    }
+    if (page.headers) {
+        params.headers = {
+            ...queryKey[0].headers,
+            ...page.headers
+        };
+    }
+    if (page.path) {
+        params.path = {
+            ...queryKey[0].path as any,
+            ...page.path as any
+        };
+    }
+    if (page.query) {
+        params.query = {
+            ...queryKey[0].query as any,
+            ...page.query as any
+        };
+    }
+    return params as unknown as typeof page;
+};
+
+export const getPlayerConnectionsInfiniteQueryKey = (options?: Options<GetPlayerConnectionsData>): QueryKey<Options<GetPlayerConnectionsData>> => createQueryKey('getPlayerConnections', options, true);
+
+/**
+ * List recorded player connections
+ */
+export const getPlayerConnectionsInfiniteOptions = (options?: Options<GetPlayerConnectionsData>) => {
+    const opts = infiniteQueryOptions<GetPlayerConnectionsResponse, DefaultError, InfiniteData<GetPlayerConnectionsResponse>, QueryKey<Options<GetPlayerConnectionsData>>, number | Pick<QueryKey<Options<GetPlayerConnectionsData>>[0], 'body' | 'headers' | 'path' | 'query'>>(
+    // @ts-ignore
+    {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+            // @ts-ignore
+            const page: Pick<QueryKey<Options<GetPlayerConnectionsData>>[0], 'body' | 'headers' | 'path' | 'query'> = typeof pageParam === 'object' ? pageParam : {
+                query: {
+                    page: pageParam
+                }
+            };
+            const params = createInfiniteParams(queryKey, page);
+            const { data } = await getPlayerConnections({
+                ...options,
+                ...params,
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: getPlayerConnectionsInfiniteQueryKey(options)
+    });
+    return opts as Omit<typeof opts, 'initialData'>;
+};
+
+export const ingestPlayerConnectionMutationKey = (options?: Partial<Options<IngestPlayerConnectionData>>) => createMutationKey('ingestPlayerConnection', options);
+
+/**
+ * Store a decoded player connection
+ */
+export const ingestPlayerConnectionMutation = (options?: Partial<Options<IngestPlayerConnectionData>>): UseMutationOptions<IngestPlayerConnectionResponse, DefaultError, Options<IngestPlayerConnectionData>> => {
+    const mutationOptions: UseMutationOptions<IngestPlayerConnectionResponse, DefaultError, Options<IngestPlayerConnectionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await ingestPlayerConnection({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        },
+        mutationKey: ingestPlayerConnectionMutationKey(options)
     };
     return mutationOptions;
 };
@@ -195,35 +312,6 @@ export const getScoreboardOptions = (options?: Options<GetScoreboardData>) => qu
     },
     queryKey: getScoreboardQueryKey(options)
 });
-
-const createInfiniteParams = <K extends Pick<QueryKey<Options>[0], 'body' | 'headers' | 'path' | 'query'>>(queryKey: QueryKey<Options>, page: K) => {
-    const params = { ...queryKey[0] };
-    if (page.body) {
-        params.body = {
-            ...queryKey[0].body as any,
-            ...page.body as any
-        };
-    }
-    if (page.headers) {
-        params.headers = {
-            ...queryKey[0].headers,
-            ...page.headers
-        };
-    }
-    if (page.path) {
-        params.path = {
-            ...queryKey[0].path as any,
-            ...page.path as any
-        };
-    }
-    if (page.query) {
-        params.query = {
-            ...queryKey[0].query as any,
-            ...page.query as any
-        };
-    }
-    return params as unknown as typeof page;
-};
 
 export const getScoreboardInfiniteQueryKey = (options?: Options<GetScoreboardData>): QueryKey<Options<GetScoreboardData>> => createQueryKey('getScoreboard', options, true);
 

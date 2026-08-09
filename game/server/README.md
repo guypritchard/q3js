@@ -30,15 +30,19 @@ Runtime variables:
 - `Q3JS_HOME_PATH`: writable server state (defaults to `game/server/state`)
 - `Q3JS_GAME_HOST`, `Q3JS_GAME_PORT`: ioq3ded bind/target, defaults `127.0.0.1:27960`
 - `Q3JS_GATEWAY_HOST`, `Q3JS_GATEWAY_PORT`: gateway bind, defaults `0.0.0.0:27961`
+- `Q3JS_TRUST_PROXY_HOPS`: trusted reverse proxies in front of the gateway,
+  defaults to `0`. Set to `1` behind Cloudflare (or one trusted TLS proxy) so
+  player connection records use the original address from `X-Forwarded-For`.
 - `Q3JS_MASTER_URL`: master HTTP base URL, defaults `http://localhost:8080`
 - `Q3JS_EVENT_URL`: authenticated event-ingestion endpoint, defaults to
   `/api/events` on `Q3JS_MASTER_URL`
-- `Q3JS_EVENT_CLIENT_SECRET`: optional shared event-ingestion secret. Local
+- `Q3JS_EVENT_CLIENT_SECRET`: optional shared ingestion secret. Local
   development uses the same fallback as the master application. Community
-  servers omit it: they register as unofficial and event reporting is disabled.
-  Project-managed servers provide the master application's secret to enable
-  authenticated events and official status. `openssl rand -hex 32` generates
-  a suitable secret for operators running their own master.
+  servers omit it: they register as unofficial and event/player-connection
+  reporting is disabled. Project-managed servers provide the master
+  application's secret to enable authenticated reporting and official status.
+  `openssl rand -hex 32` generates a suitable secret for operators running
+  their own master.
 - `Q3JS_PUBLISH_HOST`, `Q3JS_PUBLISH_PORT`: browser-reachable gateway address,
   defaults `localhost` and `Q3JS_GATEWAY_PORT`
 - `Q3JS_SECURE`: publish the gateway as `wss` instead of `ws`, defaults `false`

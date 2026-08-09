@@ -12,6 +12,10 @@ The public API is compatible with the previous Q3JS server registry:
 - `GET /api/status` reports application status.
 - `POST /api/events` accepts authenticated join, leave, and kill events from
   packaged game servers.
+- `POST /api/player-connections` accepts authenticated player name, sanitized
+  userinfo, client IP, and server identity records from packaged gateways.
+- `GET /api/player-connections` gives JWT-authenticated administrators a
+  searchable, paginated view of those connection records.
 - `GET /api/players` searches player profiles by Quake handle.
 - `GET /api/players/{playerName}` returns detailed player statistics.
 - `GET /api/scoreboard` returns searchable and paginated global frag rankings.
@@ -22,6 +26,8 @@ The public API is compatible with the previous Q3JS server registry:
   browser clients can include it in their Quake userinfo.
 - `POST /api/voice/token` issues a microphone-only LiveKit token for the voice
   room belonging to a currently listed game server.
+- `POST /api/auth/login` authenticates the configured administrator and returns
+  a signed JWT bearer token with the `admin` role.
 - `GET /q/health` reports Quarkus health checks.
 - `GET /q/openapi` returns the generated OpenAPI document.
 - `GET /q/swagger-ui` opens the interactive Swagger UI.
@@ -48,16 +54,39 @@ make master-run
 Run a packaged Q3JS server separately with `make server-run`. Its local defaults
 publish `localhost:27961` to this master at `http://localhost:8080`.
 
-Event ingestion requires the `X-Q3JS-Client-Secret` header. Heartbeats may use
-the same header; matching servers are persisted as official, while missing or
-invalid secrets remain registered as community servers. The master in dev or
-test mode and a packaged server targeting localhost share a development-only
-fallback. A deployed master requires an explicit secret; generate one and
-provide the same value to both processes:
+Event and player-connection ingestion require the `X-Q3JS-Client-Secret`
+header. Heartbeats may use the same header; matching servers are persisted as
+official, while missing or invalid secrets remain registered as community
+servers. The master in dev or test mode and a packaged server targeting
+localhost share a development-only fallback. A deployed master requires an
+explicit secret; generate one and provide the same value to both processes:
 
 ```shell
 export Q3JS_EVENT_CLIENT_SECRET="$(openssl rand -hex 32)"
 ```
+
+## Admin authentication
+
+Admin authentication uses a password from `Q3JS_ADMIN_PASSWORD`. Successful
+requests to `POST /api/auth/login` return a short-lived RS256 JWT bearer token.
+When running outside the project container image, generate a dedicated signing
+key pair and configure its filesystem locations:
+
+```shell
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out privateKey.pem
+openssl pkey -in privateKey.pem -pubout -out publicKey.pem
+export Q3JS_ADMIN_PASSWORD=replace-with-a-strong-admin-password
+export Q3JS_ADMIN_JWT_PRIVATE_KEY_LOCATION=/absolute/path/to/privateKey.pem
+export Q3JS_ADMIN_JWT_PUBLIC_KEY_LOCATION=/absolute/path/to/publicKey.pem
+export Q3JS_ADMIN_TOKEN_TTL=1h
+```
+
+The project container image generates a 2048-bit RSA key pair in `/state` when
+the configured files do not exist. Persist `/state` as a volume so tokens remain
+valid when the container is replaced. An existing complete key pair is never
+replaced; if only the private key exists, its public key is regenerated.
+Admin endpoints can use Quarkus `@RolesAllowed("admin")`; clients send the login
+response's `access_token` as `Authorization: Bearer <token>`.
 
 The game server posts to `/api/events` on `Q3JS_MASTER_URL` by default. Override
 that endpoint independently with `Q3JS_EVENT_URL`.
@@ -161,7 +190,9 @@ docker run --rm -p 8080:8080 \
   -e Q3JS_DB_USER=postgres \
   -e Q3JS_DB_PASSWORD=replace-with-the-database-password \
   -e Q3JS_EVENT_CLIENT_SECRET=replace-with-the-shared-event-secret \
+  -e Q3JS_ADMIN_PASSWORD=replace-with-a-strong-admin-password \
   -e Q3JS_CORS_ORIGINS=https://q3js.example.com \
+  -v q3js-master-state:/state \
   q3js-master
 ```
 
