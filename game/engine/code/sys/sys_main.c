@@ -33,6 +33,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
+#include <emscripten/html5.h>
 #endif
 
 #ifndef DEDICATED
@@ -53,6 +54,34 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 static char binaryPath[ MAX_OSPATH ] = { 0 };
 static char installPath[ MAX_OSPATH ] = { 0 };
+
+#ifdef __EMSCRIPTEN__
+#define BACKGROUND_FRAME_INTERVAL_MSEC 16
+
+static EM_BOOL Sys_VisibilityChangeCallback( int eventType,
+		const EmscriptenVisibilityChangeEvent *visibilityEvent, void *userData )
+{
+	(void) eventType;
+	(void) userData;
+
+	/*
+	 * Browsers suspend requestAnimationFrame in hidden tabs. Keep the client,
+	 * networking, and audio mixer advancing with a timer while hidden, then
+	 * return to display-synchronised rendering when the tab becomes visible.
+	 */
+	if ( visibilityEvent->hidden )
+		emscripten_set_main_loop_timing( EM_TIMING_SETTIMEOUT,
+				BACKGROUND_FRAME_INTERVAL_MSEC );
+	else
+		emscripten_set_main_loop_timing( EM_TIMING_RAF, 1 );
+
+	/* Replace the already-scheduled callback from the previous timing mode. */
+	emscripten_pause_main_loop();
+	emscripten_resume_main_loop();
+
+	return EM_FALSE;
+}
+#endif
 
 /*
 =================
@@ -888,6 +917,8 @@ int main( int argc, char **argv )
 	signal( SIGINT, Sys_SigHandler );
 
 #ifdef __EMSCRIPTEN__
+	emscripten_set_visibilitychange_callback( NULL, EM_FALSE,
+			Sys_VisibilityChangeCallback );
 	emscripten_set_main_loop( Com_Frame, 0, 1 );
 #else
 	while( 1 )
