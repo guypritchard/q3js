@@ -4,6 +4,12 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { PLAYER_NAME_STORAGE_KEY, randomPlayerName } from "@/lib/player-name";
 
 const listeners = new Set<() => void>();
+let generatedDefaultName: string | undefined;
+
+function defaultPlayerName(): string {
+  generatedDefaultName ??= randomPlayerName();
+  return generatedDefaultName;
+}
 
 function subscribe(listener: () => void) {
   listeners.add(listener);
@@ -34,16 +40,17 @@ function storePlayerName(value: string) {
 
 export function usePlayerName(initialName?: string) {
   const normalizedInitialName = initialName?.trim();
-  const fallbackName = normalizedInitialName || "Player";
   const playerName = useSyncExternalStore(
     subscribe,
-    () => storedPlayerName() ?? fallbackName,
-    () => fallbackName,
+    () => storedPlayerName() ?? normalizedInitialName ?? defaultPlayerName(),
+    () => normalizedInitialName ?? "",
   );
 
   useEffect(() => {
     if (normalizedInitialName) {
       storePlayerName(normalizedInitialName);
+    } else if (storedPlayerName() === undefined) {
+      storePlayerName(defaultPlayerName());
     }
   }, [normalizedInitialName]);
 
