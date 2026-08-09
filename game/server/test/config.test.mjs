@@ -11,6 +11,7 @@ test("uses matching local event-ingestion defaults", () => {
 
   assert.equal(config.masterBaseUrl, "http://localhost:8080/");
   assert.equal(config.eventIngestionUrl, "http://localhost:8080/api/events");
+  assert.equal(config.banRefreshIntervalMs, 10000);
   assert.equal(config.eventClientSecret, DEVELOPMENT_EVENT_CLIENT_SECRET);
 });
 
@@ -25,6 +26,14 @@ test("allows event ingestion URL and secret overrides", () => {
   assert.equal(config.masterBaseUrl, "https://master.example.com/root");
   assert.equal(config.eventIngestionUrl, "https://events.example.com/v1/q3");
   assert.equal(config.eventClientSecret, secret);
+});
+
+test("allows a ban synchronization interval override", () => {
+  const config = loadConfig({
+    Q3JS_BAN_REFRESH_INTERVAL_MS: "45000",
+  }, []);
+
+  assert.equal(config.banRefreshIntervalMs, 45000);
 });
 
 test("allows the complete game-server config to come from the environment", () => {

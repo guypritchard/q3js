@@ -128,3 +128,71 @@ test("gateway reports decoded userinfo and forwards the connect packet unchanged
   await within(gateway.stop(), "gateway stop");
   udp.close();
 });
+
+test("gateway rejects banned clients before accepting the WebSocket", async () => {
+  const gateway = new Gateway({
+    host: "127.0.0.1",
+    port: 0,
+    targetHost: "127.0.0.1",
+    targetPort: 27960,
+    maxConnections: 2,
+    maxPacketBytes: 65535,
+    trustedProxyHops: 1,
+    idleTimeoutMs: 5000,
+    ready: () => true,
+    isBanned: (clientIp) => clientIp === "203.0.113.7",
+  });
+  await within(gateway.start(), "gateway start");
+
+  const webSocket = new WebSocket(`ws://127.0.0.1:${gateway.address().port}/ws`, {
+    headers: { "x-forwarded-for": "203.0.113.7" },
+  });
+  const status = await within(new Promise((resolve, reject) => {
+    webSocket.once("unexpected-response", (_request, response) => {
+      response.resume();
+      resolve(response.statusCode);
+    });
+    webSocket.once("open", () => reject(new Error("Banned WebSocket was accepted.")));
+    webSocket.once("error", reject);
+  }), "banned WebSocket rejection");
+
+  assert.equal(status, 403);
+  await within(gateway.stop(), "gateway stop");
+});
+
+test("gateway disconnects a client that becomes banned while connected", async () => {
+  let banned = false;
+  const gateway = new Gateway({
+    host: "127.0.0.1",
+    port: 0,
+    targetHost: "127.0.0.1",
+    targetPort: 27960,
+    maxConnections: 2,
+    maxPacketBytes: 65535,
+    trustedProxyHops: 1,
+    idleTimeoutMs: 5000,
+    ready: () => true,
+    isBanned: (clientIp) => banned && clientIp === "203.0.113.7",
+  });
+  await within(gateway.start(), "gateway start");
+
+  const webSocket = new WebSocket(`ws://127.0.0.1:${gateway.address().port}/ws`, {
+    headers: { "x-forwarded-for": "203.0.113.7" },
+  });
+  await within(new Promise((resolve, reject) => {
+    webSocket.once("open", resolve);
+    webSocket.once("error", reject);
+  }), "WebSocket open");
+
+  const closed = new Promise((resolve) => webSocket.once("close", (code, reason) => {
+    resolve({ code, reason: reason.toString() });
+  }));
+  banned = true;
+  assert.equal(gateway.disconnectBannedClients(), 1);
+  assert.deepEqual(await within(closed, "banned WebSocket close"), {
+    code: 1008,
+    reason: "IP address banned",
+  });
+
+  await within(gateway.stop(), "gateway stop");
+});

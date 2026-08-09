@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateVoiceTokenData, CreateVoiceTokenErrors, CreateVoiceTokenResponses, GetPlayerConnectionsData, GetPlayerConnectionsErrors, GetPlayerConnectionsResponses, GetProfileData, GetProfileDistributionData, GetProfileDistributionErrors, GetProfileDistributionResponses, GetProfileErrors, GetProfileResponses, GetProfileSitemapData, GetProfileSitemapResponses, GetRequesterCountryData, GetRequesterCountryResponses, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionErrors, GetScoreboardDistributionResponses, GetScoreboardErrors, GetScoreboardResponses, GetStatsData, GetStatsResponses, GetWeaponUsageData, GetWeaponUsageErrors, GetWeaponUsageResponses, HeartbeatData, HeartbeatErrors, HeartbeatResponses, IngestData, IngestErrors, IngestPlayerConnectionData, IngestPlayerConnectionErrors, IngestPlayerConnectionResponses, IngestResponses, LoginAdminData, LoginAdminErrors, LoginAdminResponses, SearchProfilesData, SearchProfilesErrors, SearchProfilesResponses, ServersData, ServersResponses, StatusData, StatusResponses } from './types.gen';
+import type { BanPlayerData, BanPlayerErrors, BanPlayerResponses, CreateVoiceTokenData, CreateVoiceTokenErrors, CreateVoiceTokenResponses, GetAdminBansData, GetAdminBansErrors, GetAdminBansResponses, GetBansData, GetBansErrors, GetBansResponses, GetPlayerConnectionsData, GetPlayerConnectionsErrors, GetPlayerConnectionsResponses, GetProfileData, GetProfileDistributionData, GetProfileDistributionErrors, GetProfileDistributionResponses, GetProfileErrors, GetProfileResponses, GetProfileSitemapData, GetProfileSitemapResponses, GetRequesterCountryData, GetRequesterCountryResponses, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionErrors, GetScoreboardDistributionResponses, GetScoreboardErrors, GetScoreboardResponses, GetStatsData, GetStatsResponses, GetWeaponUsageData, GetWeaponUsageErrors, GetWeaponUsageResponses, HeartbeatData, HeartbeatErrors, HeartbeatResponses, IngestData, IngestErrors, IngestPlayerConnectionData, IngestPlayerConnectionErrors, IngestPlayerConnectionResponses, IngestResponses, LoginAdminData, LoginAdminErrors, LoginAdminResponses, SearchProfilesData, SearchProfilesErrors, SearchProfilesResponses, ServersData, ServersResponses, StatusData, StatusResponses, UnbanPlayerData, UnbanPlayerErrors, UnbanPlayerResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -19,6 +19,37 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
+ * List bans for the admin console
+ */
+export const getAdminBans = <ThrowOnError extends boolean = true>(options?: Options<GetAdminBansData, ThrowOnError>): RequestResult<GetAdminBansResponses, GetAdminBansErrors, ThrowOnError> => (options?.client ?? client).get<GetAdminBansResponses, GetAdminBansErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/bans',
+    ...options
+});
+
+/**
+ * Ban a player IP address
+ */
+export const banPlayer = <ThrowOnError extends boolean = true>(options: Options<BanPlayerData, ThrowOnError>): RequestResult<BanPlayerResponses, BanPlayerErrors, ThrowOnError> => (options.client ?? client).post<BanPlayerResponses, BanPlayerErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/bans',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove an IP ban
+ */
+export const unbanPlayer = <ThrowOnError extends boolean = true>(options: Options<UnbanPlayerData, ThrowOnError>): RequestResult<UnbanPlayerResponses, UnbanPlayerErrors, ThrowOnError> => (options.client ?? client).delete<UnbanPlayerResponses, UnbanPlayerErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/admin/bans/{ipAddress}',
+    ...options
+});
+
+/**
  * Authenticate the administrator
  */
 export const loginAdmin = <ThrowOnError extends boolean = true>(options: Options<LoginAdminData, ThrowOnError>): RequestResult<LoginAdminResponses, LoginAdminErrors, ThrowOnError> => (options.client ?? client).post<LoginAdminResponses, LoginAdminErrors, ThrowOnError>({
@@ -28,6 +59,15 @@ export const loginAdmin = <ThrowOnError extends boolean = true>(options: Options
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * List banned player IP addresses
+ */
+export const getBans = <ThrowOnError extends boolean = true>(options: Options<GetBansData, ThrowOnError>): RequestResult<GetBansResponses, GetBansErrors, ThrowOnError> => (options.client ?? client).get<GetBansResponses, GetBansErrors, ThrowOnError>({
+    security: [{ name: 'X-Q3JS-Client-Secret', type: 'apiKey' }],
+    url: '/api/bans',
+    ...options
 });
 
 /**

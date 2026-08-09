@@ -14,6 +14,10 @@ The public API is compatible with the previous Q3JS server registry:
   packaged game servers.
 - `POST /api/player-connections` accepts authenticated player name, sanitized
   userinfo, client IP, and server identity records from packaged gateways.
+- `GET /api/bans` returns the current IP ban list to authenticated packaged
+  gateways.
+- `GET`, `POST`, and `DELETE /api/admin/bans` let JWT-authenticated
+  administrators inspect, create, and remove IP bans.
 - `GET /api/player-connections` gives JWT-authenticated administrators a
   searchable, paginated view of those connection records.
 - `GET /api/players` searches player profiles by Quake handle.

@@ -1,3 +1,4 @@
+import { BanList } from "./ban-list.js";
 import { loadConfig } from "./config.js";
 import { GameServer } from "./game-server.js";
 import { Gateway } from "./gateway.js";
@@ -24,6 +25,12 @@ async function main(): Promise<void> {
     serverHost: config.publishHost,
     serverPort: config.publishPort,
   });
+  const banList = new BanList({
+    masterBaseUrl: config.masterBaseUrl,
+    clientSecret: config.eventClientSecret,
+    intervalMs: config.banRefreshIntervalMs,
+    timeoutMs: config.heartbeatTimeoutMs,
+  });
   let gameReady = false;
   let stopping = false;
 
@@ -37,7 +44,14 @@ async function main(): Promise<void> {
     trustedProxyHops: config.trustedProxyHops,
     idleTimeoutMs: config.idleTimeoutMs,
     ready: () => gameReady,
+    isBanned: (clientIp) => banList.isBanned(clientIp),
     playerConnected: (connection) => playerConnectionReporter.report(connection),
+  });
+  banList.onUpdate(() => {
+    const disconnected = gateway.disconnectBannedClients();
+    if (disconnected > 0) {
+      console.log(`Disconnected ${disconnected} newly banned client(s).`);
+    }
   });
 
   let requestStop!: (exitCode: number) => void;
@@ -53,6 +67,7 @@ async function main(): Promise<void> {
     gameReady = false;
     masterHeartbeat.stop();
     playerConnectionReporter.stop();
+    banList.stop();
     await gateway.stop().catch((error: unknown) => console.error("Gateway shutdown failed:", error));
     await gameServer.stop().catch((error: unknown) => console.error("Game server shutdown failed:", error));
     process.exitCode = exitCode;
@@ -62,6 +77,7 @@ async function main(): Promise<void> {
   process.once("SIGTERM", () => requestStop(0));
 
   try {
+    await banList.start();
     await gateway.start();
     await gameServer.start();
     void gameServer.waitForExit().then((exitCode) => requestStop(exitCode));

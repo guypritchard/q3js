@@ -3,6 +3,7 @@ import { createServer, type IncomingMessage, type Server as HttpServer } from "n
 import { isIP, type AddressInfo } from "node:net";
 import { WebSocket, WebSocketServer } from "ws";
 import { decompressHuffman } from "./huffman.js";
+import { normalizeIpAddress } from "./ip-address.js";
 
 export interface PlayerConnection {
   clientIp: string;
@@ -21,6 +22,7 @@ export interface GatewayOptions {
   trustedProxyHops?: number;
   idleTimeoutMs: number;
   ready: () => boolean;
+  isBanned?: (clientIp: string) => boolean;
   playerConnected?: (connection: PlayerConnection) => void | Promise<void>;
 }
 
@@ -29,11 +31,6 @@ const CONNECT_HEADER = Buffer.from("\xff\xff\xff\xffconnect ", "latin1");
 const CONNECT_RESPONSE = Buffer.from("\xff\xff\xff\xffconnectResponse", "latin1");
 const MAX_INFO_STRING_BYTES = 1024;
 const PRIVATE_USERINFO_KEYS = new Set(["clientip", "ip", "password", "rconpassword"]);
-
-function normalizeIpAddress(address: string): string {
-  const mappedIpv4 = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(address);
-  return mappedIpv4?.[1] ?? address;
-}
 
 function clientIpAddress(request: IncomingMessage, trustedProxyHops: number): string {
   const peerAddress = request.socket.remoteAddress;
@@ -108,7 +105,7 @@ export class Gateway {
   readonly #options: GatewayOptions;
   readonly #httpServer: HttpServer;
   readonly #webSocketServer: WebSocketServer;
-  readonly #clients = new Set<WebSocket>();
+  readonly #clients = new Map<WebSocket, string>();
 
   constructor(options: GatewayOptions) {
     this.#options = options;
@@ -142,19 +139,20 @@ export class Gateway {
         socket.end("HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n");
         return;
       }
-      this.#webSocketServer.handleUpgrade(request, socket, head, (webSocket) => {
-        this.#webSocketServer.emit("connection", webSocket, request);
-      });
-    });
-    this.#webSocketServer.on("connection", (webSocket, request) => {
+      let clientIp: string;
       try {
-        this.#handleConnection(
-          webSocket,
-          clientIpAddress(request, this.#options.trustedProxyHops ?? 0),
-        );
+        clientIp = clientIpAddress(request, this.#options.trustedProxyHops ?? 0);
       } catch {
-        webSocket.close(1008, "Client IP unavailable");
+        socket.end("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n");
+        return;
       }
+      if (this.#options.isBanned?.(clientIp)) {
+        socket.end("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
+        return;
+      }
+      this.#webSocketServer.handleUpgrade(request, socket, head, (webSocket) => {
+        this.#handleConnection(webSocket, clientIp);
+      });
     });
   }
 
@@ -176,6 +174,20 @@ export class Gateway {
     return address;
   }
 
+  disconnectBannedClients(): number {
+    let disconnected = 0;
+    for (const [client, clientIp] of this.#clients) {
+      if (
+        client.readyState === WebSocket.OPEN
+        && this.#options.isBanned?.(clientIp)
+      ) {
+        disconnected++;
+        client.close(1008, "IP address banned");
+      }
+    }
+    return disconnected;
+  }
+
   async stop(): Promise<void> {
     const httpClosed = this.#httpServer.listening
       ? new Promise<void>((resolve, reject) => {
@@ -183,7 +195,7 @@ export class Gateway {
         })
       : Promise.resolve();
 
-    for (const client of this.#clients) {
+    for (const client of this.#clients.keys()) {
       client.terminate();
     }
 
@@ -194,7 +206,7 @@ export class Gateway {
   }
 
   #handleConnection(webSocket: WebSocket, clientIp: string): void {
-    this.#clients.add(webSocket);
+    this.#clients.set(webSocket, clientIp);
     const udp = createSocket("udp4");
     let closed = false;
     let sentToTarget = false;
