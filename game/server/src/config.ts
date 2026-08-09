@@ -20,7 +20,6 @@ export interface ServerConfig {
   secure: boolean;
   maxConnections: number;
   maxPacketBytes: number;
-  trustedProxyHops: number;
   idleTimeoutMs: number;
   startupTimeoutMs: number;
   shutdownTimeoutMs: number;
@@ -128,7 +127,6 @@ export function loadConfig(
     secure: boolean(environment, "Q3JS_SECURE", false),
     maxConnections: integer(environment, "Q3JS_MAX_CONNECTIONS", 128, 1, 4096),
     maxPacketBytes: integer(environment, "Q3JS_MAX_PACKET_BYTES", 65535, 1024, 1048576),
-    trustedProxyHops: integer(environment, "Q3JS_TRUST_PROXY_HOPS", 0, 0, 16),
     idleTimeoutMs: integer(environment, "Q3JS_IDLE_TIMEOUT_MS", 120000, 1000, 3600000),
     startupTimeoutMs: integer(environment, "Q3JS_STARTUP_TIMEOUT_MS", 30000, 1000, 300000),
     shutdownTimeoutMs: integer(environment, "Q3JS_SHUTDOWN_TIMEOUT_MS", 10000, 1000, 60000),

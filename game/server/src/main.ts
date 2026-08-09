@@ -26,7 +26,6 @@ async function main(): Promise<void> {
     targetPort: config.gamePort,
     maxConnections: config.maxConnections,
     maxPacketBytes: config.maxPacketBytes,
-    trustedProxyHops: config.trustedProxyHops,
     idleTimeoutMs: config.idleTimeoutMs,
     ready: () => gameReady,
   });

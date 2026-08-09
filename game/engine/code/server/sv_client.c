@@ -1501,25 +1501,7 @@ SV_UpdateUserinfo_f
 ==================
 */
 static void SV_UpdateUserinfo_f( client_t *cl ) {
-	char clientip[MAX_INFO_VALUE];
-	int len;
-
-	// clientip is established by the WebSocket proxy during the connect
-	// handshake. Client userinfo updates replace the complete info string, so
-	// retain the trusted value and discard any replacement supplied by the
-	// client itself.
-	Q_strncpyz( clientip, Info_ValueForKey( cl->userinfo, "clientip" ), sizeof(clientip) );
 	Q_strncpyz( cl->userinfo, Cmd_Argv(1), sizeof(cl->userinfo) );
-	Info_RemoveKey( cl->userinfo, "clientip" );
-
-	if ( clientip[0] ) {
-		len = strlen( cl->userinfo ) + strlen( clientip ) + strlen( "\\clientip\\" );
-		if ( len >= MAX_INFO_STRING ) {
-			SV_DropClient( cl, "userinfo string length exceeded" );
-			return;
-		}
-		Info_SetValueForKey( cl->userinfo, "clientip", clientip );
-	}
 
 	SV_UserinfoChanged( cl );
 	// call prog code to allow overrides

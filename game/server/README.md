@@ -30,10 +30,6 @@ Runtime variables:
 - `Q3JS_HOME_PATH`: writable server state (defaults to `game/server/state`)
 - `Q3JS_GAME_HOST`, `Q3JS_GAME_PORT`: ioq3ded bind/target, defaults `127.0.0.1:27960`
 - `Q3JS_GATEWAY_HOST`, `Q3JS_GATEWAY_PORT`: gateway bind, defaults `0.0.0.0:27961`
-- `Q3JS_TRUST_PROXY_HOPS`: number of trusted reverse proxies in front of the
-  gateway, defaults to `0`. Set this to `1` for a single TLS/WebSocket reverse
-  proxy that securely appends or overwrites `X-Forwarded-For`; the gateway uses
-  it to expose the original peer as `clientip` in Quake userinfo.
 - `Q3JS_MASTER_URL`: master HTTP base URL, defaults `http://localhost:8080`
 - `Q3JS_EVENT_URL`: authenticated event-ingestion endpoint, defaults to
   `/api/events` on `Q3JS_MASTER_URL`
