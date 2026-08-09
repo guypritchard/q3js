@@ -17,6 +17,17 @@ export type AuthTokenResponse = {
     expires_in: number;
 };
 
+export type BanRequest = {
+    ipAddress: string;
+    playerName: string;
+};
+
+export type BanResponse = {
+    ipAddress: string;
+    playerName?: string;
+    bannedAt: OffsetDateTime;
+};
+
 export type CountryResponse = {
     ip: string;
     countryCode?: string | null;
@@ -241,6 +252,97 @@ export type WeaponUsageResponse = {
     leaders: Array<WeaponLeaderResponse>;
 };
 
+export type GetAdminBansData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/bans';
+};
+
+export type GetAdminBansErrors = {
+    /**
+     * Administrator JWT is missing or invalid
+     */
+    401: unknown;
+    /**
+     * JWT does not have the admin role
+     */
+    403: unknown;
+};
+
+export type GetAdminBansResponses = {
+    /**
+     * Current ban list
+     */
+    200: Array<BanResponse>;
+};
+
+export type GetAdminBansResponse = GetAdminBansResponses[keyof GetAdminBansResponses];
+
+export type BanPlayerData = {
+    body: BanRequest;
+    path?: never;
+    query?: never;
+    url: '/api/admin/bans';
+};
+
+export type BanPlayerErrors = {
+    /**
+     * Ban request is invalid
+     */
+    400: unknown;
+    /**
+     * Administrator JWT is missing or invalid
+     */
+    401: unknown;
+    /**
+     * JWT does not have the admin role
+     */
+    403: unknown;
+};
+
+export type BanPlayerResponses = {
+    /**
+     * IP address is banned
+     */
+    200: BanResponse;
+};
+
+export type BanPlayerResponse = BanPlayerResponses[keyof BanPlayerResponses];
+
+export type UnbanPlayerData = {
+    body?: never;
+    path: {
+        ipAddress: string;
+    };
+    query?: never;
+    url: '/api/admin/bans/{ipAddress}';
+};
+
+export type UnbanPlayerErrors = {
+    /**
+     * IP address is invalid
+     */
+    400: unknown;
+    /**
+     * Administrator JWT is missing or invalid
+     */
+    401: unknown;
+    /**
+     * JWT does not have the admin role
+     */
+    403: unknown;
+};
+
+export type UnbanPlayerResponses = {
+    /**
+     * IP address is not banned
+     */
+    204: void;
+};
+
+export type UnbanPlayerResponse = UnbanPlayerResponses[keyof UnbanPlayerResponses];
+
 export type LoginAdminData = {
     body: AdminLoginRequest;
     path?: never;
@@ -267,6 +369,35 @@ export type LoginAdminResponses = {
 };
 
 export type LoginAdminResponse = LoginAdminResponses[keyof LoginAdminResponses];
+
+export type GetBansData = {
+    body?: never;
+    headers: {
+        /**
+         * Shared game-server event secret
+         */
+        'X-Q3JS-Client-Secret': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/bans';
+};
+
+export type GetBansErrors = {
+    /**
+     * Client secret is missing or invalid
+     */
+    401: unknown;
+};
+
+export type GetBansResponses = {
+    /**
+     * Current ban list
+     */
+    200: Array<BanResponse>;
+};
+
+export type GetBansResponse = GetBansResponses[keyof GetBansResponses];
 
 export type GetRequesterCountryData = {
     body?: never;

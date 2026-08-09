@@ -3,57 +3,8 @@
 import { type DefaultError, type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { createVoiceToken, getPlayerConnections, getProfile, getProfileDistribution, getProfileSitemap, getRequesterCountry, getScoreboard, getScoreboardDistribution, getStats, getWeaponUsage, heartbeat, ingest, ingestPlayerConnection, loginAdmin, type Options, searchProfiles, servers, status } from '../sdk.gen';
-import type { CreateVoiceTokenData, CreateVoiceTokenResponse, GetPlayerConnectionsData, GetPlayerConnectionsResponse, GetProfileData, GetProfileDistributionData, GetProfileDistributionResponse, GetProfileResponse, GetProfileSitemapData, GetProfileSitemapResponse, GetRequesterCountryData, GetRequesterCountryResponse, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionResponse, GetScoreboardResponse, GetStatsData, GetStatsResponse, GetWeaponUsageData, GetWeaponUsageResponse, HeartbeatData, HeartbeatResponse, IngestData, IngestPlayerConnectionData, IngestPlayerConnectionResponse, IngestResponse, LoginAdminData, LoginAdminResponse, SearchProfilesData, SearchProfilesResponse, ServersData, ServersResponse, StatusData, StatusResponse2 } from '../types.gen';
-
-export type MutationKey<TOptions extends Partial<Options>> = [
-    Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
-        _id: string;
-        tags?: ReadonlyArray<string>;
-    }
-];
-
-const createMutationKey = <TOptions extends Partial<Options>>(id: string, options?: TOptions, tags?: ReadonlyArray<string>): [
-    MutationKey<TOptions>[0]
-] => {
-    const params: MutationKey<TOptions>[0] = { _id: id, baseUrl: options?.baseUrl || (options?.client ?? client).getConfig().baseUrl };
-    if (tags) {
-        params.tags = tags;
-    }
-    if (options?.body) {
-        params.body = options.body;
-    }
-    if (options?.headers) {
-        params.headers = options.headers;
-    }
-    if (options?.path) {
-        params.path = options.path;
-    }
-    if (options?.query) {
-        params.query = options.query;
-    }
-    return [params];
-};
-
-export const loginAdminMutationKey = (options?: Partial<Options<LoginAdminData>>) => createMutationKey('loginAdmin', options);
-
-/**
- * Authenticate the administrator
- */
-export const loginAdminMutation = (options?: Partial<Options<LoginAdminData>>): UseMutationOptions<LoginAdminResponse, DefaultError, Options<LoginAdminData>> => {
-    const mutationOptions: UseMutationOptions<LoginAdminResponse, DefaultError, Options<LoginAdminData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await loginAdmin({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        },
-        mutationKey: loginAdminMutationKey(options)
-    };
-    return mutationOptions;
-};
+import { banPlayer, createVoiceToken, getAdminBans, getBans, getPlayerConnections, getProfile, getProfileDistribution, getProfileSitemap, getRequesterCountry, getScoreboard, getScoreboardDistribution, getStats, getWeaponUsage, heartbeat, ingest, ingestPlayerConnection, loginAdmin, type Options, searchProfiles, servers, status, unbanPlayer } from '../sdk.gen';
+import type { BanPlayerData, BanPlayerResponse, CreateVoiceTokenData, CreateVoiceTokenResponse, GetAdminBansData, GetAdminBansResponse, GetBansData, GetBansResponse, GetPlayerConnectionsData, GetPlayerConnectionsResponse, GetProfileData, GetProfileDistributionData, GetProfileDistributionResponse, GetProfileResponse, GetProfileSitemapData, GetProfileSitemapResponse, GetRequesterCountryData, GetRequesterCountryResponse, GetScoreboardData, GetScoreboardDistributionData, GetScoreboardDistributionResponse, GetScoreboardResponse, GetStatsData, GetStatsResponse, GetWeaponUsageData, GetWeaponUsageResponse, HeartbeatData, HeartbeatResponse, IngestData, IngestPlayerConnectionData, IngestPlayerConnectionResponse, IngestResponse, LoginAdminData, LoginAdminResponse, SearchProfilesData, SearchProfilesResponse, ServersData, ServersResponse, StatusData, StatusResponse2, UnbanPlayerData, UnbanPlayerResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -87,6 +38,131 @@ const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions
     }
     return [params];
 };
+
+export const getAdminBansQueryKey = (options?: Options<GetAdminBansData>) => createQueryKey('getAdminBans', options, false, ['Admin bans']);
+
+/**
+ * List bans for the admin console
+ */
+export const getAdminBansOptions = (options?: Options<GetAdminBansData>) => queryOptions<GetAdminBansResponse, DefaultError, GetAdminBansResponse, ReturnType<typeof getAdminBansQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getAdminBans({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getAdminBansQueryKey(options)
+});
+
+export type MutationKey<TOptions extends Partial<Options>> = [
+    Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
+        _id: string;
+        tags?: ReadonlyArray<string>;
+    }
+];
+
+const createMutationKey = <TOptions extends Partial<Options>>(id: string, options?: TOptions, tags?: ReadonlyArray<string>): [
+    MutationKey<TOptions>[0]
+] => {
+    const params: MutationKey<TOptions>[0] = { _id: id, baseUrl: options?.baseUrl || (options?.client ?? client).getConfig().baseUrl };
+    if (tags) {
+        params.tags = tags;
+    }
+    if (options?.body) {
+        params.body = options.body;
+    }
+    if (options?.headers) {
+        params.headers = options.headers;
+    }
+    if (options?.path) {
+        params.path = options.path;
+    }
+    if (options?.query) {
+        params.query = options.query;
+    }
+    return [params];
+};
+
+export const banPlayerMutationKey = (options?: Partial<Options<BanPlayerData>>) => createMutationKey('banPlayer', options);
+
+/**
+ * Ban a player IP address
+ */
+export const banPlayerMutation = (options?: Partial<Options<BanPlayerData>>): UseMutationOptions<BanPlayerResponse, DefaultError, Options<BanPlayerData>> => {
+    const mutationOptions: UseMutationOptions<BanPlayerResponse, DefaultError, Options<BanPlayerData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await banPlayer({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        },
+        mutationKey: banPlayerMutationKey(options)
+    };
+    return mutationOptions;
+};
+
+export const unbanPlayerMutationKey = (options?: Partial<Options<UnbanPlayerData>>) => createMutationKey('unbanPlayer', options);
+
+/**
+ * Remove an IP ban
+ */
+export const unbanPlayerMutation = (options?: Partial<Options<UnbanPlayerData>>): UseMutationOptions<UnbanPlayerResponse, DefaultError, Options<UnbanPlayerData>> => {
+    const mutationOptions: UseMutationOptions<UnbanPlayerResponse, DefaultError, Options<UnbanPlayerData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await unbanPlayer({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        },
+        mutationKey: unbanPlayerMutationKey(options)
+    };
+    return mutationOptions;
+};
+
+export const loginAdminMutationKey = (options?: Partial<Options<LoginAdminData>>) => createMutationKey('loginAdmin', options);
+
+/**
+ * Authenticate the administrator
+ */
+export const loginAdminMutation = (options?: Partial<Options<LoginAdminData>>): UseMutationOptions<LoginAdminResponse, DefaultError, Options<LoginAdminData>> => {
+    const mutationOptions: UseMutationOptions<LoginAdminResponse, DefaultError, Options<LoginAdminData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await loginAdmin({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        },
+        mutationKey: loginAdminMutationKey(options)
+    };
+    return mutationOptions;
+};
+
+export const getBansQueryKey = (options: Options<GetBansData>) => createQueryKey('getBans', options, false, ['Bans']);
+
+/**
+ * List banned player IP addresses
+ */
+export const getBansOptions = (options: Options<GetBansData>) => queryOptions<GetBansResponse, DefaultError, GetBansResponse, ReturnType<typeof getBansQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getBans({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getBansQueryKey(options)
+});
 
 export const getRequesterCountryQueryKey = (options?: Options<GetRequesterCountryData>) => createQueryKey('getRequesterCountry', options, false, ['Country']);
 

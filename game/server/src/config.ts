@@ -15,6 +15,7 @@ export interface ServerConfig {
   eventClientSecret: string | undefined;
   heartbeatIntervalMs: number;
   heartbeatTimeoutMs: number;
+  banRefreshIntervalMs: number;
   publishHost: string;
   publishPort: number;
   secure: boolean;
@@ -123,6 +124,7 @@ export function loadConfig(
     eventClientSecret: eventClientSecret(environment, eventIngestionUrl),
     heartbeatIntervalMs: integer(environment, "Q3JS_HEARTBEAT_INTERVAL_MS", 5000, 1000, 3600000),
     heartbeatTimeoutMs: integer(environment, "Q3JS_HEARTBEAT_TIMEOUT_MS", 3000, 100, 60000),
+    banRefreshIntervalMs: integer(environment, "Q3JS_BAN_REFRESH_INTERVAL_MS", 10000, 1000, 3600000),
     publishHost: environment.Q3JS_PUBLISH_HOST?.trim() || "localhost",
     publishPort: integer(environment, "Q3JS_PUBLISH_PORT", gatewayPort, 1, 65535),
     secure: boolean(environment, "Q3JS_SECURE", false),

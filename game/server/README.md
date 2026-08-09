@@ -36,11 +36,15 @@ Runtime variables:
 - `Q3JS_MASTER_URL`: master HTTP base URL, defaults `http://localhost:8080`
 - `Q3JS_EVENT_URL`: authenticated event-ingestion endpoint, defaults to
   `/api/events` on `Q3JS_MASTER_URL`
+- `Q3JS_BAN_REFRESH_INTERVAL_MS`: ban-list refresh interval, defaults to `10000`.
+  When a refresh adds a connected player's address, the gateway immediately
+  disconnects that player.
 - `Q3JS_EVENT_CLIENT_SECRET`: optional shared ingestion secret. Local
   development uses the same fallback as the master application. Community
   servers omit it: they register as unofficial and event/player-connection
-  reporting is disabled. Project-managed servers provide the master
-  application's secret to enable authenticated reporting and official status.
+  reporting and ban synchronization are disabled. Project-managed servers
+  provide the master application's secret to enable authenticated reporting,
+  ban enforcement, and official status.
   `openssl rand -hex 32` generates a suitable secret for operators running
   their own master.
 - `Q3JS_PUBLISH_HOST`, `Q3JS_PUBLISH_PORT`: browser-reachable gateway address,

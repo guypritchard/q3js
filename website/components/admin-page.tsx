@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
   ArrowClockwise,
   CaretLeft,
@@ -21,14 +21,26 @@ import {
   subscribeAdminToken,
 } from "@/lib/admin-auth";
 import { client } from "@/lib/api/client";
-import { getPlayerConnections, loginAdmin } from "@/lib/api/generated/sdk.gen";
-import type { PlayerConnectionPageResponse, PlayerConnectionResponse } from "@/lib/api/generated/types.gen";
+import { banPlayer, getAdminBans, getPlayerConnections, loginAdmin, unbanPlayer } from "@/lib/api/generated/sdk.gen";
+import type { BanResponse, PlayerConnectionPageResponse, PlayerConnectionResponse } from "@/lib/api/generated/types.gen";
 
 function formatTimestamp(value: string): string {
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
     timeStyle: "medium",
   }).format(new Date(value));
+}
+
+function ipKey(value: string): string {
+  const address = value.trim().toLowerCase();
+  const mappedIpv4 = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(address);
+  if (mappedIpv4?.[1]) return mappedIpv4[1];
+  if (!address.includes(":")) return address;
+  try {
+    return new URL(`http://[${address}]`).hostname.slice(1, -1);
+  } catch {
+    return address;
+  }
 }
 
 function Userinfo({ connection }: Readonly<{ connection: PlayerConnectionResponse }>) {
@@ -121,17 +133,23 @@ function AdminLogin() {
 export function AdminPage() {
   const token = useSyncExternalStore(subscribeAdminToken, adminTokenSnapshot, adminTokenServerSnapshot);
   const [connections, setConnections] = useState<PlayerConnectionPageResponse>();
+  const [bans, setBans] = useState<BanResponse[]>([]);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [searchDraft, setSearchDraft] = useState("");
   const [refresh, setRefresh] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [changingBanIp, setChangingBanIp] = useState<string>();
   const [error, setError] = useState<string>();
+  const [notice, setNotice] = useState<string>();
+  const bannedIps = useMemo(() => new Set(bans.map((ban) => ipKey(ban.ipAddress))), [bans]);
 
   const logout = useCallback(() => {
     clearAdminToken();
     setConnections(undefined);
+    setBans([]);
     setError(undefined);
+    setNotice(undefined);
   }, []);
 
   useEffect(() => {
@@ -150,23 +168,33 @@ export function AdminPage() {
       setLoading(true);
       setError(undefined);
       try {
-        const result = await getPlayerConnections({
-          client,
-          query: { page, pageSize: 50, search: search || undefined },
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-          throwOnError: false,
-        });
+        const [connectionsResult, bansResult] = await Promise.all([
+          getPlayerConnections({
+            client,
+            query: { page, pageSize: 50, search: search || undefined },
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+            throwOnError: false,
+          }),
+          getAdminBans({
+            client,
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+            throwOnError: false,
+          }),
+        ]);
         if (controller.signal.aborted) return;
-        if (!result.data) {
-          if (result.response?.status === 401 || result.response?.status === 403) {
+        if (!connectionsResult.data || !bansResult.data) {
+          const status = connectionsResult.response?.status ?? bansResult.response?.status;
+          if (status === 401 || status === 403) {
             logout();
           } else {
-            setError("Could not load player connections.");
+            setError("Could not load player connections and ban status.");
           }
           return;
         }
-        setConnections(result.data);
+        setConnections(connectionsResult.data);
+        setBans(bansResult.data);
       } catch {
         if (!controller.signal.aborted) setError("The master server could not be reached.");
       } finally {
@@ -185,6 +213,76 @@ export function AdminPage() {
     event.preventDefault();
     setPage(1);
     setSearch(searchDraft.trim());
+  };
+
+  const banConnection = async (connection: PlayerConnectionResponse) => {
+    const confirmed = window.confirm(
+      `Ban ${connection.playerName} at ${connection.clientIp}?\n\nNew WebSocket connections from this IP will be rejected after gateways refresh their ban lists.`,
+    );
+    if (!confirmed) return;
+
+    setChangingBanIp(connection.clientIp);
+    setError(undefined);
+    setNotice(undefined);
+    try {
+      const result = await banPlayer({
+        client,
+        body: { ipAddress: connection.clientIp, playerName: connection.playerName },
+        headers: { Authorization: `Bearer ${token}` },
+        throwOnError: false,
+      });
+      if (!result.data) {
+        if (result.response?.status === 401 || result.response?.status === 403) {
+          logout();
+        } else {
+          setError(`Could not ban ${connection.playerName}.`);
+        }
+        return;
+      }
+      setBans((current) => {
+        const key = ipKey(result.data.ipAddress);
+        return [...current.filter((ban) => ipKey(ban.ipAddress) !== key), result.data];
+      });
+      setNotice(`${connection.playerName} (${connection.clientIp}) is now banned.`);
+    } catch {
+      setError("The master server could not be reached.");
+    } finally {
+      setChangingBanIp(undefined);
+    }
+  };
+
+  const unbanConnection = async (connection: PlayerConnectionResponse) => {
+    const confirmed = window.confirm(
+      `Unban ${connection.playerName} at ${connection.clientIp}?\n\nGateways will allow new WebSocket connections from this IP after their next ban-list refresh.`,
+    );
+    if (!confirmed) return;
+
+    setChangingBanIp(connection.clientIp);
+    setError(undefined);
+    setNotice(undefined);
+    try {
+      const result = await unbanPlayer({
+        client,
+        path: { ipAddress: connection.clientIp },
+        headers: { Authorization: `Bearer ${token}` },
+        throwOnError: false,
+      });
+      if (result.response?.status !== 204) {
+        if (result.response?.status === 401 || result.response?.status === 403) {
+          logout();
+        } else {
+          setError(`Could not unban ${connection.playerName}.`);
+        }
+        return;
+      }
+      const key = ipKey(connection.clientIp);
+      setBans((current) => current.filter((ban) => ipKey(ban.ipAddress) !== key));
+      setNotice(`${connection.playerName} (${connection.clientIp}) is no longer banned.`);
+    } catch {
+      setError("The master server could not be reached.");
+    } finally {
+      setChangingBanIp(undefined);
+    }
   };
 
   return (
@@ -216,7 +314,7 @@ export function AdminPage() {
         </div>
         <div className="border border-border/60 bg-card/45 px-5 py-4">
           <p className="text-xs uppercase tracking-[0.1em] text-muted-foreground">Ban enforcement</p>
-          <p className="mt-1 text-sm font-semibold text-muted-foreground">Not enabled yet</p>
+          <p className="mt-1 text-sm font-semibold text-primary">Active · {bans.length} banned IP{bans.length === 1 ? "" : "s"}</p>
         </div>
       </section>
 
@@ -244,6 +342,7 @@ export function AdminPage() {
       </form>
 
       {error && <p role="alert" className="mt-4 border border-primary/50 bg-primary/10 px-4 py-3 text-sm">{error}</p>}
+      {notice && <p role="status" className="mt-4 border border-border/70 bg-card/60 px-4 py-3 text-sm">{notice}</p>}
 
       <div className="mt-4 overflow-x-auto border border-border/60 bg-card/35" aria-busy={loading}>
         <table className="w-full min-w-[1050px] text-left text-sm">
@@ -258,23 +357,34 @@ export function AdminPage() {
             </tr>
           </thead>
           <tbody className={loading ? "divide-y divide-border/40 opacity-55" : "divide-y divide-border/40"}>
-            {connections?.entries.map((connection) => (
-              <tr key={connection.id} className="align-top hover:bg-card/45">
-                <td className="px-4 py-4 font-semibold"><Q3ColoredText text={connection.playerName} /></td>
-                <td className="px-4 py-4 font-mono text-xs tabular-nums">{connection.clientIp}</td>
-                <td className="px-4 py-4">
-                  <span className="font-medium">{connection.serverHost}:{connection.serverPort}</span>
-                  {connection.sourceIp && <span className="mt-1 block text-xs text-muted-foreground">Reporter {connection.sourceIp}</span>}
-                </td>
-                <td className="whitespace-nowrap px-4 py-4 text-xs text-muted-foreground">{formatTimestamp(connection.receivedAt)}</td>
-                <td className="px-4 py-4"><Userinfo connection={connection} /></td>
-                <td className="px-4 py-4 text-right">
-                  <Button type="button" size="sm" variant="destructive" disabled title="Ban enforcement will be implemented later">
-                    <Prohibit /> Ban
-                  </Button>
-                </td>
-              </tr>
-            ))}
+            {connections?.entries.map((connection) => {
+              const banned = bannedIps.has(ipKey(connection.clientIp));
+              const changing = changingBanIp !== undefined && ipKey(changingBanIp) === ipKey(connection.clientIp);
+              return (
+                <tr key={connection.id} className={banned ? "align-top bg-primary/5" : "align-top hover:bg-card/45"}>
+                  <td className="px-4 py-4 font-semibold"><Q3ColoredText text={connection.playerName} /></td>
+                  <td className="px-4 py-4 font-mono text-xs tabular-nums">{connection.clientIp}</td>
+                  <td className="px-4 py-4">
+                    <span className="font-medium">{connection.serverHost}:{connection.serverPort}</span>
+                    {connection.sourceIp && <span className="mt-1 block text-xs text-muted-foreground">Reporter {connection.sourceIp}</span>}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-4 text-xs text-muted-foreground">{formatTimestamp(connection.receivedAt)}</td>
+                  <td className="px-4 py-4"><Userinfo connection={connection} /></td>
+                  <td className="px-4 py-4 text-right">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={banned ? "outline" : "destructive"}
+                      disabled={changingBanIp !== undefined}
+                      title={banned ? "Remove this IP ban" : "Ban this IP address"}
+                      onClick={() => void (banned ? unbanConnection(connection) : banConnection(connection))}
+                    >
+                      {banned ? <ShieldCheck /> : <Prohibit />} {changing ? banned ? "Unbanning..." : "Banning..." : banned ? "Unban" : "Ban"}
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
         {!loading && connections && connections.entries.length === 0 && (
