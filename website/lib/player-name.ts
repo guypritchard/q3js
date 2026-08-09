@@ -133,3 +133,7 @@ export function randomPlayerName(): string {
   const number = Math.floor(10 + Math.random() * 90);
   return `${firstWord}${secondWord}${number}`;
 }
+
+export function playerNameOrRandom(value?: string): string {
+  return value?.trim() || randomPlayerName();
+}

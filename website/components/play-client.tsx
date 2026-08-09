@@ -17,6 +17,7 @@ import {
 } from "@/lib/analytics";
 import { getRequesterCountry } from "@/lib/api/generated/sdk.gen";
 import { client } from "@/lib/api/client";
+import { playerNameOrRandom } from "@/lib/player-name";
 
 const PK3_FILE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*\.pk3$/;
 const STATIC_BASE_URL = (process.env.NEXT_PUBLIC_Q3JS_STATIC_URL?.trim() || "").replace(/\/+$/, "");
@@ -511,13 +512,16 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       elapsed_ms: Date.now() - telemetry.startedAt,
     });
 
+    const resolvedPlayerName = playerNameOrRandom(playerName);
+    setPlayerName(resolvedPlayerName);
+
     if (selectedServer) {
       const host = selectedServer.host.includes(":") && !selectedServer.host.startsWith("[")
         ? `[${selectedServer.host}]`
         : selectedServer.host;
       const websocketProtocol = selectedServer.secure ? "wss:" : "ws:";
       setSession({
-        playerName: playerName.trim() || "Player",
+        playerName: resolvedPlayerName,
         countryCode,
         websocketUrl: `${websocketProtocol}//${host}:${selectedServer.proxyPort}/ws`,
         address: `${host}:${selectedServer.proxyPort}`,
@@ -532,7 +536,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
     const host = window.location.hostname || "localhost";
     const websocketProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     setSession({
-      playerName: playerName.trim() || "Player",
+      playerName: resolvedPlayerName,
       countryCode,
       websocketUrl:
         process.env.NEXT_PUBLIC_Q3JS_WEBSOCKET_URL
@@ -543,7 +547,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       comGameName,
       assets,
     });
-  }, [finishPlaySession, playerName, selectedServer, trackPlayEvent]);
+  }, [finishPlaySession, playerName, selectedServer, setPlayerName, trackPlayEvent]);
 
   const shouldAutoStart = Boolean(selectedServer && initialPlayerName?.trim() && !autoStartSuppressed);
 

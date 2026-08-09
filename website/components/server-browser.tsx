@@ -36,6 +36,7 @@ import { usePlayerName } from "@/hooks/use-player-name";
 import { createAnalyticsId, trackAnalyticsEvent } from "@/lib/analytics";
 import type { ListedServer } from "@/lib/master-server";
 import { masterServerQueryOptions } from "@/lib/master-server-query";
+import { playerNameOrRandom } from "@/lib/player-name";
 import {
   storedVoiceDeviceId,
   storedVoiceEnabled,
@@ -67,7 +68,7 @@ function joinHref(
     baseGame: server.baseGame,
     comGameName: server.comGameName,
     serverName: server.name,
-    name: playerName.trim() || "Player",
+    name: playerNameOrRandom(playerName),
     serverMode: server.mode,
     serverMap: server.map,
     official: server.official ? "1" : "0",
@@ -189,7 +190,7 @@ function PlayerNameDialog({
     event.preventDefault();
     if (!server || !entryPoint) return;
 
-    const name = playerName.trim() || "Player";
+    const name = playerNameOrRandom(playerName);
     const handoffId = createAnalyticsId();
     setPlayerName(name);
     storeVoicePreferences(voiceEnabled, voiceEnabled ? voiceDeviceId : undefined);
