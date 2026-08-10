@@ -2,7 +2,7 @@ export const VOICE_ENABLED_STORAGE_KEY = "q3js.voice.enabled";
 export const VOICE_DEVICE_STORAGE_KEY = "q3js.voice.deviceId";
 
 export function storedVoiceEnabled(): boolean {
-  return window.localStorage.getItem(VOICE_ENABLED_STORAGE_KEY) === "true";
+  return window.localStorage.getItem(VOICE_ENABLED_STORAGE_KEY) !== "false";
 }
 
 export function storedVoiceDeviceId(): string | undefined {
