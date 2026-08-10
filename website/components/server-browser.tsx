@@ -39,8 +39,7 @@ import { masterServerQueryOptions } from "@/lib/master-server-query";
 import { playerNameOrRandom } from "@/lib/player-name";
 import {
   storedVoiceDeviceId,
-  storedVoiceEnabled,
-  storeVoicePreferences,
+  storeVoiceDeviceId,
 } from "@/lib/voice-preferences";
 
 type ServerFilter = "featured" | "active" | "all" | "open";
@@ -129,16 +128,12 @@ function PlayerNameDialog({
   entryPoint?: JoinEntryPoint;
 }>) {
   const { playerName, randomizePlayerName, setPlayerName } = usePlayerName();
-  const [voiceEnabled, setVoiceEnabled] = useState(
-    () => typeof window !== "undefined" && storedVoiceEnabled(),
-  );
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [voiceDeviceId, setVoiceDeviceId] = useState(
     () => typeof window !== "undefined" ? storedVoiceDeviceId() ?? "" : "",
   );
   const [voiceDevices, setVoiceDevices] = useState<MediaDeviceInfo[]>([]);
-  const [voiceSetupState, setVoiceSetupState] = useState<"idle" | "configuring" | "ready" | "error">(
-    () => typeof window !== "undefined" && storedVoiceEnabled() && storedVoiceDeviceId() ? "ready" : "idle",
-  );
+  const [voiceSetupState, setVoiceSetupState] = useState<"idle" | "configuring" | "ready" | "error">("idle");
   const [voiceSetupError, setVoiceSetupError] = useState<string>();
   const voiceRequestStartedRef = useRef(false);
 
@@ -205,7 +200,7 @@ function PlayerNameDialog({
     const name = playerNameOrRandom(playerName);
     const handoffId = createAnalyticsId();
     setPlayerName(name);
-    storeVoicePreferences(voiceEnabled, voiceEnabled ? voiceDeviceId : undefined);
+    storeVoiceDeviceId(voiceEnabled ? voiceDeviceId : undefined);
     trackAnalyticsEvent("server_join_submitted", {
       join_handoff_id: handoffId,
       server_id: server.id,
@@ -627,14 +622,16 @@ function ServerBrowserQuery() {
         </div>
       )}
 
-      <PlayerNameDialog
-        open={selection !== undefined}
-        server={selection?.server}
-        entryPoint={selection?.entryPoint}
-        onOpenChange={(open) => {
-          if (!open) setSelection(undefined);
-        }}
-      />
+      {selection && (
+        <PlayerNameDialog
+          open
+          server={selection.server}
+          entryPoint={selection.entryPoint}
+          onOpenChange={(open) => {
+            if (!open) setSelection(undefined);
+          }}
+        />
+      )}
     </section>
   );
 }
