@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   ArrowClockwise,
@@ -140,6 +140,7 @@ function PlayerNameDialog({
     () => typeof window !== "undefined" && storedVoiceEnabled() && storedVoiceDeviceId() ? "ready" : "idle",
   );
   const [voiceSetupError, setVoiceSetupError] = useState<string>();
+  const voiceRequestStartedRef = useRef(false);
 
   const prepareVoice = useCallback(async (preferredDeviceId?: string) => {
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -185,6 +186,17 @@ function PlayerNameDialog({
       }).catch(() => undefined);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !voiceEnabled) {
+      voiceRequestStartedRef.current = false;
+      return;
+    }
+    if (voiceRequestStartedRef.current) return;
+
+    voiceRequestStartedRef.current = true;
+    void prepareVoice(voiceDeviceId || undefined);
+  }, [open, prepareVoice, voiceDeviceId, voiceEnabled]);
 
   const join = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -266,7 +278,7 @@ function PlayerNameDialog({
                   Join server voice chat
                 </span>
                 <span className="mt-1 block text-xs leading-4 text-muted-foreground">
-                  Voice is push-to-talk. Your microphone stays muted unless you hold K.
+                  Voice is push-to-talk. Your microphone stays muted unless you hold Q.
                 </span>
               </span>
             </label>
@@ -309,10 +321,10 @@ function PlayerNameDialog({
                   </Button>
                 </div>
                 {voiceSetupState === "ready" && (
-                  <p className="mt-2 text-xs text-green-500">Microphone ready. Hold K in game to transmit.</p>
+                  <p className="mt-2 text-xs text-green-500">Microphone ready. Hold Q in game to transmit.</p>
                 )}
                 {voiceSetupState === "idle" && (
-                  <p className="mt-2 text-xs text-muted-foreground">Select a microphone, then test access.</p>
+                  <p className="mt-2 text-xs text-muted-foreground">Microphone access will be requested when you join.</p>
                 )}
                 {voiceSetupError && (
                   <p role="alert" className="mt-2 text-xs leading-4 text-primary">{voiceSetupError}</p>

@@ -148,7 +148,7 @@ function progressLabel(progress: Q3ClientProgress | undefined): string {
   }
 }
 
-export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = false }: PlayClientProps) {
+export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = true }: PlayClientProps) {
   const { playerName, setPlayerName } = usePlayerName(initialPlayerName);
   const [session, setSession] = useState<Session>();
   const [progress, setProgress] = useState<Q3ClientProgress>();
