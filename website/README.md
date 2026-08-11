@@ -15,9 +15,9 @@ pnpm --dir website dev
 
 Then open [http://localhost:3000](http://localhost:3000). The game server sends heartbeats to the master, so it should appear in the server browser automatically.
 
-Joining a server also joins its LiveKit voice room by default. The player-name
-dialog requests microphone access immediately, supports opting out and selecting
-a microphone, and remains muted until the player holds `Q`. The website requests its microphone-only room token from the
+Joining a server can also join its LiveKit voice room. Voice is opt-in in the
+player-name dialog, supports microphone selection, and remains muted until the
+player holds `K`. The website requests its microphone-only room token from the
 master API, so configure the LiveKit URL and credentials on the master service
 as described in `master/README.md`.
 
