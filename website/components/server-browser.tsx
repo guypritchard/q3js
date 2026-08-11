@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   ArrowClockwise,
@@ -39,7 +39,8 @@ import { masterServerQueryOptions } from "@/lib/master-server-query";
 import { playerNameOrRandom } from "@/lib/player-name";
 import {
   storedVoiceDeviceId,
-  storeVoiceDeviceId,
+  storedVoiceEnabled,
+  storeVoicePreferences,
 } from "@/lib/voice-preferences";
 
 type ServerFilter = "featured" | "active" | "all" | "open";
@@ -128,14 +129,17 @@ function PlayerNameDialog({
   entryPoint?: JoinEntryPoint;
 }>) {
   const { playerName, randomizePlayerName, setPlayerName } = usePlayerName();
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [voiceEnabled, setVoiceEnabled] = useState(
+    () => typeof window !== "undefined" && storedVoiceEnabled(),
+  );
   const [voiceDeviceId, setVoiceDeviceId] = useState(
     () => typeof window !== "undefined" ? storedVoiceDeviceId() ?? "" : "",
   );
   const [voiceDevices, setVoiceDevices] = useState<MediaDeviceInfo[]>([]);
-  const [voiceSetupState, setVoiceSetupState] = useState<"idle" | "configuring" | "ready" | "error">("idle");
+  const [voiceSetupState, setVoiceSetupState] = useState<"idle" | "configuring" | "ready" | "error">(
+    () => typeof window !== "undefined" && storedVoiceEnabled() && storedVoiceDeviceId() ? "ready" : "idle",
+  );
   const [voiceSetupError, setVoiceSetupError] = useState<string>();
-  const voiceRequestStartedRef = useRef(false);
 
   const prepareVoice = useCallback(async (preferredDeviceId?: string) => {
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -182,17 +186,6 @@ function PlayerNameDialog({
     }
   }, [open]);
 
-  useEffect(() => {
-    if (!open || !voiceEnabled) {
-      voiceRequestStartedRef.current = false;
-      return;
-    }
-    if (voiceRequestStartedRef.current) return;
-
-    voiceRequestStartedRef.current = true;
-    void prepareVoice(voiceDeviceId || undefined);
-  }, [open, prepareVoice, voiceDeviceId, voiceEnabled]);
-
   const join = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!server || !entryPoint) return;
@@ -200,7 +193,7 @@ function PlayerNameDialog({
     const name = playerNameOrRandom(playerName);
     const handoffId = createAnalyticsId();
     setPlayerName(name);
-    storeVoiceDeviceId(voiceEnabled ? voiceDeviceId : undefined);
+    storeVoicePreferences(voiceEnabled, voiceEnabled ? voiceDeviceId : undefined);
     trackAnalyticsEvent("server_join_submitted", {
       join_handoff_id: handoffId,
       server_id: server.id,
@@ -273,7 +266,7 @@ function PlayerNameDialog({
                   Join server voice chat
                 </span>
                 <span className="mt-1 block text-xs leading-4 text-muted-foreground">
-                  Voice is push-to-talk. Your microphone stays muted unless you hold Q.
+                  Voice is push-to-talk. Your microphone stays muted unless you hold K.
                 </span>
               </span>
             </label>
@@ -316,10 +309,10 @@ function PlayerNameDialog({
                   </Button>
                 </div>
                 {voiceSetupState === "ready" && (
-                  <p className="mt-2 text-xs text-green-500">Microphone ready. Hold Q in game to transmit.</p>
+                  <p className="mt-2 text-xs text-green-500">Microphone ready. Hold K in game to transmit.</p>
                 )}
                 {voiceSetupState === "idle" && (
-                  <p className="mt-2 text-xs text-muted-foreground">Microphone access will be requested when you join.</p>
+                  <p className="mt-2 text-xs text-muted-foreground">Select a microphone, then test access.</p>
                 )}
                 {voiceSetupError && (
                   <p role="alert" className="mt-2 text-xs leading-4 text-primary">{voiceSetupError}</p>
@@ -622,16 +615,14 @@ function ServerBrowserQuery() {
         </div>
       )}
 
-      {selection && (
-        <PlayerNameDialog
-          open
-          server={selection.server}
-          entryPoint={selection.entryPoint}
-          onOpenChange={(open) => {
-            if (!open) setSelection(undefined);
-          }}
-        />
-      )}
+      <PlayerNameDialog
+        open={selection !== undefined}
+        server={selection?.server}
+        entryPoint={selection?.entryPoint}
+        onOpenChange={(open) => {
+          if (!open) setSelection(undefined);
+        }}
+      />
     </section>
   );
 }

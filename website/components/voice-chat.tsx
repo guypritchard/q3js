@@ -208,7 +208,7 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
   useEffect(() => {
     const startTalking = (event: KeyboardEvent) => {
       if (
-        event.code !== "KeyQ"
+        event.code !== "KeyK"
         || event.repeat
         || textInputActiveRef.current
         || isEditableTarget(event.target)
@@ -234,7 +234,7 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
     };
     const endTalking = (event: KeyboardEvent) => {
       if (
-        event.code !== "KeyQ"
+        event.code !== "KeyK"
         || textInputActiveRef.current
         || isEditableTarget(event.target)
       ) return;
@@ -283,7 +283,7 @@ export function VoiceChat({ participantName, serverId }: VoiceChatProps) {
         )}
         <span>
           {voiceState === "connecting" && "Voice connecting"}
-          {voiceState === "ready" && "Hold Q to talk"}
+          {voiceState === "ready" && "Hold K to talk"}
           {voiceState === "talking" && "Transmitting"}
           {voiceState === "error" && "Voice unavailable"}
         </span>
