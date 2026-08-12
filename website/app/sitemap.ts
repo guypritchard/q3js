@@ -40,6 +40,36 @@ function staticEntries(lastModified: Date): MetadataRoute.Sitemap {
       lastModified,
     },
     {
+      url: absoluteUrl("/quake-3-voice-chat"),
+      changeFrequency: "monthly",
+      priority: 0.85,
+      lastModified,
+    },
+    {
+      url: absoluteUrl("/quake-3-player-stats"),
+      changeFrequency: "monthly",
+      priority: 0.85,
+      lastModified,
+    },
+    {
+      url: absoluteUrl("/quake-3-webassembly"),
+      changeFrequency: "monthly",
+      priority: 0.8,
+      lastModified,
+    },
+    {
+      url: absoluteUrl("/quake-3-browser-mods"),
+      changeFrequency: "monthly",
+      priority: 0.8,
+      lastModified,
+    },
+    {
+      url: absoluteUrl("/custom-quake-3-servers"),
+      changeFrequency: "monthly",
+      priority: 0.85,
+      lastModified,
+    },
+    {
       url: absoluteUrl("/weapons"),
       changeFrequency: "weekly",
       priority: 0.9,

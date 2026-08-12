@@ -1,9 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { DiscordLogo, GithubLogo, XLogo } from "@phosphor-icons/react/dist/ssr";
-import { MasterStatus } from "@/components/master-status";
 import { MobileSiteMenu } from "@/components/mobile-site-menu";
-import { navItems } from "@/lib/site-navigation";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
+import { featureItems, navItems } from "@/lib/site-navigation";
 import { siteConfig } from "@/lib/seo";
 
 export function SiteHeader() {
@@ -17,12 +24,42 @@ export function SiteHeader() {
         </Link>
 
         <div className="hidden items-center gap-4 lg:flex">
-          <MasterStatus />
-          {navItems.map((item) => (
+          <Link
+            href={navItems[0].href}
+            className="inline-flex h-9 items-center whitespace-nowrap font-mono text-xs uppercase tracking-[0.05em] text-muted-foreground transition-colors hover:text-primary"
+          >
+            {navItems[0].label}
+          </Link>
+
+          <NavigationMenu viewport={false}>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="h-9 bg-transparent px-0 py-0 font-mono text-xs font-normal uppercase tracking-[0.05em] text-muted-foreground hover:bg-transparent hover:text-primary focus:bg-transparent data-[state=open]:bg-transparent data-[state=open]:text-primary">
+                  Features
+                </NavigationMenuTrigger>
+                <NavigationMenuContent className="grid w-[38rem] grid-cols-2 gap-1 p-2 md:w-[38rem]">
+                  {featureItems.map((feature) => (
+                    <NavigationMenuLink key={feature.href} asChild>
+                      <Link href={feature.href} className="flex h-full flex-col items-start gap-1 p-3">
+                        <span className="block font-mono text-xs font-bold uppercase tracking-[0.04em] text-foreground">
+                          {feature.label}
+                        </span>
+                        <span className="block text-xs leading-5 text-muted-foreground">
+                          {feature.description}
+                        </span>
+                      </Link>
+                    </NavigationMenuLink>
+                  ))}
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          {navItems.slice(1).map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="whitespace-nowrap font-mono text-xs uppercase tracking-[0.05em] text-muted-foreground transition-colors hover:text-primary"
+              className="inline-flex h-9 items-center whitespace-nowrap font-mono text-xs uppercase tracking-[0.05em] text-muted-foreground transition-colors hover:text-primary"
             >
               {item.label}
             </Link>
@@ -35,10 +72,6 @@ export function SiteHeader() {
           >
             Support
           </a>
-        </div>
-
-        <div className="lg:hidden">
-          <MasterStatus />
         </div>
 
         <a

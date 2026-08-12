@@ -12,7 +12,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { navItems } from "@/lib/site-navigation";
+import { featureItems, navItems } from "@/lib/site-navigation";
 import { siteConfig } from "@/lib/seo";
 
 const socialLinks = [
@@ -44,7 +44,7 @@ export function MobileSiteMenu() {
         </SheetHeader>
 
         <nav aria-label="Mobile navigation" className="flex-1 px-3 py-4">
-          {navItems.map((item, index) => (
+          {navItems.slice(0, 1).map((item, index) => (
             <SheetClose key={item.href} asChild>
               <Link
                 href={item.href}
@@ -53,6 +53,42 @@ export function MobileSiteMenu() {
                 <span>{item.label}</span>
                 <span className="text-xs font-normal text-muted-foreground" aria-hidden="true">
                   {String(index + 1).padStart(2, "0")}
+                </span>
+              </Link>
+            </SheetClose>
+          ))}
+
+          <p className="px-3 pb-1 pt-5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+            Features
+          </p>
+          {featureItems.map((item, index) => (
+            <SheetClose key={item.href} asChild>
+              <Link
+                href={item.href}
+                className="block border-b border-border/60 px-3 py-3 transition-colors hover:bg-muted hover:text-primary"
+              >
+                <span className="flex items-center justify-between font-mono text-sm font-bold uppercase tracking-[0.05em]">
+                  {item.label}
+                  <span className="text-xs font-normal text-muted-foreground" aria-hidden="true">
+                    {String(index + 2).padStart(2, "0")}
+                  </span>
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                  {item.description}
+                </span>
+              </Link>
+            </SheetClose>
+          ))}
+
+          {navItems.slice(1).map((item, index) => (
+            <SheetClose key={item.href} asChild>
+              <Link
+                href={item.href}
+                className="flex min-h-12 items-center justify-between border-b border-border/60 px-3 py-3 font-mono text-sm font-bold uppercase tracking-[0.05em] transition-colors hover:bg-muted hover:text-primary"
+              >
+                <span>{item.label}</span>
+                <span className="text-xs font-normal text-muted-foreground" aria-hidden="true">
+                  {String(index + featureItems.length + 2).padStart(2, "0")}
                 </span>
               </Link>
             </SheetClose>
