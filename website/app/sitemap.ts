@@ -34,6 +34,12 @@ function staticEntries(lastModified: Date): MetadataRoute.Sitemap {
       lastModified,
     },
     {
+      url: absoluteUrl("/play-quake-3-on-your-phone"),
+      changeFrequency: "monthly",
+      priority: 0.9,
+      lastModified,
+    },
+    {
       url: absoluteUrl("/weapons"),
       changeFrequency: "weekly",
       priority: 0.9,
