@@ -28,7 +28,7 @@ export function MobileSiteMenu() {
         <Button
           variant="ghost"
           size="icon-lg"
-          className="-mr-2 md:hidden"
+          className="-mr-2 lg:hidden"
           aria-label="Open navigation"
         >
           <List className="size-5" weight="bold" />

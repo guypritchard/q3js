@@ -16,13 +16,13 @@ export function SiteHeader() {
           <span className="hidden font-mono text-xs text-muted-foreground min-[380px]:inline">1.0.0</span>
         </Link>
 
-        <div className="hidden items-center gap-5 md:flex">
+        <div className="hidden items-center gap-4 lg:flex">
           <MasterStatus />
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="font-mono text-sm uppercase tracking-[0.05em] text-muted-foreground transition-colors hover:text-primary"
+              className="whitespace-nowrap font-mono text-xs uppercase tracking-[0.05em] text-muted-foreground transition-colors hover:text-primary"
             >
               {item.label}
             </Link>
@@ -31,13 +31,13 @@ export function SiteHeader() {
             href={siteConfig.supportUrl}
             target="_blank"
             rel="noreferrer"
-            className="bg-primary px-2.5 py-1 font-mono text-sm font-bold uppercase tracking-[0.05em] text-primary-foreground transition-colors hover:bg-primary/80"
+            className="whitespace-nowrap bg-primary px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-[0.05em] text-primary-foreground transition-colors hover:bg-primary/80"
           >
             Support
           </a>
         </div>
 
-        <div className="md:hidden">
+        <div className="lg:hidden">
           <MasterStatus />
         </div>
 

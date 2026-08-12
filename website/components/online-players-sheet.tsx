@@ -106,7 +106,7 @@ function OnlinePlayersSheetQuery() {
 export function OnlinePlayersSheet() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/play")) return null;
+  if (pathname === "/play") return null;
 
   return <OnlinePlayersSheetQuery />;
 }
