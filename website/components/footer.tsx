@@ -30,6 +30,9 @@ export function Footer() {
             Support Q3JS
           </a>
           <Link href="/play-quake-3-on-your-phone" className="hover:text-foreground">Play on your phone</Link>
+          <Link href="/quake-3-voice-chat" className="hover:text-foreground">Voice chat</Link>
+          <Link href="/quake-3-player-stats" className="hover:text-foreground">Player stats</Link>
+          <Link href="/custom-quake-3-servers" className="hover:text-foreground">Custom servers</Link>
           <Link href="/weapons" className="hover:text-foreground">Weapon database</Link>
           <Link href="/guide" className="hover:text-foreground">Run a server</Link>
           <a href="https://github.com/lklacar/q3js" target="_blank" rel="noreferrer" className="hover:text-foreground">
