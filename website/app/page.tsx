@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Coffee } from "@phosphor-icons/react/dist/ssr";
+import { CounterStrikeDialog } from "@/components/counter-strike-dialog";
 import { Footer } from "@/components/footer";
 import { HomeStats } from "@/components/home-stats";
-import { InviteFriendsDialog } from "@/components/invite-friends-dialog";
 import { JsonLd } from "@/components/json-ld";
 import { Q3ColoredText } from "@/components/q3-colored-text";
 import { ScoreboardPreview } from "@/components/scoreboard-preview";
@@ -66,7 +66,7 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <JsonLd data={homeStructuredData} />
       <SiteHeader />
-      <InviteFriendsDialog />
+      <CounterStrikeDialog />
       <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-7 sm:pb-20 sm:pt-10 md:pt-14">
         <section aria-labelledby="hero-heading" className="mb-10 py-5 text-center sm:mb-14 sm:py-8">
           <p className="font-mono text-xs uppercase tracking-[0.24em] text-primary">
