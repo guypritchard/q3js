@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Coffee } from "@phosphor-icons/react/dist/ssr";
+import { ArrowSquareOut, Coffee } from "@phosphor-icons/react/dist/ssr";
 import { CounterStrikeDialog } from "@/components/counter-strike-dialog";
 import { Footer } from "@/components/footer";
 import { HomeStats } from "@/components/home-stats";
@@ -8,6 +8,7 @@ import { Q3ColoredText } from "@/components/q3-colored-text";
 import { ScoreboardPreview } from "@/components/scoreboard-preview";
 import { ServerBrowser } from "@/components/server-browser";
 import { SiteHeader } from "@/components/site-header";
+import { csjsPromotionUrl } from "@/lib/cross-promotion";
 import { absoluteUrl, buildPageMetadata, siteConfig } from "@/lib/seo";
 
 const homeMetadata = buildPageMetadata({
@@ -60,6 +61,19 @@ const homeStructuredData = [
     },
   },
 ] satisfies ReadonlyArray<Record<string, unknown>>;
+
+const otherGames = [
+  {
+    name: "Counter-Strike",
+    description: "Classic tactical multiplayer, directly in your browser.",
+    href: csjsPromotionUrl("homepage_hero"),
+  },
+  {
+    name: "Jedi Academy",
+    description: "Lightsabers, Force powers, and multiplayer duels.",
+    href: "https://jk.q3js.com",
+  },
+] as const;
 
 export default function Home() {
   return (
@@ -115,14 +129,37 @@ export default function Home() {
               <Q3ColoredText text={siteConfig.author.coloredName} />
             </a>
           </p>
-          <a
-            href="https://jk.q3js.com"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-3 inline-block font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-primary"
-          >
-            New: Play Jedi Academy ↗
-          </a>
+          <aside aria-labelledby="other-games-heading" className="mx-auto mt-7 max-w-2xl text-left">
+            <div className="mb-3 flex items-center justify-between gap-4">
+              <div>
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-primary">More from Q3JS</p>
+                <h2 id="other-games-heading" className="mt-1 font-mono text-sm font-bold uppercase tracking-[0.08em] text-foreground">
+                  Pick another game
+                </h2>
+              </div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">2 games</span>
+            </div>
+            <nav aria-label="Other games" className="grid gap-2 sm:grid-cols-2">
+              {otherGames.map((game) => (
+                <a
+                  key={game.name}
+                  href={game.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group flex min-h-24 items-start justify-between gap-3 border border-border bg-background/45 p-4 transition-colors hover:border-primary/70 hover:bg-background/80"
+                >
+                  <span>
+                    <span className="block font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Play now</span>
+                    <span className="mt-1 block font-mono text-lg font-bold uppercase leading-tight tracking-[0.025em] text-foreground">
+                      {game.name}
+                    </span>
+                    <span className="mt-2 block text-xs leading-5 text-muted-foreground">{game.description}</span>
+                  </span>
+                  <ArrowSquareOut className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" weight="bold" aria-hidden="true" />
+                </a>
+              ))}
+            </nav>
+          </aside>
         </section>
         <HomeStats />
         <ServerBrowser />

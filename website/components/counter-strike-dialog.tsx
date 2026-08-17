@@ -11,8 +11,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import { csjsPromotionUrl } from "@/lib/cross-promotion";
 
-const COUNTER_STRIKE_URL = "https://csjs.live/?utm_source=q3js&utm_medium=referral&utm_campaign=q3js_cross_promo";
+const COUNTER_STRIKE_URL = csjsPromotionUrl("homepage_dialog");
 const HIDE_COUNTER_STRIKE_KEY = "q3js-hide-counter-strike-launch-prompt";
 const ANALYTICS_COMPONENT = "homepage_counter_strike_dialog";
 
