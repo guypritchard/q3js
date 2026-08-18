@@ -1,0 +1,153 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Q3JS home" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: Q3JS
+          - generic [ref=e7]: 1.0.0
+        - generic [ref=e8]:
+          - link "Servers" [ref=e9] [cursor=pointer]:
+            - /url: /#servers
+          - navigation "Main" [ref=e10]:
+            - list [ref=e12]:
+              - listitem [ref=e13]:
+                - button "Features" [ref=e14]:
+                  - text: Features
+                  - img [ref=e15]
+          - link "Host game" [ref=e17] [cursor=pointer]:
+            - /url: /host
+          - link "Scoreboard" [ref=e18] [cursor=pointer]:
+            - /url: /scoreboard
+          - link "Weapons" [ref=e19] [cursor=pointer]:
+            - /url: /weapons
+          - link "Run a server" [ref=e20] [cursor=pointer]:
+            - /url: /guide
+          - link "Support" [ref=e21] [cursor=pointer]:
+            - /url: https://ko-fi.com/quake3js
+        - link "Q3JS on GitHub" [ref=e22] [cursor=pointer]:
+          - /url: https://github.com/lklacar/q3js
+          - img [ref=e23]
+        - link "LK on X" [ref=e25] [cursor=pointer]:
+          - /url: https://x.com/lukathedev
+          - img [ref=e26]
+        - link "Q3JS Discord" [ref=e28] [cursor=pointer]:
+          - /url: https://discord.gg/mKvM9su443
+          - img [ref=e29]
+    - main [ref=e31]:
+      - region "Play Quake III Multiplayer in Your Browser" [ref=e32]:
+        - paragraph [ref=e33]: Quake 3 in browser
+        - heading "Play Quake III Multiplayer in Your Browser" [level=1] [ref=e34]
+        - paragraph [ref=e35]: No install step. Pick a server and jump straight into a live Quake 3 match.
+        - generic [ref=e36]:
+          - link "Play now" [ref=e37] [cursor=pointer]:
+            - /url: /#servers
+          - link "Scoreboard" [ref=e38] [cursor=pointer]:
+            - /url: /scoreboard
+          - link "Support Q3JS" [ref=e39] [cursor=pointer]:
+            - /url: https://ko-fi.com/quake3js
+            - img [ref=e40]
+            - text: Support Q3JS
+        - paragraph [ref=e42]:
+          - text: Created by
+          - link "LK" [ref=e43] [cursor=pointer]:
+            - /url: https://x.com/lukathedev
+            - generic [ref=e44]: LK
+        - 'link "New: Play Jedi Academy ↗" [ref=e45] [cursor=pointer]':
+          - /url: https://jk.q3js.com
+      - generic "Loading Q3JS statistics" [ref=e46]:
+        - generic [ref=e48]:
+          - img [ref=e49]
+          - text: Players online
+        - generic [ref=e54]:
+          - img [ref=e55]
+          - text: Most frags last 24 hours
+        - generic [ref=e60]:
+          - img [ref=e61]
+          - text: Total frags ever
+      - region "Server browser" [ref=e65]:
+        - generic [ref=e67]:
+          - paragraph [ref=e68]: 02 / Live arenas
+          - heading "Server browser" [level=2] [ref=e69]
+          - paragraph [ref=e70]: Choose your arena and join the fight.
+        - generic [ref=e74]:
+          - generic [ref=e75]:
+            - generic [ref=e76]:
+              - img [ref=e77]
+              - text: Search server, map, or player
+            - button [disabled]: Quick play
+            - button [disabled]:
+              - img
+          - generic [ref=e79]:
+            - button [disabled]: Featured
+            - button [disabled]: All
+            - button [disabled]: With players
+            - button [disabled]: Open slots
+            - generic [ref=e80]: Syncing arenas
+        - article [ref=e82]:
+          - generic [ref=e83]:
+            - generic [ref=e84]:
+              - button [disabled]: Join arena
+            - generic [ref=e95]: players
+            - generic [ref=e98]:
+              - generic [ref=e99]: Players
+              - generic [ref=e100]: Score
+              - generic [ref=e101]: Ping
+      - region "Loading top fraggers" [ref=e106]:
+        - generic [ref=e107]:
+          - generic [ref=e108]:
+            - paragraph [ref=e109]: 01 / Global frag feed
+            - generic [ref=e110]:
+              - img [ref=e111]
+              - heading "Top fraggers" [level=2] [ref=e113]
+            - paragraph [ref=e114]: Global frag leaders for the selected period.
+          - generic [ref=e115]:
+            - button [disabled] [ref=e116]: 24 hours
+            - button [disabled] [ref=e117]: Week
+            - button [disabled] [ref=e118]: Month
+            - button [disabled] [ref=e119]: All time
+        - list [ref=e120]:
+          - listitem [ref=e121]:
+            - generic [ref=e122]: "#1"
+          - listitem [ref=e127]:
+            - generic [ref=e128]: "#2"
+          - listitem [ref=e133]:
+            - generic [ref=e134]: "#3"
+        - generic [ref=e140]:
+          - text: View frag rankings
+          - img [ref=e141]
+    - contentinfo [ref=e143]:
+      - generic [ref=e144]:
+        - generic [ref=e145]:
+          - paragraph [ref=e146]: Q3JS // Browser arena
+          - paragraph [ref=e147]: Q3JS is a non-commercial fan project using the officially released demo data and a GPL-licensed ioquake3 engine build. Not affiliated with id Software or ZeniMax.
+          - paragraph [ref=e148]:
+            - text: Designed, built, and maintained by
+            - link "LK" [ref=e149] [cursor=pointer]:
+              - /url: https://github.com/lklacar
+              - generic [ref=e150]: LK
+            - text: .
+        - generic [ref=e151]:
+          - link "Support Q3JS" [ref=e152] [cursor=pointer]:
+            - /url: https://ko-fi.com/quake3js
+          - link "Play on your phone" [ref=e153] [cursor=pointer]:
+            - /url: /play-quake-3-on-your-phone
+          - link "Voice chat" [ref=e154] [cursor=pointer]:
+            - /url: /quake-3-voice-chat
+          - link "Player stats" [ref=e155] [cursor=pointer]:
+            - /url: /quake-3-player-stats
+          - link "Custom servers" [ref=e156] [cursor=pointer]:
+            - /url: /custom-quake-3-servers
+          - link "Weapon database" [ref=e157] [cursor=pointer]:
+            - /url: /weapons
+          - link "Run a server" [ref=e158] [cursor=pointer]:
+            - /url: /guide
+          - link "GitHub source" [ref=e159] [cursor=pointer]:
+            - /url: https://github.com/lklacar/q3js
+          - link "X / @lukathedev" [ref=e160] [cursor=pointer]:
+            - /url: https://x.com/lukathedev
+          - link "Discord" [ref=e161] [cursor=pointer]:
+            - /url: https://discord.gg/mKvM9su443
+  - button "Loading online players" [ref=e162]:
+    - img
+    - text: Players

@@ -1,0 +1,362 @@
+- generic:
+  - generic:
+    - banner:
+      - generic:
+        - link:
+          - /url: /
+          - generic: Q3JS
+        - generic:
+          - link:
+            - /url: /#servers
+            - text: Servers
+          - navigation:
+            - generic:
+              - list:
+                - listitem:
+                  - button:
+                    - text: Features
+                    - img
+          - link:
+            - /url: /host
+            - text: Host temporary game
+          - link:
+            - /url: /guide
+            - text: Run dedicated server
+          - link:
+            - /url: /scoreboard
+            - text: Scoreboard
+          - link:
+            - /url: /weapons
+            - text: Weapons
+          - link:
+            - /url: https://ko-fi.com/quake3js
+            - text: Support
+        - link:
+          - /url: https://github.com/lklacar/q3js
+          - img
+        - link:
+          - /url: https://x.com/lukathedev
+          - img
+        - link:
+          - /url: https://discord.gg/mKvM9su443
+          - img
+    - main:
+      - region:
+        - paragraph: Quake 3 in browser
+        - heading [level=1]: Pick an arena. Play Quake III.
+        - paragraph: Choose a live server, enter a player name, and play in your browser. No installer or account required.
+        - generic:
+          - link:
+            - /url: /#servers
+            - text: Browse live servers
+          - link:
+            - /url: /host
+            - text: Host a game
+        - paragraph: First visit downloads the game data once. Later launches reuse the browser cache.
+        - paragraph:
+          - text: Created by
+          - link:
+            - /url: https://x.com/lukathedev
+            - generic: LK
+        - generic:
+          - link:
+            - /url: /scoreboard
+            - text: View scoreboard
+          - link:
+            - /url: https://ko-fi.com/quake3js
+            - img
+            - text: Support Q3JS
+          - link:
+            - /url: https://jk.q3js.com
+            - text: Play Jedi Academy ↗
+      - region:
+        - generic:
+          - generic:
+            - paragraph: Live arenas
+            - heading [level=2]: Choose where to play
+            - paragraph: Quick play picks an unlocked arena with people and a good connection.
+          - paragraph:
+            - text: 3 servers
+            - generic: 1 human online
+            - generic: 11 bots active
+        - generic:
+          - generic:
+            - generic:
+              - generic: Search servers
+              - img
+              - textbox:
+                - /placeholder: Search server, map, or player
+            - button: Quick play
+            - button:
+              - img
+          - paragraph: "Quick play destination: q3.pieter.com · 1 human playing"
+          - generic:
+            - button: Featured
+            - button: All
+            - button: With players
+            - button: Joinable
+            - generic: 3 shown
+        - generic:
+          - article:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - heading [level=3]: Q3JS Transit Hub
+                    - generic:
+                      - img
+                      - text: Official
+                  - paragraph: Free for all on Q3JS_HUB
+                - button: Join arena
+              - generic:
+                - generic: No limit
+              - generic:
+                - generic:
+                  - generic: 0 human players
+                  - generic: 0 bots
+                  - generic: 0/16 slots
+                - generic: 2 ms
+              - generic:
+                - generic:
+                  - img
+                  - generic: Who is playing
+                - generic:
+                  - generic:
+                    - generic: Score
+                    - generic: Ping
+                    - generic: Name
+                  - paragraph: No one is playing yet
+                - group:
+                  - generic: Connection details
+          - article:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - heading [level=3]: Q3JS Server
+                    - generic:
+                      - img
+                      - text: Official
+                  - paragraph: Free for all on Q3DM17
+                - button: Join arena
+              - generic:
+                - generic: 20 frags / 15 minutes
+              - generic:
+                - generic:
+                  - generic: 0 human players
+                  - generic: 4 bots
+                  - generic: 4/16 slots
+                - generic: 1 ms
+              - generic:
+                - generic:
+                  - img
+                  - generic: Who is playing
+                - generic:
+                  - generic:
+                    - generic: Score
+                    - generic: Ping
+                    - generic: Name
+                  - generic:
+                    - generic: "6"
+                    - generic: BOT
+                    - generic: Grunt
+                  - generic:
+                    - generic: "4"
+                    - generic: BOT
+                    - generic: Hossman
+                  - generic:
+                    - generic: "-2"
+                    - generic: BOT
+                    - generic: Bones
+                  - generic:
+                    - generic: "-3"
+                    - generic: BOT
+                    - generic: Keel
+                - group:
+                  - generic: Connection details
+          - article:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - heading [level=3]: q3.pieter.com
+                    - generic: Community
+                  - paragraph: Free for all on Q3DM7
+                - button: Join arena
+              - generic:
+                - generic: 10 minutes
+              - generic:
+                - generic:
+                  - generic: 1 human player
+                  - generic: 7 bots
+                  - generic: 8/64 slots
+                - generic: 175 ms
+              - generic:
+                - generic:
+                  - img
+                  - generic: Who is playing
+                - generic:
+                  - generic:
+                    - generic: Score
+                    - generic: Ping
+                    - generic: Name
+                  - generic:
+                    - generic: "0"
+                    - generic: "999"
+                    - link:
+                      - /url: /players/Comet%20Beacon
+                      - generic: Comet Beacon
+                  - generic:
+                    - generic: "14"
+                    - generic: BOT
+                    - generic: lncPEK
+                  - generic:
+                    - generic: "14"
+                    - generic: BOT
+                    - generic: KAT
+                  - generic:
+                    - generic: "12"
+                    - generic: BOT
+                    - generic: d3ath.runner
+                  - generic:
+                    - generic: "10"
+                    - generic: BOT
+                    - generic: "@sid4"
+                  - paragraph: 3 more players in this arena.
+                - group:
+                  - generic: Connection details
+      - region:
+        - paragraph: New here?
+        - heading [level=2]: Playing takes three steps
+        - list:
+          - listitem:
+            - text: "01"
+            - heading [level=3]: Choose an arena
+            - paragraph: Use Quick play or compare the human player and latency counts.
+          - listitem:
+            - text: "02"
+            - heading [level=3]: Name your player
+            - paragraph: Your name is remembered locally. Voice chat remains optional.
+          - listitem:
+            - text: "03"
+            - heading [level=3]: Enter the game
+            - paragraph: Use WASD and mouse. Press Esc for the Quake III menu.
+      - generic:
+        - generic:
+          - term:
+            - img
+            - text: Players online
+          - definition: "1"
+          - paragraph: Across 3 live arenas · 11 bots active.
+        - generic:
+          - term:
+            - img
+            - text: Most frags last 24 hours
+          - definition:
+            - link:
+              - /url: /players/CinderRanger87
+              - text: CinderRanger87
+          - paragraph: 5 frags in the last 24 hours.
+        - generic:
+          - term:
+            - img
+            - text: Total frags ever
+          - definition: "5"
+          - paragraph: Since Q3JS started keeping score.
+      - region:
+        - generic:
+          - generic:
+            - paragraph: Global rankings
+            - generic:
+              - img
+              - heading [level=2]: Top fraggers
+            - paragraph: Global frag leaders for the selected period.
+          - generic:
+            - button: 24 hours
+            - button: Week
+            - button: Month
+            - button: All time
+        - list:
+          - listitem:
+            - generic: "#1"
+            - generic:
+              - link:
+                - /url: /players/CinderRanger87
+                - text: CinderRanger87
+              - paragraph: Last online 34 minutes ago
+            - generic: 5 frags
+        - generic:
+          - link:
+            - /url: /scoreboard?period=daily
+            - text: View frag rankings
+            - img
+    - contentinfo:
+      - generic:
+        - generic:
+          - paragraph: Q3JS // Browser arena
+          - paragraph: Q3JS is a non-commercial fan project using the officially released demo data and a GPL-licensed ioquake3 engine build. Not affiliated with id Software or ZeniMax.
+          - paragraph:
+            - text: Designed, built, and maintained by
+            - link:
+              - /url: https://github.com/lklacar
+              - generic: LK
+            - text: .
+        - generic:
+          - link:
+            - /url: https://ko-fi.com/quake3js
+            - text: Support Q3JS
+          - link:
+            - /url: /play-quake-3-on-your-phone
+            - text: Play on your phone
+          - link:
+            - /url: /quake-3-voice-chat
+            - text: Voice chat
+          - link:
+            - /url: /quake-3-player-stats
+            - text: Player stats
+          - link:
+            - /url: /custom-quake-3-servers
+            - text: Custom servers
+          - link:
+            - /url: /weapons
+            - text: Weapon database
+          - link:
+            - /url: /guide
+            - text: Run a server
+          - link:
+            - /url: https://github.com/lklacar/q3js
+            - text: GitHub source
+          - link:
+            - /url: https://x.com/lukathedev
+            - text: X / @lukathedev
+          - link:
+            - /url: https://discord.gg/mKvM9su443
+            - text: Discord
+  - button:
+    - img
+    - generic: 1 online
+  - alert
+  - dialog "Ready to play?" [ref=e181]:
+    - generic [ref=e182]:
+      - heading "Ready to play?" [level=2] [ref=e183]
+      - paragraph [ref=e184]: You are joining q3.pieter.com on Q3DM7.
+    - generic [ref=e185]:
+      - paragraph [ref=e186]: The first launch may take a moment while game data downloads. In game, use WASD and mouse; press Esc for the menu.
+      - generic [ref=e187]: Player name
+      - generic [ref=e188]:
+        - textbox "Player name" [active] [ref=e189]:
+          - /placeholder: Enter your player name
+          - text: NovaBlade55
+        - button "Generate a random player name" [ref=e190]:
+          - img
+      - generic [ref=e192] [cursor=pointer]:
+        - checkbox "Join server voice chat Voice is push-to-talk. Your microphone stays muted unless you hold K." [ref=e193]
+        - generic [ref=e194]:
+          - generic [ref=e195]:
+            - img [ref=e196]
+            - text: Join server voice chat
+          - generic [ref=e198]: Voice is push-to-talk. Your microphone stays muted unless you hold K.
+      - button "Enter arena" [ref=e200]
+    - button "Close" [ref=e201]:
+      - img [ref=e202]
+      - generic [ref=e204]: Close

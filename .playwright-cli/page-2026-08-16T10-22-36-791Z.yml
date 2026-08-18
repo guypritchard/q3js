@@ -1,0 +1,135 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Q3JS home" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: Q3JS
+        - generic [ref=e7]:
+          - link "Servers" [ref=e8] [cursor=pointer]:
+            - /url: /#servers
+          - navigation "Main" [ref=e9]:
+            - list [ref=e11]:
+              - listitem [ref=e12]:
+                - button "Features" [ref=e13]:
+                  - text: Features
+                  - img [ref=e14]
+          - link "Host temporary game" [ref=e16] [cursor=pointer]:
+            - /url: /host
+          - link "Run dedicated server" [ref=e17] [cursor=pointer]:
+            - /url: /guide
+          - link "Scoreboard" [ref=e18] [cursor=pointer]:
+            - /url: /scoreboard
+          - link "Weapons" [ref=e19] [cursor=pointer]:
+            - /url: /weapons
+          - link "Support" [ref=e20] [cursor=pointer]:
+            - /url: https://ko-fi.com/quake3js
+        - link "Q3JS on GitHub" [ref=e21] [cursor=pointer]:
+          - /url: https://github.com/lklacar/q3js
+          - img [ref=e22]
+        - link "LK on X" [ref=e24] [cursor=pointer]:
+          - /url: https://x.com/lukathedev
+          - img [ref=e25]
+        - link "Q3JS Discord" [ref=e27] [cursor=pointer]:
+          - /url: https://discord.gg/mKvM9su443
+          - img [ref=e28]
+    - main [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - paragraph [ref=e34]: Temporary browser hosting
+            - heading "Host a game from this tab." [level=1] [ref=e35]
+            - paragraph [ref=e36]: Start an arena without installing server software or opening ports. Share the invite link, then keep this page open while everyone plays.
+            - paragraph [ref=e37]:
+              - text: Need a game that stays online without this browser?
+              - link "Run a dedicated server instead." [ref=e38] [cursor=pointer]:
+                - /url: /guide
+            - generic [ref=e39]:
+              - generic [ref=e42]: Waiting to start
+              - paragraph [ref=e43]: Keep this page open. Closing it or allowing the device to sleep ends the hosted game immediately.
+          - generic [ref=e44]:
+            - generic [ref=e45]:
+              - img [ref=e46]
+              - heading "Arena setup" [level=2] [ref=e48]
+            - generic [ref=e49]:
+              - generic [ref=e50]:
+                - text: Server name
+                - textbox "Server name" [ref=e51]: Browser Arena
+              - generic [ref=e52]:
+                - text: Level
+                - combobox "Level" [ref=e53]:
+                  - option "Transit Hub (q3js_hub)"
+                  - option "Introduction (q3dm0)"
+                  - option "Arena Gate (q3dm1)"
+                  - option "House of Pain (q3dm2)"
+                  - option "Arena of Death (q3dm3)"
+                  - option "The Place of Many Deaths (q3dm4)"
+                  - option "The Forgotten Place (q3dm5)"
+                  - option "The Camping Grounds (q3dm6)"
+                  - option "Temple of Retribution (q3dm7)"
+                  - option "Brimstone Abbey (q3dm8)"
+                  - option "Hero's Keep (q3dm9)"
+                  - option "The Nameless Place (q3dm10)"
+                  - option "Deva Station (q3dm11)"
+                  - option "The Dredwerkz (q3dm12)"
+                  - option "Lost World (q3dm13)"
+                  - option "Grim Dungeons (q3dm14)"
+                  - option "Demon Keep (q3dm15)"
+                  - option "The Bouncy Map (q3dm16)"
+                  - option "The Longest Yard (q3dm17)" [selected]
+                  - option "Space Chamber (q3dm18)"
+                  - option "Apocalypse Void (q3dm19)"
+                  - option "Powerstation 0218 (q3tourney1)"
+                  - option "The Proving Grounds (q3tourney2)"
+                  - option "Hell's Gate (q3tourney3)"
+                  - option "Vertical Vengeance (q3tourney4)"
+                  - option "Fatal Instinct (q3tourney5)"
+                  - option "The Very End of You (q3tourney6)"
+              - generic [ref=e54]:
+                - text: "Target players: 4 (bots fill empty slots)"
+                - 'slider "Target players: 4 (bots fill empty slots)" [ref=e55]': "4"
+              - button "Start temporary arena" [ref=e56]:
+                - img
+                - text: Start temporary arena
+        - group [ref=e57]:
+          - generic "Server console 0 lines" [ref=e58] [cursor=pointer]:
+            - generic [ref=e59]:
+              - generic [ref=e60]: ">_"
+              - generic [ref=e61]: Server console
+            - generic [ref=e62]: 0 lines
+    - contentinfo [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e65]:
+          - paragraph [ref=e66]: Q3JS // Browser arena
+          - paragraph [ref=e67]: Q3JS is a non-commercial fan project using the officially released demo data and a GPL-licensed ioquake3 engine build. Not affiliated with id Software or ZeniMax.
+          - paragraph [ref=e68]:
+            - text: Designed, built, and maintained by
+            - link "LK" [ref=e69] [cursor=pointer]:
+              - /url: https://github.com/lklacar
+              - generic [ref=e70]: LK
+            - text: .
+        - generic [ref=e71]:
+          - link "Support Q3JS" [ref=e72] [cursor=pointer]:
+            - /url: https://ko-fi.com/quake3js
+          - link "Play on your phone" [ref=e73] [cursor=pointer]:
+            - /url: /play-quake-3-on-your-phone
+          - link "Voice chat" [ref=e74] [cursor=pointer]:
+            - /url: /quake-3-voice-chat
+          - link "Player stats" [ref=e75] [cursor=pointer]:
+            - /url: /quake-3-player-stats
+          - link "Custom servers" [ref=e76] [cursor=pointer]:
+            - /url: /custom-quake-3-servers
+          - link "Weapon database" [ref=e77] [cursor=pointer]:
+            - /url: /weapons
+          - link "Run a server" [ref=e78] [cursor=pointer]:
+            - /url: /guide
+          - link "GitHub source" [ref=e79] [cursor=pointer]:
+            - /url: https://github.com/lklacar/q3js
+          - link "X / @lukathedev" [ref=e80] [cursor=pointer]:
+            - /url: https://x.com/lukathedev
+          - link "Discord" [ref=e81] [cursor=pointer]:
+            - /url: https://discord.gg/mKvM9su443
+  - button "Loading online players" [ref=e82]:
+    - img
+    - generic [ref=e83]: Players
+  - alert [ref=e84]

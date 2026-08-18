@@ -1,0 +1,333 @@
+- generic:
+  - generic:
+    - banner:
+      - generic:
+        - link:
+          - /url: /
+          - generic: Q3JS
+        - button [expanded]:
+          - img
+    - main:
+      - region:
+        - paragraph: Quake 3 in browser
+        - heading [level=1]: Pick an arena. Play Quake III.
+        - paragraph: Choose a live server, enter a player name, and play in your browser. No installer or account required.
+        - generic:
+          - link:
+            - /url: /#servers
+            - text: Browse live servers
+          - link:
+            - /url: /host
+            - text: Host a game
+        - paragraph: First visit downloads the game data once. Later launches reuse the browser cache.
+        - paragraph:
+          - text: Created by
+          - link:
+            - /url: https://x.com/lukathedev
+            - generic: LK
+        - generic:
+          - link:
+            - /url: /scoreboard
+            - text: View scoreboard
+          - link:
+            - /url: https://ko-fi.com/quake3js
+            - img
+            - text: Support Q3JS
+          - link:
+            - /url: https://jk.q3js.com
+            - text: Play Jedi Academy ↗
+      - region:
+        - generic:
+          - generic:
+            - paragraph: Live arenas
+            - heading [level=2]: Choose where to play
+            - paragraph: Quick play picks an unlocked arena with people and a good connection.
+          - paragraph:
+            - generic: 3 servers
+            - generic: 0 humans online
+            - generic: 12 bots active
+        - generic:
+          - generic:
+            - generic:
+              - generic: Search servers
+              - img
+              - textbox:
+                - /placeholder: Search server, map, or player
+            - button: Quick play
+            - button:
+              - img
+          - paragraph: "Quick play destination: Q3JS Transit Hub · empty arena"
+          - generic:
+            - combobox:
+              - generic: Featured
+              - img
+            - generic: 2 shown
+        - generic:
+          - article:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - heading [level=3]: Q3JS Transit Hub
+                    - generic:
+                      - img
+                      - text: Official
+                  - paragraph: Free for all on Q3JS_HUB
+                - button: Join arena
+              - generic:
+                - generic: No limit
+              - generic:
+                - generic:
+                  - generic: 0 human players
+                  - generic: 0 bots
+                  - generic: 0/16 slots
+                - generic: 2 ms
+              - generic:
+                - generic:
+                  - img
+                  - generic: Who is playing
+                - generic:
+                  - generic:
+                    - generic: Score
+                    - generic: Ping
+                    - generic: Name
+                  - paragraph: No one is playing yet
+                - group:
+                  - generic: Connection details
+          - article:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - heading [level=3]: Q3JS Server
+                    - generic:
+                      - img
+                      - text: Official
+                  - paragraph: Free for all on Q3DM17
+                - button: Join arena
+              - generic:
+                - generic: 20 frags / 15 minutes
+              - generic:
+                - generic:
+                  - generic: 0 human players
+                  - generic: 4 bots
+                  - generic: 4/16 slots
+                - generic: 2 ms
+              - generic:
+                - generic:
+                  - img
+                  - generic: Who is playing
+                - generic:
+                  - generic:
+                    - generic: Score
+                    - generic: Ping
+                    - generic: Name
+                  - generic:
+                    - generic: "1"
+                    - generic: BOT
+                    - generic: Bones
+                  - generic:
+                    - generic: "1"
+                    - generic: BOT
+                    - generic: Hossman
+                  - generic:
+                    - generic: "1"
+                    - generic: BOT
+                    - generic: Keel
+                  - generic:
+                    - generic: "-1"
+                    - generic: BOT
+                    - generic: Grunt
+                - group:
+                  - generic: Connection details
+      - region:
+        - paragraph: New here?
+        - heading [level=2]: Playing takes three steps
+        - list:
+          - listitem:
+            - text: "01"
+            - heading [level=3]: Choose an arena
+            - paragraph: Use Quick play or compare the human player and latency counts.
+          - listitem:
+            - text: "02"
+            - heading [level=3]: Name your player
+            - paragraph: Your name is remembered locally. Voice chat remains optional.
+          - listitem:
+            - text: "03"
+            - heading [level=3]: Enter the game
+            - paragraph: Use WASD and mouse. Press Esc for the Quake III menu.
+      - generic:
+        - generic:
+          - term:
+            - img
+            - text: Players online
+          - definition: "0"
+          - paragraph: Across 3 live arenas · 12 bots active.
+        - generic:
+          - term:
+            - img
+            - text: Most frags last 24 hours
+          - definition:
+            - link:
+              - /url: /players/CinderRanger87
+              - text: CinderRanger87
+          - paragraph: 5 frags in the last 24 hours.
+        - generic:
+          - term:
+            - img
+            - text: Total frags ever
+          - definition: "5"
+          - paragraph: Since Q3JS started keeping score.
+      - region:
+        - generic:
+          - generic:
+            - paragraph: Global rankings
+            - generic:
+              - img
+              - heading [level=2]: Top fraggers
+            - paragraph: Global frag leaders for the selected period.
+          - generic:
+            - button: 24 hours
+            - button: Week
+            - button: Month
+            - button: All time
+        - list:
+          - listitem:
+            - generic: "#1"
+            - generic:
+              - link:
+                - /url: /players/CinderRanger87
+                - text: CinderRanger87
+              - paragraph: Last online 44 minutes ago
+            - generic: 5 frags
+        - generic:
+          - link:
+            - /url: /scoreboard?period=daily
+            - text: View frag rankings
+            - img
+    - contentinfo:
+      - generic:
+        - generic:
+          - paragraph: Q3JS // Browser arena
+          - paragraph: Q3JS is a non-commercial fan project using the officially released demo data and a GPL-licensed ioquake3 engine build. Not affiliated with id Software or ZeniMax.
+          - paragraph:
+            - text: Designed, built, and maintained by
+            - link:
+              - /url: https://github.com/lklacar
+              - generic: LK
+            - text: .
+        - generic:
+          - link:
+            - /url: https://ko-fi.com/quake3js
+            - text: Support Q3JS
+          - link:
+            - /url: /play-quake-3-on-your-phone
+            - text: Play on your phone
+          - link:
+            - /url: /quake-3-voice-chat
+            - text: Voice chat
+          - link:
+            - /url: /quake-3-player-stats
+            - text: Player stats
+          - link:
+            - /url: /custom-quake-3-servers
+            - text: Custom servers
+          - link:
+            - /url: /weapons
+            - text: Weapon database
+          - link:
+            - /url: /guide
+            - text: Run a server
+          - link:
+            - /url: https://github.com/lklacar/q3js
+            - text: GitHub source
+          - link:
+            - /url: https://x.com/lukathedev
+            - text: X / @lukathedev
+          - link:
+            - /url: https://discord.gg/mKvM9su443
+            - text: Discord
+  - button:
+    - img
+  - alert
+  - dialog "Q3JS menu" [ref=e307]:
+    - generic [ref=e308]:
+      - heading "Q3JS menu" [level=2] [ref=e309]
+      - paragraph [ref=e310]: Play online, host a game, or explore Q3JS.
+    - navigation "Mobile navigation" [ref=e311]:
+      - paragraph [ref=e312]: Main
+      - link "Servers" [ref=e313] [cursor=pointer]:
+        - /url: /#servers
+        - generic [ref=e314]: Servers
+        - generic [ref=e315]: "01"
+      - link "Host temporary game" [ref=e316] [cursor=pointer]:
+        - /url: /host
+        - generic [ref=e317]: Host temporary game
+        - generic [ref=e318]: "02"
+      - link "Run dedicated server" [ref=e319] [cursor=pointer]:
+        - /url: /guide
+        - generic [ref=e320]: Run dedicated server
+        - generic [ref=e321]: "03"
+      - link "Scoreboard" [ref=e322] [cursor=pointer]:
+        - /url: /scoreboard
+        - generic [ref=e323]: Scoreboard
+        - generic [ref=e324]: "04"
+      - link "Weapons" [ref=e325] [cursor=pointer]:
+        - /url: /weapons
+        - generic [ref=e326]: Weapons
+        - generic [ref=e327]: "05"
+      - paragraph [ref=e328]: Features
+      - link "Play on your phone Run Quake III Arena in your mobile browser with touch controls." [ref=e329] [cursor=pointer]:
+        - /url: /play-quake-3-on-your-phone
+        - generic [ref=e330]:
+          - text: Play on your phone
+          - generic [ref=e331]: "06"
+        - generic [ref=e332]: Run Quake III Arena in your mobile browser with touch controls.
+      - link "Voice chat Use opt-in server voice with microphone selection and push to talk." [ref=e333] [cursor=pointer]:
+        - /url: /quake-3-voice-chat
+        - generic [ref=e334]:
+          - text: Voice chat
+          - generic [ref=e335]: "07"
+        - generic [ref=e336]: Use opt-in server voice with microphone selection and push to talk.
+      - link "Player stats Explore rankings, profiles, weapons, maps, rivals, and frag activity." [ref=e337] [cursor=pointer]:
+        - /url: /quake-3-player-stats
+        - generic [ref=e338]:
+          - text: Player stats
+          - generic [ref=e339]: "08"
+        - generic [ref=e340]: Explore rankings, profiles, weapons, maps, rivals, and frag activity.
+      - link "WebAssembly engine See how ioquake3, browser storage, and WebSockets power Q3JS." [ref=e341] [cursor=pointer]:
+        - /url: /quake-3-webassembly
+        - generic [ref=e342]:
+          - text: WebAssembly engine
+          - generic [ref=e343]: "09"
+        - generic [ref=e344]: See how ioquake3, browser storage, and WebSockets power Q3JS.
+      - link "Browser mods Load compatible PK3 mods automatically with persistent asset caching." [ref=e345] [cursor=pointer]:
+        - /url: /quake-3-browser-mods
+        - generic [ref=e346]:
+          - text: Browser mods
+          - generic [ref=e347]: "10"
+        - generic [ref=e348]: Load compatible PK3 mods automatically with persistent asset caching.
+      - link "Custom servers Run a community arena with custom maps, modes, limits, and mods." [ref=e349] [cursor=pointer]:
+        - /url: /custom-quake-3-servers
+        - generic [ref=e350]:
+          - text: Custom servers
+          - generic [ref=e351]: "11"
+        - generic [ref=e352]: Run a community arena with custom maps, modes, limits, and mods.
+      - link "Support Q3JS" [ref=e353] [cursor=pointer]:
+        - /url: https://ko-fi.com/quake3js
+    - generic [ref=e354]:
+      - link "GitHub" [ref=e355] [cursor=pointer]:
+        - /url: https://github.com/lklacar/q3js
+        - img [ref=e356]
+        - text: GitHub
+      - link "X" [ref=e358] [cursor=pointer]:
+        - /url: https://x.com/lukathedev
+        - img [ref=e359]
+        - text: X
+      - link "Discord" [ref=e361] [cursor=pointer]:
+        - /url: https://discord.gg/mKvM9su443
+        - img [ref=e362]
+        - text: Discord
+    - button "Close" [active] [ref=e364]:
+      - img [ref=e365]
+      - generic [ref=e367]: Close
