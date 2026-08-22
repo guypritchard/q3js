@@ -51,7 +51,9 @@ export class Q3BrowserHost {
         ...(asset.requestCache === undefined ? {} : { requestCache: asset.requestCache }),
       })),
       arguments: buildHostArguments(options),
-      ...(options.wasmUrl ? { wasmUrl: String(options.wasmUrl) } : {}),
+      ...(options.wasmUrl
+        ? { wasmUrl: new URL(String(options.wasmUrl), document.baseURI).href }
+        : {}),
     };
     this.#worker = new Worker(new URL("./host-worker.js", import.meta.url), { type: "module" });
     this.#worker.addEventListener("message", this.#onMessage);

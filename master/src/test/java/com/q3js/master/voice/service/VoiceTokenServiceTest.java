@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.Base64;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -16,9 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class VoiceTokenServiceTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final VoiceTokenService service = new VoiceTokenService(
-        "https://staging.livekit.q3js.com/",
-        "devkey",
-        "devsecretdevsecretdevsecretdevsecret",
+        Optional.of("https://staging.livekit.q3js.com/"),
+        Optional.of("devkey"),
+        Optional.of("devsecretdevsecretdevsecretdevsecret"),
         Duration.ofHours(6)
     );
 

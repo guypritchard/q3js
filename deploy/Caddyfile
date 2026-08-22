@@ -1,0 +1,37 @@
+# >>> q3js >>>
+# Cloudflare terminates TLS and forwards HTTP with this Host header.
+http://q3js.amber-fly.org {
+    encode zstd gzip
+
+    handle /api/* {
+        reverse_proxy 127.0.0.1:3081
+    }
+
+    handle /q/* {
+        reverse_proxy 127.0.0.1:3081
+    }
+
+    # Cloudflare carries the Hub's browser WebSocket over HTTPS. Quake UDP
+    # remains private inside the combined server/gateway container.
+    handle /ws {
+        reverse_proxy 127.0.0.1:3083
+    }
+
+    handle /baseq3/* {
+        reverse_proxy 127.0.0.1:3082
+    }
+
+    handle /missionpack/* {
+        reverse_proxy 127.0.0.1:3082
+    }
+
+    @nextAssets path /_next/static/*
+    header @nextAssets Cache-Control "public, max-age=31536000, immutable"
+
+    handle {
+        reverse_proxy 127.0.0.1:3080
+    }
+
+    log
+}
+# <<< q3js <<<

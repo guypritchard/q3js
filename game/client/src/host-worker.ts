@@ -1,6 +1,8 @@
 import type { Q3HostWorkerRequest, Q3HostWorkerResponse } from "./host-protocol.js";
 import createServer from "./runtime/ioq3ded.js";
 
+const bundledWasmUrl = new URL("./runtime/ioq3ded.wasm", import.meta.url).href;
+
 function post(message: Q3HostWorkerResponse, transfer?: Transferable[]): void {
   globalThis.postMessage(message, { transfer: transfer ?? [] });
 }
@@ -22,9 +24,9 @@ async function start(request: Extract<Q3HostWorkerRequest, { type: "start" }>): 
     let abortError: Error | undefined;
     const runtime = await createServer({
       noInitialRun: true,
-      ...(request.wasmUrl
-        ? { locateFile: (path: string, prefix: string) => path.endsWith(".wasm") ? request.wasmUrl! : `${prefix}${path}` }
-        : {}),
+      locateFile: (path: string, prefix: string) => path.endsWith(".wasm")
+        ? (request.wasmUrl ?? bundledWasmUrl)
+        : `${prefix}${path}`,
       print: (message) => post({ type: "console", level: "info", message }),
       printErr: (message) => post({ type: "console", level: "error", message }),
       onAbort: (reason) => {

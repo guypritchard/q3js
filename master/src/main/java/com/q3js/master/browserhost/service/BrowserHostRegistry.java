@@ -58,12 +58,20 @@ public class BrowserHostRegistry {
         this.statusParser = statusParser;
         this.objectMapper = objectMapper;
         this.publicUrl = validatePublicUrl(publicUrl);
-        this.maxGames = maxGames;
-        this.maxPlayers = maxPlayers;
+        this.maxGames = positive(maxGames, "Browser-host game capacity");
+        this.maxPlayers = positive(maxPlayers, "Browser-host player capacity");
+        if (startupTimeout.isZero() || startupTimeout.isNegative()) {
+            throw new IllegalArgumentException("Browser-host startup timeout must be positive");
+        }
         this.startupTimeout = startupTimeout;
     }
 
     public synchronized String registerHost(WebSocketConnection connection) {
+        for (HostedGame game : List.copyOf(games.values())) {
+            if (!game.host.isOpen()) {
+                removeHost(game.host);
+            }
+        }
         if (games.size() >= maxGames) {
             throw new IllegalStateException("Browser-host capacity is full");
         }
@@ -229,6 +237,13 @@ public class BrowserHostRegistry {
             throw new IllegalArgumentException("Browser-host public URL must be an absolute ws or wss URL without credentials, query, or fragment");
         }
         return uri.toString();
+    }
+
+    private static int positive(int value, String name) {
+        if (value <= 0) {
+            throw new IllegalArgumentException(name + " must be positive");
+        }
+        return value;
     }
 
     private static ServerResponse response(HostedGame game, ServerInfo info) {

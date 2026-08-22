@@ -20,7 +20,6 @@ export function SiteHeader() {
         <Link href="/" className="mr-auto flex min-w-0 items-center gap-2.5" aria-label="Q3JS home">
           <Image src="/quake3.svg" alt="" width={24} height={24} className="size-6" priority />
           <span className="font-mono text-xl font-black uppercase tracking-[0.04em]">Q3JS</span>
-          <span className="hidden font-mono text-xs text-muted-foreground min-[380px]:inline">1.0.0</span>
         </Link>
 
         <div className="hidden items-center gap-4 lg:flex">
@@ -68,7 +67,7 @@ export function SiteHeader() {
             href={siteConfig.supportUrl}
             target="_blank"
             rel="noreferrer"
-            className="whitespace-nowrap bg-primary px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-[0.05em] text-primary-foreground transition-colors hover:bg-primary/80"
+            className="whitespace-nowrap border border-border px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-[0.05em] text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
           >
             Support
           </a>

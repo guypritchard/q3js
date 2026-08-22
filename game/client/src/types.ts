@@ -51,6 +51,17 @@ export interface Q3PersistenceOptions {
 
 export type Q3CvarValue = string | number | boolean;
 
+export interface Q3PortalInfo {
+  active: boolean;
+  bestMatch: boolean;
+  /** Stock map index, or -1 for a custom/unknown map. */
+  map: number;
+  ping: number;
+  players: number;
+  capacity: number;
+  topScore: number;
+}
+
 export interface Q3ClientOptions {
   canvas: HTMLCanvasElement;
   game?: Q3GameOptions;
@@ -66,6 +77,7 @@ export interface Q3ClientOptions {
   onProgress?: (progress: Q3ClientProgress) => void;
   onReady?: (client: import("./client.js").Q3Client) => void;
   onConsole?: (level: "info" | "error", message: string) => void;
+  onServerHandoff?: (slot: number) => void;
   onError?: (error: Error) => void;
 }
 

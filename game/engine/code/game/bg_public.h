@@ -696,6 +696,12 @@ typedef enum {
 							// this avoids having to set eFlags and eventNum
 } entityType_t;
 
+#define Q3JS_PORTAL_GENERIC_BASE 240
+#define Q3JS_PORTAL_COUNT Q3JS_MAX_PORTALS
+#if Q3JS_PORTAL_GENERIC_BASE + Q3JS_PORTAL_COUNT > 256
+#error Q3JS portal identifiers exceed the 8-bit generic1 field
+#endif
+
 
 
 void	BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );

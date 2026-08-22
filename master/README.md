@@ -101,6 +101,23 @@ minutes. These values are configured with `q3js.master.refresh-every`,
 `q3js.master.prune-every`, `q3js.master.heartbeat-ttl`, and
 `q3js.master.server-status-timeout`.
 
+## Browser-hosted games
+
+The WebSockets Next endpoints at `/api/hosted-games/host` and
+`/api/hosted-games/{serverId}/ws` relay players to authoritative WebAssembly
+servers running in browser Workers. Hosted games are held in memory, appear in
+`GET /api/servers` after a successful Quake status probe, and are removed as
+soon as the host connection closes.
+
+Set `Q3JS_BROWSER_HOST_PUBLIC_URL` to the browser-reachable base URL ending in
+`/api/hosted-games`; production HTTPS sites require `wss`. Capacity defaults to
+32 games and 16 players per game and can be changed with
+`Q3JS_BROWSER_HOST_MAX_GAMES` and `Q3JS_BROWSER_HOST_MAX_PLAYERS`. Unlisted host
+connections are closed after two minutes by default with
+`Q3JS_BROWSER_HOST_STARTUP_TIMEOUT=2m`. The production Compose deployment uses
+`3m` to allow for slower client uploads while keeping abandoned relay slots
+short-lived.
+
 ## Voice chat
 
 The master signs LiveKit room tokens; API credentials remain server-side. Set

@@ -1,8 +1,9 @@
 export const navItems = [
   { label: "Servers", href: "/#servers" },
+  { label: "Host temporary game", href: "/host" },
+  { label: "Run dedicated server", href: "/guide" },
   { label: "Scoreboard", href: "/scoreboard" },
   { label: "Weapons", href: "/weapons" },
-  { label: "Run a server", href: "/guide" },
 ] as const;
 
 export const featureItems = [

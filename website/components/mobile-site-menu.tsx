@@ -39,12 +39,15 @@ export function MobileSiteMenu() {
         <SheetHeader>
           <SheetTitle>Q3JS menu</SheetTitle>
           <SheetDescription id="mobile-navigation-description">
-            Play, check rankings, or explore the arena.
+            Play online, host a game, or explore Q3JS.
           </SheetDescription>
         </SheetHeader>
 
-        <nav aria-label="Mobile navigation" className="flex-1 px-3 py-4">
-          {navItems.slice(0, 1).map((item, index) => (
+        <nav aria-label="Mobile navigation" className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
+          <p className="px-3 pb-1 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+            Main
+          </p>
+          {navItems.map((item, index) => (
             <SheetClose key={item.href} asChild>
               <Link
                 href={item.href}
@@ -70,25 +73,11 @@ export function MobileSiteMenu() {
                 <span className="flex items-center justify-between font-mono text-sm font-bold uppercase tracking-[0.05em]">
                   {item.label}
                   <span className="text-xs font-normal text-muted-foreground" aria-hidden="true">
-                    {String(index + 2).padStart(2, "0")}
+                    {String(index + navItems.length + 1).padStart(2, "0")}
                   </span>
                 </span>
                 <span className="mt-1 block text-xs leading-5 text-muted-foreground">
                   {item.description}
-                </span>
-              </Link>
-            </SheetClose>
-          ))}
-
-          {navItems.slice(1).map((item, index) => (
-            <SheetClose key={item.href} asChild>
-              <Link
-                href={item.href}
-                className="flex min-h-12 items-center justify-between border-b border-border/60 px-3 py-3 font-mono text-sm font-bold uppercase tracking-[0.05em] transition-colors hover:bg-muted hover:text-primary"
-              >
-                <span>{item.label}</span>
-                <span className="text-xs font-normal text-muted-foreground" aria-hidden="true">
-                  {String(index + featureItems.length + 2).padStart(2, "0")}
                 </span>
               </Link>
             </SheetClose>

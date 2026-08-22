@@ -19,6 +19,8 @@ COPY game/client game/client
 COPY game/engine game/engine
 COPY website website
 
+RUN sed -i 's/\r$//' game/build-client.sh game/client/build.sh
+
 ARG NEXT_PUBLIC_Q3JS_MASTER_URL=http://localhost:8080
 ARG NEXT_PUBLIC_Q3JS_SITE_URL=http://localhost:3000
 ARG NEXT_PUBLIC_Q3JS_STATIC_URL=
@@ -69,5 +71,8 @@ EXPOSE 3000
 
 USER q3js
 WORKDIR /opt/q3js/website/website
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=6 \
+    CMD node -e "fetch('http://127.0.0.1:3000').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
 
 CMD ["node", "server.js"]

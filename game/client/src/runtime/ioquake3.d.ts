@@ -12,6 +12,16 @@ export interface Q3EngineModule {
   _Q3JS_MobileMouseMove?: (deltaX: number, deltaY: number) => void;
   _Q3JS_RequestQuit?: () => void;
   _Q3JS_Resize?: (width: number, height: number) => void;
+  _Q3JS_SetPortalInfo?: (
+    slot: number,
+    active: number,
+    map: number,
+    ping: number,
+    players: number,
+    capacity: number,
+    topScore: number,
+    bestMatch: number,
+  ) => void;
 }
 
 export interface Q3EngineModuleOptions {
@@ -25,6 +35,7 @@ export interface Q3EngineModuleOptions {
   locateFile?: (path: string, prefix: string) => string;
   print?: (message: string) => void;
   printErr?: (message: string) => void;
+  onServerHandoff?: (slot: number) => void;
   onAbort?: (reason: unknown) => void;
 }
 

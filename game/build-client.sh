@@ -29,7 +29,8 @@ emcmake cmake \
   -G Ninja \
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
   -DBUILD_CLIENT=ON \
-  -DBUILD_SERVER=OFF \
+  -DBUILD_SERVER=ON \
+  -DBUILD_BROWSER_SERVER=ON \
   -DBUILD_GAME_LIBRARIES=OFF \
   -DBUILD_GAME_QVMS=OFF \
   -DBUILD_RENDERER_GL1=OFF \
@@ -44,6 +45,8 @@ OUTPUT_DIR="$BUILD_DIR/$BUILD_TYPE"
 ARTIFACTS=(
   ioquake3.js
   ioquake3.wasm
+  ioq3ded.js
+  ioq3ded.wasm
   ioquake3.html
   ioquake3-config.json
 )

@@ -14,6 +14,7 @@
   },
   "scripts": {
     "build": "./build.sh",
+    "test": "node --test test/*.test.mjs",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "devDependencies": {

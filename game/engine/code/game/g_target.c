@@ -24,6 +24,48 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 //==========================================================
 
+/*QUAKED target_q3js_portal (0 0.8 1) (-8 -8 -8) (8 8 8)
+Sends the activating browser client through the live arena assigned to "count" (0-15).
+*/
+static void Use_Target_Q3JSPortal( gentity_t *ent, gentity_t *other, gentity_t *activator ) {
+	if ( !activator || !activator->client ) {
+		return;
+	}
+	if ( ent->count < 0 || ent->count >= Q3JS_PORTAL_COUNT ) {
+		return;
+	}
+
+	trap_SendServerCommand( activator - g_entities, va( "q3js_handoff %i", ent->count ) );
+}
+
+void SP_target_q3js_portal( gentity_t *ent ) {
+	if ( ent->count < 0 || ent->count >= Q3JS_PORTAL_COUNT ) {
+		G_Printf( "target_q3js_portal has invalid slot %i\n", ent->count );
+		G_FreeEntity( ent );
+		return;
+	}
+	ent->use = Use_Target_Q3JSPortal;
+}
+
+/*QUAKED misc_q3js_portal (0 0.8 1) (-8 -8 -8) (8 8 8)
+Client-rendered Transit Hub sign and light for portal slot "count" (0-15).
+*/
+void SP_misc_q3js_portal( gentity_t *ent ) {
+	if ( ent->count < 0 || ent->count >= Q3JS_PORTAL_COUNT ) {
+		G_Printf( "misc_q3js_portal has invalid slot %i\n", ent->count );
+		G_FreeEntity( ent );
+		return;
+	}
+
+	ent->s.eType = ET_GENERAL;
+	ent->s.generic1 = Q3JS_PORTAL_GENERIC_BASE + ent->count;
+	ent->r.svFlags = SVF_BROADCAST;
+	G_SetOrigin( ent, ent->s.origin );
+	trap_LinkEntity( ent );
+}
+
+//==========================================================
+
 /*QUAKED target_give (1 0 0) (-8 -8 -8) (8 8 8)
 Gives the activator all the items pointed to.
 */

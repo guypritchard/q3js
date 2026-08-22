@@ -35,12 +35,13 @@ function OnlinePlayersSheetQuery() {
     <Sheet>
       <SheetTrigger asChild>
         <Button
+          variant={players.length > 0 ? "default" : "outline"}
           size="lg"
-          className="fixed bottom-3 right-3 z-40 h-11 gap-2 border border-primary/70 px-3 shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:bottom-6 sm:right-6 sm:h-12 sm:px-4"
+          className="fixed right-14 top-1.5 z-50 size-11 gap-2 border border-primary/70 px-0 shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:bottom-6 sm:right-6 sm:top-auto sm:z-40 sm:h-12 sm:w-auto sm:px-4"
           aria-label={isPending ? "Loading online players" : `View ${countLabel(players.length, "player")} online`}
         >
           <Users className={isPending ? "animate-pulse" : undefined} weight="fill" aria-hidden="true" />
-          {isPending ? "Players" : `${players.length} online`}
+          <span className="hidden sm:inline">{isPending ? "Players" : `${players.length} online`}</span>
         </Button>
       </SheetTrigger>
 

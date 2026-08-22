@@ -78,6 +78,7 @@ flowchart LR
 | `website/` | Server browser, player profiles, scoreboards, and game launcher | Next.js, React, Tailwind CSS | [Website guide](website/README.md) |
 | `game/client/` | Browser runtime, virtual filesystem, asset loading, persistence, and mobile input | TypeScript, Emscripten, WebAssembly | [Client guide](game/client/README.md) |
 | `game/server/` | Dedicated server package and WebSocket-to-UDP gateway | ioquake3, Node.js, TypeScript | [Server guide](game/server/README.md) |
+| `game/maps/` | Original Transit Hub source generator, compiled BSP package, and map build workflow | q3map2, Node.js | [Map guide](game/maps/README.md) |
 | `master/` | Server registry, event ingestion, profiles, scoreboards, statistics, and GeoIP | Java 17, Quarkus, jOOQ, Flyway | [Master guide](master/README.md) |
 | `static/` | Safe, cacheable PK3 and manifest delivery | nginx, shell | [Static server guide](static/README.md) |
 
@@ -85,6 +86,8 @@ flowchart LR
 
 - Native ioquake3 gameplay compiled to WebAssembly with the OpenGL 2 renderer.
 - Browser-to-server play through a WebSocket-to-UDP gateway.
+- Ephemeral authoritative servers hosted in a browser Web Worker with relay-backed discovery and invite links.
+- A damage-free Transit Hub with launch pads and 16 live doors for moving between listed arenas.
 - Live community and official server discovery with health-aware heartbeats.
 - Global frag rankings, activity distribution, player profiles, rivals, maps, and weapon statistics.
 - Multi-mod asset manifests with persistent browser-side caching.
@@ -104,6 +107,41 @@ flowchart LR
 The container builds pin the toolchain versions used by the project and are the best reference when setting up a local environment.
 
 ## Quick start
+
+### Podman Compose
+
+The complete local stack can run in containers. Copy `.env.example` to `.env`
+and set `Q3JS_DATA_DIR` to the absolute directory containing `baseq3/pak0.pk3`.
+On Windows, use forward slashes in the path. Then run:
+
+```bash
+podman machine start
+podman compose up --build -d
+podman compose ps
+```
+
+Open [http://localhost:3000](http://localhost:3000). The Compose stack builds
+the WebAssembly client and starts the website, master API, PostgreSQL, static
+asset server, dedicated game server, and WebSocket gateway. The local game is
+published as `game.localhost`, which resolves to the host for browsers and to
+the game container from inside the Compose network.
+
+Open [http://localhost:3000/host](http://localhost:3000/host) to start an
+ephemeral browser-hosted arena. The host tab runs the authoritative WebAssembly
+server and must remain open; closing it disconnects players and removes the game
+from discovery.
+
+The Compose stack also lists `Q3JS Transit Hub` on `q3js_hub`. Its 16 doorway
+signs update every five seconds with map, human occupancy, leading score, and
+latency. The best low-latency, moderately populated match is marked in gold.
+Players can chat and use launch pads, but cannot take damage or die. Entering an
+active doorway reconnects the browser to that listed arena.
+
+Use `podman compose logs -f` to follow startup and `podman compose down` to stop
+the stack. Add `--volumes` to `down` only when you also want to delete database,
+server, and generated master-key state.
+
+### Manual development
 
 Clone the repository and install the workspace dependencies:
 
@@ -185,6 +223,10 @@ Each component documents its complete configuration surface. These variables con
 | `Q3JS_EVENT_CLIENT_SECRET` | Master/game server | Shared secret for authenticated events and official heartbeats |
 | `Q3JS_PUBLISH_HOST` / `Q3JS_PUBLISH_PORT` | Game server | Browser-reachable gateway address |
 | `Q3JS_SECURE` | Game server | Publish the gateway with `wss` instead of `ws` |
+| `Q3JS_BROWSER_HOST_PUBLIC_URL` | Master | Public `ws` or `wss` base URL for browser-hosted player relays |
+| `Q3JS_BROWSER_HOST_MAX_GAMES` | Master | Maximum concurrent browser-hosted games |
+| `Q3JS_BROWSER_HOST_MAX_PLAYERS` | Master | Maximum relay players per browser-hosted game |
+| `Q3JS_BROWSER_HOST_STARTUP_TIMEOUT` | Master | Maximum time an unlisted browser host may occupy a relay slot (default `2m`; production Compose uses `3m`) |
 | `Q3JS_DB_URL` / `Q3JS_DB_USER` / `Q3JS_DB_PASSWORD` | Master | PostgreSQL connection settings |
 
 Generate a production event secret with `openssl rand -hex 32` and provide the same value to the master and each official game server. Never use the development fallback in production.

@@ -36,15 +36,37 @@ list(APPEND CLIENT_LINK_OPTIONS
     -lidbfs.js
 )
 
-list(APPEND SERVER_LINK_OPTIONS
-    -sTOTAL_MEMORY=256MB
-    -sSTACK_SIZE=5242880
-    -sEXIT_RUNTIME=1
-    -sENVIRONMENT=node
-    -sNODERAWFS=1
-    -sWEBSOCKET_SUBPROTOCOL=binary
-    --pre-js ${SOURCE_DIR}/web/server-node-pre.js
-)
+if(BUILD_BROWSER_SERVER)
+    if(NOT BUILD_SERVER)
+        message(FATAL_ERROR "BUILD_BROWSER_SERVER requires BUILD_SERVER")
+    endif()
+
+    list(APPEND SERVER_DEFINITIONS Q3JS_BROWSER_SERVER)
+    list(APPEND SERVER_PLATFORM_SOURCES ${SOURCE_DIR}/web/server-browser.c)
+    list(APPEND SERVER_LINK_OPTIONS
+        -sTOTAL_MEMORY=256MB
+        -sALLOW_MEMORY_GROWTH=1
+        -sSTACK_SIZE=5242880
+        -sFORCE_FILESYSTEM=1
+        -sWASMFS=0
+        -sENVIRONMENT=worker
+        -sEXPORTED_FUNCTIONS=_main,_malloc,_free,_Q3JS_ServerInjectPacket,_Q3JS_ServerCommand,_Q3JS_ServerIsRunning
+        -sEXPORTED_RUNTIME_METHODS=FS,callMain
+        -sEXIT_RUNTIME=1
+        -sEXPORT_ES6
+        -sEXPORT_NAME=${SERVER_NAME}
+    )
+else()
+    list(APPEND SERVER_LINK_OPTIONS
+        -sTOTAL_MEMORY=256MB
+        -sSTACK_SIZE=5242880
+        -sEXIT_RUNTIME=1
+        -sENVIRONMENT=node
+        -sNODERAWFS=1
+        -sWEBSOCKET_SUBPROTOCOL=binary
+        --pre-js ${SOURCE_DIR}/web/server-node-pre.js
+    )
+endif()
 
 option(EMSCRIPTEN_PRELOAD_FILE "Preload game files into .data file" OFF)
 

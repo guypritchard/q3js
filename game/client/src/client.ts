@@ -5,6 +5,7 @@ import type {
   Q3ClientProgress,
   Q3CvarValue,
   Q3FileSystem,
+  Q3PortalInfo,
 } from "./types.js";
 
 function normalizeError(error: unknown): Error {
@@ -195,6 +196,22 @@ export class Q3Client {
     this.#runtime._Q3JS_MobileJoystickAxis?.(axis, Math.round(value));
   }
 
+  setPortalInfo(slot: number, info: Q3PortalInfo): void {
+    if (this.#disposed || !Number.isInteger(slot) || slot < 0 || slot >= 16) {
+      return;
+    }
+    this.#runtime._Q3JS_SetPortalInfo?.(
+      slot,
+      info.active ? 1 : 0,
+      Math.trunc(info.map),
+      Math.max(0, Math.trunc(info.ping)),
+      Math.max(0, Math.trunc(info.players)),
+      Math.max(0, Math.trunc(info.capacity)),
+      Math.trunc(info.topScore),
+      info.bestMatch ? 1 : 0,
+    );
+  }
+
   async sync(): Promise<void> {
     if (this.persistent && !this.#disposed) {
       await syncFileSystem(this.#runtime, false);
@@ -253,6 +270,7 @@ export async function createQ3Client(options: Q3ClientOptions): Promise<Q3Client
       engineOptions.print = (message) => options.onConsole?.("info", message);
       engineOptions.printErr = (message) => options.onConsole?.("error", message);
     }
+    engineOptions.onServerHandoff = (slot) => options.onServerHandoff?.(slot);
     let abortError: Error | undefined;
     engineOptions.onAbort = (reason) => {
       abortError = normalizeError(reason);

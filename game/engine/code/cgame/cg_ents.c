@@ -154,6 +154,199 @@ static void CG_EntityEffects( centity_t *cent ) {
 
 }
 
+static int CG_Q3JSPortalCvar( int slot, const char *field ) {
+	char name[32];
+	char value[16];
+
+	Com_sprintf( name, sizeof( name ), "q3js_portal%i_%s", slot, field );
+	trap_Cvar_VariableStringBuffer( name, value, sizeof( value ) );
+	return atoi( value );
+}
+
+static void CG_Q3JSPortalText( const vec3_t origin, float verticalOffset,
+	const char *text, float size, const byte color[4] ) {
+	polyVert_t verts[4];
+	vec3_t cursor;
+	vec3_t right;
+	vec3_t up;
+	float width;
+	int i;
+
+	width = strlen( text ) * size * 0.62f;
+	VectorScale( cg.refdef.viewaxis[1], -1.0f, right );
+	VectorCopy( cg.refdef.viewaxis[2], up );
+	VectorMA( origin, verticalOffset, up, cursor );
+	VectorMA( cursor, -width * 0.5f, right, cursor );
+
+	for ( i = 0; text[i]; i++ ) {
+		int ch;
+		int row;
+		int col;
+		float left;
+		float rightEdge;
+		float top;
+		float bottom;
+		int vertex;
+
+		ch = text[i] & 255;
+		if ( ch == ' ' ) {
+			VectorMA( cursor, size * 0.62f, right, cursor );
+			continue;
+		}
+
+		row = ch >> 4;
+		col = ch & 15;
+		left = col * 0.0625f;
+		rightEdge = left + 0.0625f;
+		top = row * 0.0625f;
+		bottom = top + 0.0625f;
+
+		VectorCopy( cursor, verts[0].xyz );
+		VectorMA( verts[0].xyz, size, up, verts[0].xyz );
+		VectorMA( cursor, size * 0.62f, right, verts[1].xyz );
+		VectorMA( verts[1].xyz, size, up, verts[1].xyz );
+		VectorMA( cursor, size * 0.62f, right, verts[2].xyz );
+		VectorCopy( cursor, verts[3].xyz );
+		verts[0].st[0] = left; verts[0].st[1] = top;
+		verts[1].st[0] = rightEdge; verts[1].st[1] = top;
+		verts[2].st[0] = rightEdge; verts[2].st[1] = bottom;
+		verts[3].st[0] = left; verts[3].st[1] = bottom;
+		for ( vertex = 0; vertex < 4; vertex++ ) {
+			memcpy( verts[vertex].modulate, color, sizeof( verts[vertex].modulate ) );
+		}
+		trap_R_AddPolyToScene( cgs.media.charsetShader, 4, verts );
+		VectorMA( cursor, size * 0.62f, right, cursor );
+	}
+}
+
+static void CG_Q3JSPortalOutlinedText( const vec3_t origin, float verticalOffset,
+	const char *text, float size, const byte color[4] ) {
+	byte shadow[4];
+
+	shadow[0] = 0;
+	shadow[1] = 0;
+	shadow[2] = 0;
+	shadow[3] = 245;
+	CG_Q3JSPortalText( origin, verticalOffset - 0.75f, text, size + 1.5f, shadow );
+	CG_Q3JSPortalText( origin, verticalOffset, text, size, color );
+}
+
+static void CG_Q3JSPortalQuad( const vec3_t origin, float horizontalOffset,
+	float verticalOffset, float width, float height, const byte color[4] ) {
+	polyVert_t verts[4];
+	vec3_t center;
+	vec3_t right;
+	vec3_t up;
+	int vertex;
+
+	VectorScale( cg.refdef.viewaxis[1], -1.0f, right );
+	VectorCopy( cg.refdef.viewaxis[2], up );
+	VectorMA( origin, 1.5f, cg.refdef.viewaxis[0], center );
+	VectorMA( center, horizontalOffset, right, center );
+	VectorMA( center, verticalOffset, up, center );
+
+	VectorMA( center, -width * 0.5f, right, verts[0].xyz );
+	VectorMA( verts[0].xyz, height * 0.5f, up, verts[0].xyz );
+	VectorMA( center, width * 0.5f, right, verts[1].xyz );
+	VectorMA( verts[1].xyz, height * 0.5f, up, verts[1].xyz );
+	VectorMA( center, width * 0.5f, right, verts[2].xyz );
+	VectorMA( verts[2].xyz, -height * 0.5f, up, verts[2].xyz );
+	VectorMA( center, -width * 0.5f, right, verts[3].xyz );
+	VectorMA( verts[3].xyz, -height * 0.5f, up, verts[3].xyz );
+
+	verts[0].st[0] = 0.0f; verts[0].st[1] = 0.0f;
+	verts[1].st[0] = 1.0f; verts[1].st[1] = 0.0f;
+	verts[2].st[0] = 1.0f; verts[2].st[1] = 1.0f;
+	verts[3].st[0] = 0.0f; verts[3].st[1] = 1.0f;
+	for ( vertex = 0; vertex < 4; vertex++ ) {
+		memcpy( verts[vertex].modulate, color, sizeof( verts[vertex].modulate ) );
+	}
+	trap_R_AddPolyToScene( cgs.media.q3jsPortalPanelShader, 4, verts );
+}
+
+static void CG_Q3JSPortalPanel( const vec3_t origin, const byte accent[4] ) {
+	byte background[4];
+	byte border[4];
+
+	background[0] = 2;
+	background[1] = 7;
+	background[2] = 13;
+	background[3] = 215;
+	memcpy( border, accent, sizeof( border ) );
+	border[3] = 235;
+
+	CG_Q3JSPortalQuad( origin, 0.0f, 30.0f, 230.0f, 84.0f, background );
+	CG_Q3JSPortalQuad( origin, 0.0f, 71.0f, 230.0f, 2.5f, border );
+	CG_Q3JSPortalQuad( origin, 0.0f, -11.0f, 230.0f, 2.5f, border );
+	CG_Q3JSPortalQuad( origin, -114.0f, 30.0f, 2.5f, 84.0f, border );
+	CG_Q3JSPortalQuad( origin, 114.0f, 30.0f, 2.5f, 84.0f, border );
+}
+
+static void CG_Q3JSPortal( centity_t *cent ) {
+	static const char *mapNames[] = {
+		"Q3DM0", "Q3DM1", "Q3DM2", "Q3DM3", "Q3DM4", "Q3DM5", "Q3DM6",
+		"Q3DM7", "Q3DM8", "Q3DM9", "Q3DM10", "Q3DM11", "Q3DM12", "Q3DM13",
+		"Q3DM14", "Q3DM15", "Q3DM16", "Q3DM17", "Q3DM18", "Q3DM19",
+		"Q3TOURNEY1", "Q3TOURNEY2", "Q3TOURNEY3", "Q3TOURNEY4", "Q3TOURNEY5", "Q3TOURNEY6"
+	};
+	byte color[4];
+	char line[64];
+	int slot;
+	int active;
+	int map;
+	int ping;
+	int players;
+	int capacity;
+	int score;
+	int bestMatch;
+	float pulse;
+
+	if ( Distance( cg.refdef.vieworg, cent->lerpOrigin ) > 2800.0f ) {
+		return;
+	}
+
+	slot = cent->currentState.generic1 - Q3JS_PORTAL_GENERIC_BASE;
+	active = CG_Q3JSPortalCvar( slot, "active" );
+	color[3] = 255;
+	if ( !active ) {
+		color[0] = 105; color[1] = 120; color[2] = 135;
+		CG_Q3JSPortalPanel( cent->lerpOrigin, color );
+		Com_sprintf( line, sizeof( line ), "PORTAL %i", slot + 1 );
+		CG_Q3JSPortalOutlinedText( cent->lerpOrigin, 38.0f, line, 13.0f, color );
+		CG_Q3JSPortalOutlinedText( cent->lerpOrigin, 17.0f, "NO ACTIVE ROUTE", 10.0f, color );
+		return;
+	}
+
+	map = CG_Q3JSPortalCvar( slot, "map" );
+	ping = CG_Q3JSPortalCvar( slot, "ping" );
+	players = CG_Q3JSPortalCvar( slot, "players" );
+	capacity = CG_Q3JSPortalCvar( slot, "capacity" );
+	score = CG_Q3JSPortalCvar( slot, "score" );
+	bestMatch = CG_Q3JSPortalCvar( slot, "best" );
+	if ( bestMatch ) {
+		color[0] = 255; color[1] = 220; color[2] = 40;
+	} else if ( ping > 0 && ping >= 80 ) {
+		color[0] = 255; color[1] = 170; color[2] = 40;
+	} else {
+		color[0] = 30; color[1] = 225; color[2] = 255;
+	}
+
+	CG_Q3JSPortalPanel( cent->lerpOrigin, color );
+	CG_Q3JSPortalOutlinedText( cent->lerpOrigin, 51.0f,
+		bestMatch ? "BEST MATCH" : "LIVE DESTINATION", bestMatch ? 14.0f : 10.0f, color );
+	Com_sprintf( line, sizeof( line ), "PORTAL %i // %s", slot + 1,
+		map >= 0 && map < 26 ? mapNames[map] : "CUSTOM ARENA" );
+	CG_Q3JSPortalOutlinedText( cent->lerpOrigin, 34.0f, line, 11.0f, color );
+	Com_sprintf( line, sizeof( line ), "%i/%i PLAYERS", players, capacity );
+	CG_Q3JSPortalOutlinedText( cent->lerpOrigin, 18.0f, line, 9.5f, color );
+	Com_sprintf( line, sizeof( line ), "TOP %i // %i MS", score, ping );
+	CG_Q3JSPortalOutlinedText( cent->lerpOrigin, 3.0f, line, 9.5f, color );
+
+	pulse = ( bestMatch ? 280.0f : 190.0f ) + 30.0f * sin( cg.time * 0.006f + slot );
+	trap_R_AddLightToScene( cent->lerpOrigin, pulse,
+		color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f );
+}
+
 
 /*
 ==================
@@ -165,6 +358,11 @@ static void CG_General( centity_t *cent ) {
 	entityState_t		*s1;
 
 	s1 = &cent->currentState;
+	if ( s1->generic1 >= Q3JS_PORTAL_GENERIC_BASE
+		&& s1->generic1 < Q3JS_PORTAL_GENERIC_BASE + Q3JS_PORTAL_COUNT ) {
+		CG_Q3JSPortal( cent );
+		return;
+	}
 
 	// if set to invisible, skip
 	if (!s1->modelindex) {

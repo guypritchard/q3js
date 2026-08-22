@@ -36,7 +36,7 @@ function PreviewQuery() {
     <section aria-labelledby="top-fraggers-heading" className="arena-card my-8 border border-border/60 bg-card/35 p-4 sm:my-10 sm:p-5 md:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="mb-2 font-mono text-xs uppercase tracking-[0.16em] text-primary">01 / Global frag feed</p>
+          <p className="mb-2 font-mono text-xs uppercase tracking-[0.16em] text-primary">Global rankings</p>
           <div className="flex items-center gap-2">
             <Trophy className="size-4 text-primary" />
             <h2 id="top-fraggers-heading" className="font-mono text-2xl font-bold uppercase tracking-[0.035em]">Top fraggers</h2>

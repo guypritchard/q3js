@@ -20,6 +20,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
   --font-mono: var(--font-terminal);
   --font-sans: var(--font-terminal);
   --radius-sm: 0;
@@ -47,6 +48,7 @@
   --border: oklch(0.3562 0 0);
   --input: oklch(0.285 0 0);
   --ring: oklch(0.7615 0.1568 69.7819);
+  --destructive: oklch(0.637 0.237 25.331);
 }
 
 * {

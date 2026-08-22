@@ -15,8 +15,10 @@ import {
   trackAnalyticsEvent,
   type AnalyticsParameters,
 } from "@/lib/analytics";
-import { getRequesterCountry } from "@/lib/api/generated/sdk.gen";
+import { getRequesterCountry, servers as listServers } from "@/lib/api/generated/sdk.gen";
 import { client } from "@/lib/api/client";
+import { humanPlayerCount, joinServerHref } from "@/lib/join-server";
+import { mapServers, type ListedServer } from "@/lib/master-server";
 import { playerNameOrRandom } from "@/lib/player-name";
 
 const PK3_FILE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*\.pk3$/;
@@ -25,7 +27,23 @@ const CONNECTION_POLL_MS = 1_000;
 const CONNECTION_TIMEOUT_MS = 30_000;
 const DISCONNECT_GRACE_POLLS = 3;
 const HEARTBEAT_INTERVAL_MS = 60_000;
+const PORTAL_REFRESH_MS = 5_000;
+const PORTAL_SLOT_COUNT = 16;
 const ASSET_PERCENT_MILESTONES = [25, 50, 75, 100] as const;
+
+function stockMapIndex(map: string): number {
+  const deathmatch = /^q3dm(\d|1\d)$/.exec(map.toLowerCase());
+  if (deathmatch) return Number.parseInt(deathmatch[1], 10);
+  const tournament = /^q3tourney([1-6])$/.exec(map.toLowerCase());
+  return tournament ? 19 + Number.parseInt(tournament[1], 10) : -1;
+}
+
+function portalMatchScore(server: ListedServer): number {
+  const players = humanPlayerCount(server);
+  const targetPlayers = Math.min(6, Math.max(2, Math.round((server.capacity || 8) * 0.4)));
+  const latency = server.ping > 0 ? server.ping : 1_000;
+  return latency + Math.abs(players - targetPlayers) * 12;
+}
 
 function staticUrl(path: string): string {
   return `${STATIC_BASE_URL}/${path}`;
@@ -89,6 +107,8 @@ async function requesterCountryCode(): Promise<string | undefined> {
 
 export interface SelectedServer {
   id: string;
+  hosted: boolean;
+  gatewayUrl?: string;
   host: string;
   proxyPort: number;
   secure: boolean;
@@ -100,6 +120,8 @@ export interface SelectedServer {
   map: string;
   official: boolean;
   humanPlayers: number;
+  protocol: number;
+  ping: number;
   entryPoint?: string;
   handoffId?: string;
 }
@@ -162,6 +184,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
   const clientRef = useRef<Q3Client | undefined>(undefined);
   const connectionPollRef = useRef<number | undefined>(undefined);
   const heartbeatRef = useRef<number | undefined>(undefined);
+  const portalAssignmentsRef = useRef<readonly (ListedServer | undefined)[]>([]);
   const {
     isTouchDevice,
     isLandscape,
@@ -391,6 +414,22 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
     }
   }, []);
 
+  const handleServerHandoff = useCallback((slot: number) => {
+    const destination = portalAssignmentsRef.current[slot];
+    if (!destination || !session) {
+      return;
+    }
+
+    finishPlaySession("portal_handoff");
+    window.location.assign(joinServerHref(
+      destination,
+      session.playerName,
+      "portal_hub",
+      createAnalyticsId(),
+      voiceEnabled,
+    ));
+  }, [finishPlaySession, session, voiceEnabled]);
+
   useEffect(() => {
     const handlePageHide = () => finishPlaySession("page_hide", { beacon: true });
     window.addEventListener("pagehide", handlePageHide);
@@ -442,6 +481,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
         countryCode: session.countryCode,
       },
       assets: session.assets,
+      persistence: { mounts: ["/persist"] },
       ...(isTouchDevice ? {
         cvars: {
           in_nograb: 1,
@@ -452,9 +492,67 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       } : {}),
       onProgress: handleProgress,
       onConsole: (_level, message) => console.info(`[Q3JS] ${message}`),
+      onServerHandoff: handleServerHandoff,
       onError: handleClientError,
     };
-  }, [handleClientError, handleProgress, isTouchDevice, session]);
+  }, [handleClientError, handleProgress, handleServerHandoff, isTouchDevice, session]);
+
+  useEffect(() => {
+    if (!gameClient || !selectedServer || selectedServer.map.toLowerCase() !== "q3js_hub") {
+      portalAssignmentsRef.current = [];
+      return;
+    }
+
+    let cancelled = false;
+    const refreshPortals = async () => {
+      try {
+        const response = await listServers({ client });
+        if (cancelled) return;
+
+        const candidates = mapServers(response.data)
+          .filter((server) => (
+            server.id !== selectedServer.id
+            && server.protocol === selectedServer.protocol
+            && server.baseGame === selectedServer.baseGame
+            && server.comGameName === selectedServer.comGameName
+            && !server.passwordProtected
+            && (server.capacity === 0 || server.players < server.capacity)
+          ))
+          .sort((left, right) => (
+            portalMatchScore(left) - portalMatchScore(right)
+            || (left.ping || 1_000) - (right.ping || 1_000)
+            || humanPlayerCount(right) - humanPlayerCount(left)
+            || left.name.localeCompare(right.name)
+          ))
+          .slice(0, PORTAL_SLOT_COUNT);
+
+        portalAssignmentsRef.current = Array.from(
+          { length: PORTAL_SLOT_COUNT },
+          (_, slot) => candidates[slot],
+        );
+        portalAssignmentsRef.current.forEach((server, slot) => {
+          gameClient.setPortalInfo(slot, {
+            active: Boolean(server),
+            bestMatch: slot === 0 && Boolean(server),
+            map: server ? stockMapIndex(server.map) : -1,
+            ping: server?.ping ?? 0,
+            players: server ? humanPlayerCount(server) : 0,
+            capacity: server?.capacity ?? 0,
+            topScore: server?.users[0]?.score ?? 0,
+          });
+        });
+      } catch (portalError) {
+        console.warn("Unable to refresh Transit Hub portals", portalError);
+      }
+    };
+
+    void refreshPortals();
+    const refreshTimer = window.setInterval(() => void refreshPortals(), PORTAL_REFRESH_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(refreshTimer);
+    };
+  }, [gameClient, selectedServer]);
 
   const start = useCallback(async () => {
     finishPlaySession("restart");
@@ -520,10 +618,16 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
         ? `[${selectedServer.host}]`
         : selectedServer.host;
       const websocketProtocol = selectedServer.secure ? "wss:" : "ws:";
+      if (selectedServer.hosted && !selectedServer.gatewayUrl) {
+        setError("The hosted game relay address is missing or invalid.");
+        finishPlaySession("invalid_hosted_gateway", { errorCode: "invalid_gateway" });
+        return;
+      }
       setSession({
         playerName: resolvedPlayerName,
         countryCode,
-        websocketUrl: `${websocketProtocol}//${host}:${selectedServer.proxyPort}/ws`,
+        websocketUrl: selectedServer.gatewayUrl
+          ?? `${websocketProtocol}//${host}:${selectedServer.proxyPort}/ws`,
         address: `${host}:${selectedServer.proxyPort}`,
         baseGame,
         ...(fsGame ? { fsGame } : {}),
@@ -594,11 +698,14 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
             {selectedServer ? selectedServer.name : "Launch Q3JS"}
           </h1>
           <p className="mt-3 text-sm leading-5 text-muted-foreground">
-            The first launch downloads the required game packages into browser storage. Later launches reuse the local copy.
+            {selectedServer?.hosted
+              ? "Hosted games load the required packages into memory while your game settings remain in browser storage."
+              : "The first launch downloads the required game packages into browser storage. Later launches reuse the local copy."}
           </p>
           {selectedServer && (
             <p className="mt-3 text-xs uppercase text-muted-foreground">
-              {selectedServer.secure ? "wss" : "ws"}://{selectedServer.host}:{selectedServer.proxyPort}/ws
+              {selectedServer.gatewayUrl
+                ?? `${selectedServer.secure ? "wss" : "ws"}://${selectedServer.host}:${selectedServer.proxyPort}/ws`}
             </p>
           )}
 

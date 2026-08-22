@@ -4,8 +4,9 @@ COPY static/nginx.conf /etc/nginx/nginx.conf
 COPY --chmod=755 static/generate-manifests.sh /docker-entrypoint.d/40-generate-manifests.sh
 
 RUN rm -rf /usr/share/nginx/html \
-    && mkdir -p /data \
-    && chown -R nginx:nginx /data /var/cache/nginx
+    && sed -i 's/\r$//' /docker-entrypoint.d/40-generate-manifests.sh \
+    && mkdir -p /data /custom/baseq3 \
+    && chown -R nginx:nginx /data /custom /var/cache/nginx
 
 VOLUME ["/data"]
 EXPOSE 8080

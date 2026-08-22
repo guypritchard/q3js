@@ -2,6 +2,7 @@ package com.q3js.master.server.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.q3js.master.browserhost.service.BrowserHostRegistry;
 import com.q3js.master.server.client.ServerStatusClient;
 import com.q3js.master.server.domain.RegisteredServer;
 import com.q3js.master.server.domain.StoredServer;
@@ -29,17 +30,20 @@ public class ServerService {
     private final ServerRepository repository;
     private final ServerStatusClient statusClient;
     private final ObjectMapper objectMapper;
+    private final BrowserHostRegistry browserHostRegistry;
     private final Duration heartbeatTtl;
 
     public ServerService(
         ServerRepository repository,
         ServerStatusClient statusClient,
         ObjectMapper objectMapper,
+        BrowserHostRegistry browserHostRegistry,
         @ConfigProperty(name = "q3js.master.heartbeat-ttl") Duration heartbeatTtl
     ) {
         this.repository = repository;
         this.statusClient = statusClient;
         this.objectMapper = objectMapper;
+        this.browserHostRegistry = browserHostRegistry;
         this.heartbeatTtl = heartbeatTtl;
     }
 
@@ -56,9 +60,12 @@ public class ServerService {
     }
 
     public List<ServerResponse> servers() {
-        return repository.findAll().stream()
-            .map(this::response)
-            .flatMap(Optional::stream)
+        return java.util.stream.Stream.concat(
+            repository.findAll().stream()
+                .map(this::response)
+                .flatMap(Optional::stream),
+            browserHostRegistry.servers().stream()
+        )
             .sorted(
                 Comparator.comparing(ServerResponse::official).reversed()
                     .thenComparing(Comparator.comparingInt(ServerService::realPlayerCount).reversed())
@@ -73,7 +80,7 @@ public class ServerService {
 
     public boolean isListedServer(String serverId) {
         return servers().stream()
-            .anyMatch(server -> serverId.equals(server.host() + ":" + server.proxyPort()));
+            .anyMatch(server -> serverId.equals(server.id()));
     }
 
     public PlayerCounts playerCounts() {
@@ -147,6 +154,9 @@ public class ServerService {
         }
         try {
             return Optional.of(new ServerResponse(
+                stored.server().host() + ":" + stored.server().proxyPort(),
+                gatewayUrl(stored.server()),
+                false,
                 stored.server().host(),
                 stored.server().proxyPort(),
                 stored.server().targetPort(),
@@ -172,6 +182,13 @@ public class ServerService {
         return (int) server.info().users().stream()
             .filter(user -> user.ping() > 0)
             .count();
+    }
+
+    private static String gatewayUrl(RegisteredServer server) {
+        String host = server.host().contains(":") && !server.host().startsWith("[")
+            ? "[" + server.host() + "]"
+            : server.host();
+        return (server.secure() ? "wss://" : "ws://") + host + ":" + server.proxyPort() + "/ws";
     }
 
     private static int officialGameTypePriority(ServerResponse server) {

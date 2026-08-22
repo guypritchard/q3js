@@ -3146,6 +3146,7 @@ void Com_Frame( void ) {
 	else
 		minMsec = 1;
 
+#ifndef Q3JS_BROWSER_SERVER
 	do
 	{
 		if(com_sv_running->integer)
@@ -3165,6 +3166,7 @@ void Com_Frame( void ) {
 		else
 			NET_Sleep(timeVal - 1);
 	} while(Com_TimeVal(minMsec));
+#endif
 	
 	IN_Frame();
 
