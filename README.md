@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  A multiplayer Quake III Arena experience for the modern web, built on ioquake3 and WebAssembly.
+  An experimental Q3JS fork for modern browsers, built on ioquake3 and WebAssembly.
 </p>
 
 <p align="center">
@@ -51,6 +51,8 @@
 </p>
 
 Q3JS brings the ioquake3 engine to the browser and surrounds it with everything needed for an online game: a framework-independent WebAssembly client, packaged dedicated servers, a WebSocket-to-UDP gateway, live server discovery, player statistics, and a responsive web interface.
+
+This fork builds directly on [the original Q3JS project](https://github.com/lklacar/q3js) and adds some deliberately mad stuff: authoritative games hosted inside a browser tab, a persistent portal hub, richer discovery and onboarding, production deployment tooling, and a pile of engine and relay work that makes the whole thing hold together.
 
 ## Fork notice: AI-generated and not for upstream
 
@@ -109,6 +111,8 @@ The following experimental features were AI-generated for this fork and are inte
 - Ephemeral authoritative servers hosted in a browser Web Worker, with bounded relay-backed discovery and shareable invite links.
 - A damage-free, persistent 16-slot Transit Hub with launch pads and live portals that display arena status and hand players off to listed servers.
 - Exact hosted-game gateway propagation through listings, invitations, launch URLs, and reconnects.
+- Hosted-invite lifecycle checks that reject ended arenas before ioquake3 enters an endless connection loop.
+- Graceful normal exits that avoid false connection-loss errors, release pointer lock, and return players to the host tab or server browser.
 - A redesigned homepage, onboarding flow, server browser, human-versus-bot counts, Quick Play selection, mobile navigation, and scoreboard summaries.
 - Production Docker Compose, Caddy, and Cloudflare Tunnel configuration for the fork deployment at `q3js.amber-fly.org`.
 - Browser-server runtime packaging, relay limits, cleanup behavior, worker pacing, deployment health checks, and supporting tests.
