@@ -36,7 +36,9 @@ export interface Q3EngineModuleOptions {
   print?: (message: string) => void;
   printErr?: (message: string) => void;
   onServerHandoff?: (slot: number) => void;
+  onNormalExit?: () => void;
   onAbort?: (reason: unknown) => void;
+  onExit?: (status: number) => void;
 }
 
 export default function createIoquake3Module(

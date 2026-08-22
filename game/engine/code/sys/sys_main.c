@@ -359,6 +359,10 @@ Sys_Quit
 */
 void Sys_Quit( void )
 {
+#if defined(__EMSCRIPTEN__) && !defined(DEDICATED)
+	extern void Q3JS_NotifyNormalExit( void );
+	Q3JS_NotifyNormalExit( );
+#endif
 	Sys_Exit( 0 );
 }
 

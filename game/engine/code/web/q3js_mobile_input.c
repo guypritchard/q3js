@@ -28,6 +28,13 @@ EM_JS( void, Q3JS_NotifyServerHandoff, ( int slot ), {
 		Module["onServerHandoff"]( slot );
 	}
 } );
+
+EM_JS( void, Q3JS_NotifyNormalExit, ( void ), {
+	if( typeof Module["onNormalExit"] === "function" )
+	{
+		Module["onNormalExit"]();
+	}
+} );
 #else
 void Q3JS_NotifyTextInputActive( int active )
 {
@@ -37,6 +44,10 @@ void Q3JS_NotifyTextInputActive( int active )
 void Q3JS_NotifyServerHandoff( int slot )
 {
 	(void)slot;
+}
+
+void Q3JS_NotifyNormalExit( void )
+{
 }
 #endif
 

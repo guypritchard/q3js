@@ -314,7 +314,7 @@ export function HostGame() {
               <Button className="w-full" onClick={() => void copyInvite()}>
                 <Copy /> {copied ? "Invite link copied" : "Copy invite link"}
               </Button>
-              <Button className="w-full" variant="outline" onClick={() => window.open(invite, "_blank", "noopener,noreferrer")}>
+              <Button className="w-full" variant="outline" onClick={() => window.open(invite, "_blank")}>
                 <ArrowSquareOut /> Enter arena in new tab
               </Button>
               <details className="border border-border bg-background/30 p-3">

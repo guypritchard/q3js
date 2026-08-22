@@ -1,7 +1,7 @@
 "use client";
 
 import type { Q3Asset, Q3Client, Q3ClientOptions, Q3ClientProgress } from "@q3js/client";
-import { ArrowClockwise, Play } from "@phosphor-icons/react";
+import { ArrowClockwise, ArrowLeft, Play, X } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameCanvas } from "@/components/game-canvas";
 import { MobileControls } from "@/components/mobile-controls";
@@ -176,6 +176,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
   const [session, setSession] = useState<Session>();
   const [progress, setProgress] = useState<Q3ClientProgress>();
   const [error, setError] = useState<string>();
+  const [exited, setExited] = useState(false);
   const [gameClient, setGameClient] = useState<Q3Client>();
   const [autoStartSuppressed, setAutoStartSuppressed] = useState(false);
   const gameShellRef = useRef<HTMLElement>(null);
@@ -183,6 +184,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
   const telemetryRef = useRef<PlayTelemetrySession | undefined>(undefined);
   const progressRef = useRef<Q3ClientProgress | undefined>(undefined);
   const clientRef = useRef<Q3Client | undefined>(undefined);
+  const clientExitedRef = useRef(false);
   const connectionPollRef = useRef<number | undefined>(undefined);
   const heartbeatRef = useRef<number | undefined>(undefined);
   const portalAssignmentsRef = useRef<readonly (ListedServer | undefined)[]>([]);
@@ -326,6 +328,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
   }, [trackPlayEvent]);
 
   const handleClientError = useCallback((clientError: Error) => {
+    if (clientExitedRef.current) return;
     setGameClient(undefined);
     setError(clientError.message);
     const telemetry = telemetryRef.current;
@@ -338,6 +341,18 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
     });
     finishPlaySession("launch_error", { errorCode });
   }, [finishPlaySession, trackPlayEvent]);
+
+  const handleClientExit = useCallback((status: number) => {
+    if (status !== 0) {
+      handleClientError(new Error(`Q3JS exited unexpectedly (status ${status}).`));
+      return;
+    }
+    clientExitedRef.current = true;
+    setGameClient(undefined);
+    setError(undefined);
+    setExited(true);
+    finishPlaySession("game_exit");
+  }, [finishPlaySession, handleClientError]);
 
   const emitHeartbeat = useCallback(() => {
     const telemetry = telemetryRef.current;
@@ -494,10 +509,11 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       } : {}),
       onProgress: handleProgress,
       onConsole: (_level, message) => console.info(`[Q3JS] ${message}`),
+      onExit: handleClientExit,
       onServerHandoff: handleServerHandoff,
       onError: handleClientError,
     };
-  }, [handleClientError, handleProgress, handleServerHandoff, isTouchDevice, session]);
+  }, [handleClientError, handleClientExit, handleProgress, handleServerHandoff, isTouchDevice, session]);
 
   useEffect(() => {
     if (!gameClient || !selectedServer || selectedServer.map.toLowerCase() !== "q3js_hub") {
@@ -560,6 +576,8 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
     finishPlaySession("restart");
     setGameClient(undefined);
     setError(undefined);
+    setExited(false);
+    clientExitedRef.current = false;
     setProgress(undefined);
     progressRef.current = undefined;
     const baseGame = selectedServer?.baseGame ?? "baseq3";
@@ -697,7 +715,25 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
     setSession(undefined);
     setProgress(undefined);
     setError(undefined);
+    setExited(false);
+    clientExitedRef.current = false;
     setAutoStartSuppressed(true);
+  };
+
+  const exitDestination = selectedServer?.hosted ? "/host" : "/";
+  const returnFromGame = () => {
+    if (selectedServer?.hosted && window.opener && !window.opener.closed) {
+      window.opener.focus();
+      window.close();
+      return;
+    }
+    window.location.assign(exitDestination);
+  };
+  const closeGamePage = () => {
+    window.close();
+    window.setTimeout(() => {
+      if (!window.closed) window.location.assign(exitDestination);
+    }, 100);
   };
 
   if (!session) {
@@ -776,7 +812,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       aria-label="Q3JS client"
       className="absolute inset-0 size-full overflow-hidden bg-black"
     >
-      {!waitingForLandscape && (
+      {!waitingForLandscape && !exited && (
         <GameCanvas
           options={options!}
           inputMode={isTouchDevice ? "mobile" : "desktop"}
@@ -816,7 +852,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
         </div>
       )}
 
-      {(waitingForLandscape || portraitBlocked) && !error && (
+      {(waitingForLandscape || portraitBlocked) && !error && !exited && (
         <div className="absolute inset-0 z-30 grid place-items-center bg-black p-6 text-center text-white">
           <div className="max-w-sm">
             <p className="text-xs font-black uppercase tracking-[0.32em] text-white/55">
@@ -839,7 +875,30 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
         </div>
       )}
 
-      {error && (
+      {exited && (
+        <div className="absolute inset-0 z-30 grid place-items-center bg-black/90 p-6 text-center">
+          <div className="max-w-lg">
+            <p className="text-base font-semibold text-primary">Game exited</p>
+            <p className="mt-2 text-sm leading-5 text-muted-foreground">
+              {selectedServer?.hosted
+                ? "The arena is still running in the host tab."
+                : "You have left the game."}
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <Button size="sm" onClick={returnFromGame}>
+                <ArrowLeft />
+                {selectedServer?.hosted ? "Return to host" : "Back to servers"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={closeGamePage}>
+                <X />
+                Close this tab
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && !exited && (
         <div className="absolute inset-0 z-30 grid place-items-center bg-black/90 p-6 text-center">
           <div className="max-w-lg">
             <p className="text-base font-semibold text-primary">Unable to start Q3JS</p>

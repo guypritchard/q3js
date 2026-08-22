@@ -77,6 +77,7 @@ export interface Q3ClientOptions {
   persistence?: false | Q3PersistenceOptions;
   onProgress?: (progress: Q3ClientProgress) => void;
   onReady?: (client: import("./client.js").Q3Client) => void;
+  onExit?: (status: number) => void;
   onConsole?: (level: "info" | "error", message: string) => void;
   onServerHandoff?: (slot: number) => void;
   onError?: (error: Error) => void;

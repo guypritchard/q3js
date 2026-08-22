@@ -271,6 +271,14 @@ export async function createQ3Client(options: Q3ClientOptions): Promise<Q3Client
       engineOptions.printErr = (message) => options.onConsole?.("error", message);
     }
     engineOptions.onServerHandoff = (slot) => options.onServerHandoff?.(slot);
+    let exitReported = false;
+    const reportExit = (status: number): void => {
+      if (exitReported) return;
+      exitReported = true;
+      options.onExit?.(status);
+    };
+    engineOptions.onNormalExit = () => reportExit(0);
+    engineOptions.onExit = reportExit;
     let abortError: Error | undefined;
     engineOptions.onAbort = (reason) => {
       abortError = normalizeError(reason);
