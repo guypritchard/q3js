@@ -583,6 +583,25 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       elapsed_ms: 0,
     });
 
+    let activeHostedServer: ListedServer | undefined;
+    if (selectedServer?.hosted) {
+      try {
+        const response = await listServers({ client });
+        activeHostedServer = mapServers(response.data).find((server) => (
+          server.hosted && server.id === selectedServer.id
+        ));
+      } catch {
+        setError("Unable to verify that this hosted game is still online. Try again.");
+        finishPlaySession("hosted_game_check_failed", { errorCode: "hosted_game_check_failed" });
+        return;
+      }
+      if (!activeHostedServer) {
+        setError("This hosted game has ended. Return to the server list and choose a live arena.");
+        finishPlaySession("hosted_game_ended", { errorCode: "hosted_game_ended" });
+        return;
+      }
+    }
+
     let countryCode: string | undefined;
     let assets: readonly Q3Asset[];
     try {
@@ -616,11 +635,13 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
     setPlayerName(resolvedPlayerName);
 
     if (selectedServer) {
-      const host = selectedServer.host.includes(":") && !selectedServer.host.startsWith("[")
-        ? `[${selectedServer.host}]`
-        : selectedServer.host;
+      const selectedHost = activeHostedServer?.host ?? selectedServer.host;
+      const host = selectedHost.includes(":") && !selectedHost.startsWith("[")
+        ? `[${selectedHost}]`
+        : selectedHost;
       const websocketProtocol = selectedServer.secure ? "wss:" : "ws:";
-      if (selectedServer.hosted && !selectedServer.gatewayUrl) {
+      const gatewayUrl = activeHostedServer?.gatewayUrl ?? selectedServer.gatewayUrl;
+      if (selectedServer.hosted && !gatewayUrl) {
         setError("The hosted game relay address is missing or invalid.");
         finishPlaySession("invalid_hosted_gateway", { errorCode: "invalid_gateway" });
         return;
@@ -628,7 +649,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       setSession({
         playerName: resolvedPlayerName,
         countryCode,
-        websocketUrl: selectedServer.gatewayUrl
+        websocketUrl: gatewayUrl
           ?? `${websocketProtocol}//${host}:${selectedServer.proxyPort}/ws`,
         ...(selectedServer.hosted ? { subprotocol: null } : {}),
         address: `${host}:${selectedServer.proxyPort}`,

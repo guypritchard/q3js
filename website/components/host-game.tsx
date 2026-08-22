@@ -80,7 +80,7 @@ function inviteUrl(session: Q3BrowserHostedSession, serverName: string, map: str
     id: `browser:${session.serverId}`,
     hosted: "1",
     gatewayUrl: session.gatewayUrl,
-    host: gateway.hostname,
+    host: "browser",
     proxyPort: gateway.port || (gateway.protocol === "wss:" ? "443" : "80"),
     secure: gateway.protocol === "wss:" ? "1" : "0",
     baseGame: "baseq3",
