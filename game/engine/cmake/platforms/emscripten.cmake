@@ -51,7 +51,7 @@ if(BUILD_BROWSER_SERVER)
         -sWASMFS=0
         -sENVIRONMENT=worker
         -sEXPORTED_FUNCTIONS=_main,_malloc,_free,_Q3JS_ServerInjectPacket,_Q3JS_ServerCommand,_Q3JS_ServerIsRunning
-        -sEXPORTED_RUNTIME_METHODS=FS,callMain
+        -sEXPORTED_RUNTIME_METHODS=FS,HEAPU8,callMain
         -sEXIT_RUNTIME=1
         -sEXPORT_ES6
         -sEXPORT_NAME=${SERVER_NAME}

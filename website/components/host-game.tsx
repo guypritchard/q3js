@@ -167,6 +167,7 @@ export function HostGame() {
       setStatus("Starting the authoritative server in a Web Worker");
       const session = await createQ3BrowserHostedSession(relayUrl(), {
         assets,
+        workerUrl: "/browser-host/host-worker.js",
         game: { map: normalizedMap },
         cvars: {
           sv_hostname: normalizedName,

@@ -30,7 +30,7 @@ export interface Q3EngineModuleOptions {
   elementPointerLock?: boolean;
   websocket?: {
     url: string;
-    subprotocol: string;
+    subprotocol: string | null;
   };
   locateFile?: (path: string, prefix: string) => string;
   print?: (message: string) => void;

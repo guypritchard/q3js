@@ -74,7 +74,7 @@ export function SiteHeader() {
         </div>
 
         <a
-          href="https://github.com/lklacar/q3js"
+          href="https://github.com/guypritchard/q3js"
           target="_blank"
           rel="noreferrer"
           className="hidden text-muted-foreground transition-colors hover:text-primary sm:block"

@@ -38,7 +38,7 @@ export function createQ3BrowserHostedSession(
       reject(options.signal.reason instanceof Error ? options.signal.reason : new Error("Browser hosting was cancelled."));
       return;
     }
-    const socket = new WebSocket(relayUrl, "binary");
+    const socket = new WebSocket(relayUrl);
     socket.binaryType = "arraybuffer";
     let host: Q3BrowserHost | undefined;
     let registration: Required<Pick<RelayControlMessage, "serverId" | "gatewayUrl">> | undefined;

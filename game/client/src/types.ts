@@ -40,7 +40,8 @@ export interface Q3PlayerOptions {
 export interface Q3ServerOptions {
   websocketUrl: string;
   address?: string;
-  subprotocol?: string;
+  /** WebSocket subprotocol. Defaults to "binary"; null disables negotiation. */
+  subprotocol?: string | null;
 }
 
 export interface Q3PersistenceOptions {

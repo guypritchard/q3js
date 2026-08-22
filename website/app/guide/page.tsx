@@ -398,7 +398,7 @@ docker rm -f q3js-server`}</Code>
         <div className="mt-12 border-l-2 border-primary pl-4 text-sm leading-6 text-muted-foreground">
           Need custom ports, RCON, mods, or a self-hosted master? Read the{" "}
           <Link
-            href="https://github.com/lklacar/q3js/blob/develop/game/server/README.md"
+            href="https://github.com/guypritchard/q3js/blob/feature/host-server-plus-tweaks/game/server/README.md"
             target="_blank"
             rel="noreferrer"
             className="text-foreground underline underline-offset-4 hover:text-primary"

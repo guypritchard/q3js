@@ -35,7 +35,7 @@ export function Footer() {
           <Link href="/custom-quake-3-servers" className="hover:text-foreground">Custom servers</Link>
           <Link href="/weapons" className="hover:text-foreground">Weapon database</Link>
           <Link href="/guide" className="hover:text-foreground">Run a server</Link>
-          <a href="https://github.com/lklacar/q3js" target="_blank" rel="noreferrer" className="hover:text-foreground">
+          <a href="https://github.com/guypritchard/q3js" target="_blank" rel="noreferrer" className="hover:text-foreground">
             GitHub source
           </a>
           <a href={siteConfig.author.xUrl} target="_blank" rel="author noreferrer" className="hover:text-foreground">

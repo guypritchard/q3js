@@ -16,7 +16,7 @@ import { featureItems, navItems } from "@/lib/site-navigation";
 import { siteConfig } from "@/lib/seo";
 
 const socialLinks = [
-  { label: "GitHub", href: "https://github.com/lklacar/q3js", icon: GithubLogo },
+  { label: "GitHub", href: "https://github.com/guypritchard/q3js", icon: GithubLogo },
   { label: "X", href: siteConfig.author.xUrl, icon: XLogo },
   { label: "Discord", href: "https://discord.gg/mKvM9su443", icon: DiscordLogo },
 ] as const;

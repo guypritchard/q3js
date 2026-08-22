@@ -24,25 +24,25 @@
       <img src="https://shieldcn.dev/discord/members/mKvM9su443.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Discord members" />
     </picture>
   </a>
-  <a href="https://github.com/lklacar/q3js/stargazers">
+  <a href="https://github.com/guypritchard/q3js/stargazers">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/stars/lklacar/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
-      <img src="https://shieldcn.dev/github/stars/lklacar/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="GitHub stars" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/stars/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
+      <img src="https://shieldcn.dev/github/stars/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="GitHub stars" />
     </picture>
   </a>
-  <a href="https://github.com/lklacar/q3js/commits/develop">
+  <a href="https://github.com/guypritchard/q3js/commits/feature/host-server-plus-tweaks">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/last-commit/lklacar/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
-      <img src="https://shieldcn.dev/github/last-commit/lklacar/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Last commit" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/last-commit/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
+      <img src="https://shieldcn.dev/github/last-commit/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Last commit" />
     </picture>
   </a>
-  <a href="https://github.com/lklacar/q3js/graphs/contributors">
+  <a href="https://github.com/guypritchard/q3js/graphs/contributors">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/contributors/lklacar/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
-      <img src="https://shieldcn.dev/github/contributors/lklacar/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Contributors" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/contributors/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
+      <img src="https://shieldcn.dev/github/contributors/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Contributors" />
     </picture>
   </a>
-  <a href="https://github.com/lklacar/q3js/blob/develop/LICENSE">
+  <a href="https://github.com/guypritchard/q3js/blob/feature/host-server-plus-tweaks/LICENSE">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/license-mixed-d94a36.svg?variant=outline&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
       <img src="https://shieldcn.dev/badge/license-mixed-d94a36.svg?variant=outline&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Mixed repository licenses" />
@@ -51,6 +51,13 @@
 </p>
 
 Q3JS brings the ioquake3 engine to the browser and surrounds it with everything needed for an online game: a framework-independent WebAssembly client, packaged dedicated servers, a WebSocket-to-UDP gateway, live server discovery, player statistics, and a responsive web interface.
+
+## Fork notice: AI-generated and not for upstream
+
+> [!CAUTION]
+> This is a personal, experimental fork of [the original Q3JS project](https://github.com/lklacar/q3js). The fork-only additions described below were generated primarily by AI coding agents under human direction and verification. They are **not intended to be proposed, contributed, or merged back upstream**. The upstream project and its maintainers are not responsible for these changes, their operation, or their support.
+
+These additions are experimental and unsupported. Do not open upstream pull requests, issues, or support requests for them.
 
 > [!IMPORTANT]
 > Q3JS does not include or download proprietary Quake III Arena game data. You must provide your own legally obtained PK3 files.
@@ -84,16 +91,27 @@ flowchart LR
 
 ## Features
 
+### Core Q3JS capabilities
+
 - Native ioquake3 gameplay compiled to WebAssembly with the OpenGL 2 renderer.
 - Browser-to-server play through a WebSocket-to-UDP gateway.
-- Ephemeral authoritative servers hosted in a browser Web Worker with relay-backed discovery and invite links.
-- A damage-free Transit Hub with launch pads and 16 live doors for moving between listed arenas.
 - Live community and official server discovery with health-aware heartbeats.
 - Global frag rankings, activity distribution, player profiles, rivals, maps, and weapon statistics.
 - Multi-mod asset manifests with persistent browser-side caching.
 - Country lookup and in-game country metadata.
 - OpenAPI-generated website client and Swagger UI for the master API.
 - Container images for every deployable service.
+
+### AI-generated fork-only additions
+
+The following experimental features were AI-generated for this fork and are intentionally outside the upstream project's scope:
+
+- Ephemeral authoritative servers hosted in a browser Web Worker, with bounded relay-backed discovery and shareable invite links.
+- A damage-free, persistent 16-slot Transit Hub with launch pads and live portals that display arena status and hand players off to listed servers.
+- Exact hosted-game gateway propagation through listings, invitations, launch URLs, and reconnects.
+- A redesigned homepage, onboarding flow, server browser, human-versus-bot counts, Quick Play selection, mobile navigation, and scoreboard summaries.
+- Production Docker Compose, Caddy, and Cloudflare Tunnel configuration for the fork deployment at `q3js.amber-fly.org`.
+- Browser-server runtime packaging, relay limits, cleanup behavior, worker pacing, deployment health checks, and supporting tests.
 
 ## Prerequisites
 
@@ -146,7 +164,7 @@ server, and generated master-key state.
 Clone the repository and install the workspace dependencies:
 
 ```bash
-git clone https://github.com/lklacar/q3js.git
+git clone --branch feature/host-server-plus-tweaks https://github.com/guypritchard/q3js.git
 cd q3js
 pnpm install --frozen-lockfile
 ```

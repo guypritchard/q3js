@@ -5,6 +5,7 @@ export interface Q3BrowserHostOptions {
   game?: Q3GameOptions & { map?: string };
   cvars?: Readonly<Record<string, Q3CvarValue>>;
   additionalArguments?: readonly string[];
+  workerUrl?: string | URL;
   wasmUrl?: string | URL;
   signal?: AbortSignal;
   onConsole?: (level: "info" | "error", message: string) => void;

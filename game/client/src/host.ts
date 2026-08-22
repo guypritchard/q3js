@@ -55,7 +55,10 @@ export class Q3BrowserHost {
         ? { wasmUrl: new URL(String(options.wasmUrl), document.baseURI).href }
         : {}),
     };
-    this.#worker = new Worker(new URL("./host-worker.js", import.meta.url), { type: "module" });
+    const workerUrl = options.workerUrl
+      ? new URL(String(options.workerUrl), document.baseURI)
+      : new URL("./host-worker.js", import.meta.url);
+    this.#worker = new Worker(workerUrl, { type: "module" });
     this.#worker.addEventListener("message", this.#onMessage);
     this.#worker.addEventListener("error", (event) => {
       options.onError?.(new Error(event.message || "Browser-host Worker failed."));

@@ -85,6 +85,7 @@ interface Session {
   playerName: string;
   countryCode?: string;
   websocketUrl: string;
+  subprotocol?: string | null;
   address: string;
   baseGame: string;
   fsGame?: string;
@@ -469,6 +470,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       server: {
         websocketUrl: session.websocketUrl,
         address: session.address,
+        ...(session.subprotocol === undefined ? {} : { subprotocol: session.subprotocol }),
       },
       game: {
         comBaseGame: session.baseGame,
@@ -628,6 +630,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
         countryCode,
         websocketUrl: selectedServer.gatewayUrl
           ?? `${websocketProtocol}//${host}:${selectedServer.proxyPort}/ws`,
+        ...(selectedServer.hosted ? { subprotocol: null } : {}),
         address: `${host}:${selectedServer.proxyPort}`,
         baseGame,
         ...(fsGame ? { fsGame } : {}),

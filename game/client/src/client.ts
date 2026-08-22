@@ -259,7 +259,7 @@ export async function createQ3Client(options: Q3ClientOptions): Promise<Q3Client
     if (options.server) {
       engineOptions.websocket = {
         url: options.server.websocketUrl,
-        subprotocol: options.server.subprotocol ?? "binary",
+        subprotocol: options.server.subprotocol === undefined ? "binary" : options.server.subprotocol,
       };
     }
     if (options.wasmUrl) {
