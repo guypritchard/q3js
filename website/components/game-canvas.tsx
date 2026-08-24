@@ -133,7 +133,18 @@ export function GameCanvas({
       className={className}
       aria-label="Q3JS game"
       tabIndex={0}
-      onClick={(event) => event.currentTarget.focus()}
+      onPointerDown={(event) => {
+        const canvas = event.currentTarget;
+        canvas.focus();
+        if (
+          inputMode === "desktop"
+          && clientReady
+          && document.pointerLockElement !== canvas
+          && typeof canvas.requestPointerLock === "function"
+        ) {
+          void Promise.resolve(canvas.requestPointerLock()).catch(() => undefined);
+        }
+      }}
       onContextMenu={(event) => event.preventDefault()}
     />
   );
