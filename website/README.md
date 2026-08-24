@@ -23,6 +23,10 @@ as described in `master/README.md`.
 
 Copy `.env.example` to `.env.local` to override local endpoints. `NEXT_PUBLIC_Q3JS_MASTER_URL` selects the HTTP master API. In a production HTTPS deployment, `NEXT_PUBLIC_Q3JS_INSECURE_PLAY_URL` can point insecure game servers at a separate HTTP play page so browsers do not reject their `ws://` connection as mixed content.
 
+Desktop play requests pointer lock when the player presses the game canvas.
+Touch controls are selected for coarse-pointer devices without hover support;
+append `?mobileControls=1` to a play URL to force them during testing.
+
 ## SEO and analytics
 
 Set `NEXT_PUBLIC_Q3JS_SITE_URL` to the public canonical origin. It is used for

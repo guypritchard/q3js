@@ -239,7 +239,7 @@
             - /url: /guide
             - text: Run a server
           - link:
-            - /url: https://github.com/lklacar/q3js
+            - /url: https://github.com/guypritchard/q3js
             - text: GitHub source
           - link:
             - /url: https://x.com/lukathedev
@@ -317,7 +317,7 @@
         - /url: https://ko-fi.com/quake3js
     - generic [ref=e354]:
       - link "GitHub" [ref=e355] [cursor=pointer]:
-        - /url: https://github.com/lklacar/q3js
+        - /url: https://github.com/guypritchard/q3js
         - img [ref=e356]
         - text: GitHub
       - link "X" [ref=e358] [cursor=pointer]:

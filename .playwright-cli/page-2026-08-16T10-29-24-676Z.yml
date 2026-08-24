@@ -133,7 +133,7 @@
           - link "Run a server" [ref=e150] [cursor=pointer]:
             - /url: /guide
           - link "GitHub source" [ref=e151] [cursor=pointer]:
-            - /url: https://github.com/lklacar/q3js
+            - /url: https://github.com/guypritchard/q3js
           - link "X / @lukathedev" [ref=e152] [cursor=pointer]:
             - /url: https://x.com/lukathedev
           - link "Discord" [ref=e153] [cursor=pointer]:

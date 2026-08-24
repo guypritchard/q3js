@@ -26,7 +26,7 @@
           - link "Support" [ref=e21] [cursor=pointer]:
             - /url: https://ko-fi.com/quake3js
         - link "Q3JS on GitHub" [ref=e22] [cursor=pointer]:
-          - /url: https://github.com/lklacar/q3js
+          - /url: https://github.com/guypritchard/q3js
           - img [ref=e23]
         - link "LK on X" [ref=e25] [cursor=pointer]:
           - /url: https://x.com/lukathedev
@@ -143,7 +143,7 @@
           - link "Run a server" [ref=e158] [cursor=pointer]:
             - /url: /guide
           - link "GitHub source" [ref=e159] [cursor=pointer]:
-            - /url: https://github.com/lklacar/q3js
+            - /url: https://github.com/guypritchard/q3js
           - link "X / @lukathedev" [ref=e160] [cursor=pointer]:
             - /url: https://x.com/lukathedev
           - link "Discord" [ref=e161] [cursor=pointer]:

@@ -32,7 +32,7 @@
             - /url: https://ko-fi.com/quake3js
             - text: Support
         - link:
-          - /url: https://github.com/lklacar/q3js
+          - /url: https://github.com/guypritchard/q3js
           - img
         - link:
           - /url: https://x.com/lukathedev
@@ -324,7 +324,7 @@
             - /url: /guide
             - text: Run a server
           - link:
-            - /url: https://github.com/lklacar/q3js
+            - /url: https://github.com/guypritchard/q3js
             - text: GitHub source
           - link:
             - /url: https://x.com/lukathedev
