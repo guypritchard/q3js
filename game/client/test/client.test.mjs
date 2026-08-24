@@ -31,3 +31,15 @@ test("reports a normal quit before engine networking shuts down", async () => {
   assert.match(mobileInput, /Module\["onNormalExit"\]\(\)/);
   assert.match(system, /Q3JS_NotifyNormalExit\( \);\s*#endif\s*Sys_Exit\( 0 \);/);
 });
+
+test("treats a deliberate browser disconnect as a normal quit", async () => {
+  const clientMain = await readFile(
+    new URL("../../engine/code/client/cl_main.c", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    clientMain,
+    /void CL_Disconnect_f\( void \).*?#if defined\(__EMSCRIPTEN__\).*?Com_Quit_f\(\);.*?#else.*?Com_Error \(ERR_DISCONNECT/s,
+  );
+});
