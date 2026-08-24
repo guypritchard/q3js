@@ -498,7 +498,6 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
         countryCode: session.countryCode,
       },
       assets: session.assets,
-      persistence: { mounts: ["/persist"] },
       ...(isTouchDevice ? {
         cvars: {
           in_nograb: 1,
