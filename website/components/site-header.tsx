@@ -1,17 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { DiscordLogo, GithubLogo, XLogo } from "@phosphor-icons/react/dist/ssr";
 import { MobileSiteMenu } from "@/components/mobile-site-menu";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
-import { featureItems, navItems } from "@/lib/site-navigation";
-import { siteConfig } from "@/lib/seo";
+import { navItems } from "@/lib/site-navigation";
 
 export function SiteHeader() {
   return (
@@ -22,84 +12,19 @@ export function SiteHeader() {
           <span className="font-mono text-xl font-black uppercase tracking-[0.04em]">Q3JS</span>
         </Link>
 
-        <div className="hidden items-center gap-4 lg:flex">
-          <Link
-            href={navItems[0].href}
-            className="inline-flex h-9 items-center whitespace-nowrap font-mono text-xs uppercase tracking-[0.05em] text-muted-foreground transition-colors hover:text-primary"
-          >
-            {navItems[0].label}
-          </Link>
-
-          <NavigationMenu viewport={false}>
-            <NavigationMenuList>
-              <NavigationMenuItem>
-                <NavigationMenuTrigger className="h-9 bg-transparent px-0 py-0 font-mono text-xs font-normal uppercase tracking-[0.05em] text-muted-foreground hover:bg-transparent hover:text-primary focus:bg-transparent data-[state=open]:bg-transparent data-[state=open]:text-primary">
-                  Features
-                </NavigationMenuTrigger>
-                <NavigationMenuContent className="grid w-[38rem] grid-cols-2 gap-1 p-2 md:w-[38rem]">
-                  {featureItems.map((feature) => (
-                    <NavigationMenuLink key={feature.href} asChild>
-                      <Link href={feature.href} className="flex h-full flex-col items-start gap-1 p-3">
-                        <span className="block font-mono text-xs font-bold uppercase tracking-[0.04em] text-foreground">
-                          {feature.label}
-                        </span>
-                        <span className="block text-xs leading-5 text-muted-foreground">
-                          {feature.description}
-                        </span>
-                      </Link>
-                    </NavigationMenuLink>
-                  ))}
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
-
-          {navItems.slice(1).map((item) => (
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
+          {navItems.map((item, index) => (
             <Link
               key={item.href}
               href={item.href}
-              className="inline-flex h-9 items-center whitespace-nowrap font-mono text-xs uppercase tracking-[0.05em] text-muted-foreground transition-colors hover:text-primary"
+              className={index === 0
+                ? "inline-flex h-9 items-center border border-primary bg-primary px-4 font-mono text-xs font-bold uppercase tracking-[0.05em] text-primary-foreground transition-colors hover:bg-primary/85"
+                : "inline-flex h-9 items-center whitespace-nowrap px-3 font-mono text-xs uppercase tracking-[0.05em] text-muted-foreground transition-colors hover:text-primary"}
             >
               {item.label}
             </Link>
           ))}
-          <a
-            href={siteConfig.supportUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="whitespace-nowrap border border-border px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-[0.05em] text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
-          >
-            Support
-          </a>
-        </div>
-
-        <a
-          href="https://github.com/guypritchard/q3js"
-          target="_blank"
-          rel="noreferrer"
-          className="hidden text-muted-foreground transition-colors hover:text-primary sm:block"
-          aria-label="Q3JS on GitHub"
-        >
-          <GithubLogo className="size-5" weight="fill" />
-        </a>
-        <a
-          href={siteConfig.author.xUrl}
-          target="_blank"
-          rel="author noreferrer"
-          className="hidden text-muted-foreground transition-colors hover:text-primary sm:block"
-          aria-label={`${siteConfig.author.name} on X`}
-        >
-          <XLogo className="size-5" weight="bold" />
-        </a>
-        <a
-          href="https://discord.gg/mKvM9su443"
-          target="_blank"
-          rel="noreferrer"
-          className="hidden text-muted-foreground transition-colors hover:text-primary sm:block"
-          aria-label="Q3JS Discord"
-        >
-          <DiscordLogo className="size-5" weight="fill" />
-        </a>
+        </nav>
         <MobileSiteMenu />
       </div>
     </header>

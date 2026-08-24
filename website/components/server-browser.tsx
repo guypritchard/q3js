@@ -7,7 +7,6 @@ import {
   ArrowClockwise,
   DiceFive,
   LockKey,
-  MagnifyingGlass,
   Microphone,
   SealCheck,
   Users,
@@ -43,23 +42,12 @@ import {
   storeVoicePreferences,
 } from "@/lib/voice-preferences";
 
-type ServerFilter = "featured" | "active" | "all" | "open";
 type JoinEntryPoint = "quick_play" | "server_card";
 
 const DEFAULT_VOICE_DEVICE = "default";
-const filterOptions = [
-  { value: "featured", label: "Featured" },
-  { value: "active", label: "With players" },
-  { value: "open", label: "Joinable" },
-  { value: "all", label: "All servers" },
-] as const satisfies ReadonlyArray<{ value: ServerFilter; label: string }>;
 
 function isOpen(server: ListedServer): boolean {
   return server.capacity === 0 || server.players < server.capacity;
-}
-
-function isFeatured(server: ListedServer): boolean {
-  return server.official || server.hosted || humanPlayerCount(server) > 0;
 }
 
 function occupancy(server: ListedServer): number {
@@ -430,20 +418,7 @@ function ServerCard({ onJoin, server }: Readonly<{
   );
 }
 
-function FilterButton({ active, children, onClick }: Readonly<{
-  active: boolean;
-  children: React.ReactNode;
-  onClick: () => void;
-}>) {
-  return (
-    <Button variant={active ? "secondary" : "ghost"} size="sm" onClick={onClick}>
-      {children}
-    </Button>
-  );
-}
-
-function BrowserHeading({ botCount, serverCount, playerCount, pending = false }: Readonly<{
-  botCount?: number;
+function BrowserHeading({ serverCount, playerCount, pending = false }: Readonly<{
   serverCount?: number;
   playerCount?: number;
   pending?: boolean;
@@ -458,8 +433,7 @@ function BrowserHeading({ botCount, serverCount, playerCount, pending = false }:
       {serverCount !== undefined && (
         <p className="flex shrink-0 flex-wrap gap-x-3 font-mono text-xs leading-5 text-muted-foreground sm:block sm:text-right">
           <span>{countLabel(serverCount, "server")}</span><br className="hidden sm:block" />
-          <span>{countLabel(playerCount ?? 0, "human")} online</span><br className="hidden sm:block" />
-          <span>{countLabel(botCount ?? 0, "bot")} active</span>
+          <span>{countLabel(playerCount ?? 0, "human")} online</span>
         </p>
       )}
       {pending && (
@@ -473,8 +447,6 @@ function BrowserHeading({ botCount, serverCount, playerCount, pending = false }:
 }
 
 function ServerBrowserQuery() {
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<ServerFilter>("featured");
   const [selection, setSelection] = useState<{
     server: ListedServer;
     entryPoint: JoinEntryPoint;
@@ -500,21 +472,7 @@ function ServerBrowserQuery() {
     });
   }, [serverOrder, servers]);
 
-  const normalizedQuery = query.trim().toLowerCase();
-  const filteredServers = useMemo(
-    () => orderedServers.filter((server) => {
-      if (filter === "featured" && !isFeatured(server)) return false;
-      if (filter === "active" && humanPlayerCount(server) === 0) return false;
-      if (filter === "open" && (!isOpen(server) || server.passwordProtected)) return false;
-      if (!normalizedQuery) return true;
-
-      return [server.name, server.map, server.mode, server.host, ...server.users.map((player) => player.name)]
-        .some((value) => value.toLowerCase().includes(normalizedQuery));
-    }),
-    [filter, normalizedQuery, orderedServers],
-  );
   const playerCount = servers.reduce((total, server) => total + humanPlayerCount(server), 0);
-  const botCount = servers.reduce((total, server) => total + server.users.filter((player) => player.bot).length, 0);
   const quickPlayServer = useMemo(() => [...orderedServers]
     .filter((server) => isOpen(server) && !server.passwordProtected)
     .sort((left, right) => {
@@ -527,25 +485,14 @@ function ServerBrowserQuery() {
 
   return (
     <section id="servers" aria-labelledby="servers-heading" className="scroll-mt-20">
-      <BrowserHeading serverCount={servers.length} playerCount={playerCount} botCount={botCount} />
+      <BrowserHeading serverCount={servers.length} playerCount={playerCount} />
 
       <div className="mt-5 border border-border/60 bg-card/60 p-3 sm:mt-6 sm:p-4">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:gap-3">
-          <label className="relative min-w-0">
-            <span className="sr-only">Search servers</span>
-            <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search server, map, or player"
-              className="h-10 w-full border border-border bg-input pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:border-ring focus:outline-none"
-            />
-          </label>
-
+        <div className="flex gap-2 sm:gap-3">
           {quickPlayServer && (
             <Button
               size="lg"
-              className="col-span-2 row-start-2 h-10 w-full px-4 sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:w-auto"
+              className="h-10 flex-1 px-4 sm:flex-none"
               onClick={() => setSelection({ server: quickPlayServer, entryPoint: "quick_play" })}
               aria-label={`Quick play on ${quickPlayServer.name}`}
             >
@@ -555,42 +502,13 @@ function ServerBrowserQuery() {
           <Button
             variant="outline"
             size="icon-lg"
-            className="col-start-2 row-start-1 size-10 bg-transparent sm:col-start-3"
+            className="size-10 shrink-0 bg-transparent"
             disabled={isFetching}
             onClick={() => void refetch()}
             aria-label="Refresh server list"
           >
             <ArrowClockwise className={isFetching ? "animate-spin" : undefined} />
           </Button>
-        </div>
-
-        {quickPlayServer && (
-          <p className="mt-2 truncate text-xs text-muted-foreground">
-            Quick play destination: <span className="font-semibold text-foreground">{quickPlayServer.name}</span>
-            {humanPlayerCount(quickPlayServer) > 0 ? ` · ${countLabel(humanPlayerCount(quickPlayServer), "human")} playing` : " · empty arena"}
-          </p>
-        )}
-
-        <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:hidden">
-          <Select value={filter} onValueChange={(value) => setFilter(value as ServerFilter)}>
-            <SelectTrigger className="h-10 w-full min-w-0 border-border bg-background/40 px-3 text-sm" aria-label="Filter servers">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {filterOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <span className="font-mono text-xs text-muted-foreground">{filteredServers.length} shown</span>
-        </div>
-
-        <div className="mt-3 hidden flex-wrap items-center gap-1.5 sm:flex">
-          <FilterButton active={filter === "featured"} onClick={() => setFilter("featured")}>Featured</FilterButton>
-          <FilterButton active={filter === "all"} onClick={() => setFilter("all")}>All</FilterButton>
-          <FilterButton active={filter === "active"} onClick={() => setFilter("active")}>With players</FilterButton>
-          <FilterButton active={filter === "open"} onClick={() => setFilter("open")}>Joinable</FilterButton>
-          <span className="ml-auto font-mono text-xs text-muted-foreground">{filteredServers.length} shown</span>
         </div>
       </div>
 
@@ -603,9 +521,9 @@ function ServerBrowserQuery() {
         </p>
       )}
 
-      {filteredServers.length ? (
+      {orderedServers.length ? (
         <div className="mt-5 grid gap-4">
-          {filteredServers.map((server) => (
+          {orderedServers.map((server) => (
             <ServerCard
               key={server.id}
               onJoin={(selected) => setSelection({ server: selected, entryPoint: "server_card" })}
@@ -616,16 +534,14 @@ function ServerBrowserQuery() {
       ) : (
         <div className="mt-5 border border-border/60 bg-card/50 px-4 py-8 text-center sm:px-6 sm:py-12">
           <p className="text-base font-semibold">
-            {servers.length === 0 ? "No servers are live right now." : "No servers match your filters."}
+            No servers are live right now.
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            {servers.length === 0 ? "Refresh the list or run your own server." : "Change the search or filter and try again."}
+            Refresh the list or start a temporary arena.
           </p>
-          {(normalizedQuery || filter !== "featured") && (
-            <Button variant="outline" size="sm" className="mt-4" onClick={() => { setQuery(""); setFilter("featured"); }}>
-              Clear filters
-            </Button>
-          )}
+          <Link href="/host" className="mt-4 inline-flex h-10 items-center bg-primary px-4 font-mono text-xs font-bold uppercase text-primary-foreground hover:bg-primary/85">
+            Host an arena
+          </Link>
         </div>
       )}
 
@@ -647,30 +563,11 @@ function ServerBrowserPending() {
       <BrowserHeading pending />
 
       <div className="mt-5 border border-border/60 bg-card/60 p-3 sm:mt-6 sm:p-4" aria-hidden="true">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:gap-3">
-          <div className="relative flex h-10 items-center border border-border bg-input pl-9 pr-3 text-sm text-muted-foreground">
-            <MagnifyingGlass className="absolute left-3 size-4" />
-            Search server, map, or player
-          </div>
-          <Button size="lg" className="col-span-2 row-start-2 h-10 w-full px-4 sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:w-auto" disabled>Quick play</Button>
-          <Button variant="outline" size="icon-lg" className="col-start-2 row-start-1 size-10 bg-transparent sm:col-start-3" disabled>
+        <div className="flex gap-2 sm:gap-3">
+          <Button size="lg" className="h-10 flex-1 px-4 sm:flex-none" disabled>Quick play</Button>
+          <Button variant="outline" size="icon-lg" className="size-10 bg-transparent" disabled>
             <ArrowClockwise className="animate-spin" />
           </Button>
-        </div>
-
-        <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:hidden">
-          <Button variant="outline" size="lg" className="h-10 w-full justify-start" disabled>Featured</Button>
-          <span className="font-mono text-xs text-muted-foreground">Syncing</span>
-        </div>
-
-        <div className="mt-3 hidden flex-wrap items-center gap-1.5 sm:flex">
-          <Button variant="secondary" size="sm" disabled>Featured</Button>
-          <Button variant="ghost" size="sm" disabled>All</Button>
-          <Button variant="ghost" size="sm" disabled>With players</Button>
-          <Button variant="ghost" size="sm" disabled>Joinable</Button>
-          <span className="ml-auto flex items-center gap-2 font-mono text-xs text-muted-foreground">
-            <span className="size-1.5 bg-primary motion-safe:animate-pulse" /> Syncing arenas
-          </span>
         </div>
       </div>
 

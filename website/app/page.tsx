@@ -1,14 +1,9 @@
 import Link from "next/link";
-import { Coffee } from "@phosphor-icons/react/dist/ssr";
-import { CounterStrikeDialog } from "@/components/counter-strike-dialog";
+import { GameController, HardDrives } from "@phosphor-icons/react/dist/ssr";
 import { Footer } from "@/components/footer";
-import { HomeStats } from "@/components/home-stats";
 import { JsonLd } from "@/components/json-ld";
-import { Q3ColoredText } from "@/components/q3-colored-text";
-import { ScoreboardPreview } from "@/components/scoreboard-preview";
 import { ServerBrowser } from "@/components/server-browser";
 import { SiteHeader } from "@/components/site-header";
-import { csjsPromotionUrl } from "@/lib/cross-promotion";
 import { absoluteUrl, buildPageMetadata, siteConfig } from "@/lib/seo";
 
 const homeMetadata = buildPageMetadata({
@@ -67,78 +62,37 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <JsonLd data={homeStructuredData} />
       <SiteHeader />
-      <CounterStrikeDialog />
-      <main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-7 sm:pb-20 sm:pt-10 md:pt-14">
-        <section aria-labelledby="hero-heading" className="mb-10 py-5 text-center sm:mb-14 sm:py-8">
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-primary">
-            Quake 3 in browser
+      <main className="mx-auto w-full max-w-5xl px-4 pb-16 sm:pb-20">
+        <section aria-labelledby="hero-heading" className="border-x border-b border-border bg-card px-5 py-12 sm:px-8 sm:py-16 lg:px-12">
+          <p className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-primary">
+            Quake III in your browser
           </p>
-          <h1
-            id="hero-heading"
-            className="mx-auto mt-3 max-w-4xl font-mono text-[1.75rem] font-bold uppercase leading-[1.15] tracking-[0.025em] sm:text-3xl sm:tracking-[0.035em] md:text-4xl"
-          >
-            Pick an arena. Play Quake III.
+          <h1 id="hero-heading" className="mt-4 max-w-3xl font-mono text-5xl font-black uppercase leading-[0.9] tracking-[-0.07em] sm:text-7xl">
+            Pick an arena.
+            <span className="block text-primary">Start playing.</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-            Choose a live server, enter a player name, and play in your browser. No installer or account required.
+          <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
+            No account. No installer. Choose a live server below and jump straight into Quake III Arena.
           </p>
-          <div className="mx-auto mt-6 grid max-w-2xl gap-2 min-[380px]:grid-cols-2 sm:gap-3">
-            <Link
-              href="/#servers"
-              className="inline-flex h-10 items-center justify-center bg-primary px-4 font-mono text-sm font-bold uppercase tracking-[0.05em] text-primary-foreground hover:bg-primary/80"
-            >
-              Browse live servers
+
+          <div className="mt-8 grid gap-2 sm:grid-cols-3">
+            <Link href="/#servers" className="flex min-h-14 items-center justify-center gap-3 border border-primary bg-primary px-4 py-3 font-mono text-xs font-bold uppercase text-primary-foreground transition-colors hover:bg-primary/85">
+              <GameController className="size-5" weight="fill" aria-hidden="true" />
+              Play
             </Link>
-            <Link
-              href="/host"
-              className="inline-flex h-10 items-center justify-center bg-secondary px-4 font-mono text-sm font-bold uppercase tracking-[0.05em] text-secondary-foreground hover:bg-secondary/80"
-            >
-              Host a game
+            <Link href="/host" className="flex min-h-14 items-center justify-center border border-border bg-background px-4 py-3 text-center font-mono text-xs font-bold uppercase transition-colors hover:border-primary hover:text-primary">
+              Host a temporary arena
+            </Link>
+            <Link href="/guide" className="flex min-h-14 items-center justify-center gap-3 border border-border bg-background px-4 py-3 text-center font-mono text-xs font-bold uppercase transition-colors hover:border-primary hover:text-primary">
+              <HardDrives className="size-5" aria-hidden="true" />
+              Run a server
             </Link>
           </div>
-          <p className="mt-4 text-sm text-muted-foreground">
-            First visit downloads the game data once. Later launches reuse the browser cache.
-          </p>
-          <p className="mt-5 font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground">
-            Created by{" "}
-            <a
-              href={siteConfig.author.xUrl}
-              target="_blank"
-              rel="author noreferrer"
-              className="font-bold hover:text-foreground"
-            >
-              <Q3ColoredText text={siteConfig.author.coloredName} />
-            </a>
-          </p>
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-xs uppercase tracking-[0.12em] text-muted-foreground">
-            <Link href="/scoreboard" className="underline decoration-border underline-offset-4 hover:text-primary">View scoreboard</Link>
-            <a href={siteConfig.supportUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 underline decoration-border underline-offset-4 hover:text-primary">
-              <Coffee className="size-3.5" weight="fill" aria-hidden="true" /> Support Q3JS
-            </a>
-            <a href={csjsPromotionUrl("homepage_hero")} target="_blank" rel="noreferrer" className="underline decoration-border underline-offset-4 hover:text-primary">Play Counter-Strike ↗</a>
-            <a href="https://jk.q3js.com" target="_blank" rel="noreferrer" className="underline decoration-border underline-offset-4 hover:text-primary">Play Jedi Academy ↗</a>
-          </div>
         </section>
-        <ServerBrowser />
-        <section aria-labelledby="how-it-works-heading" className="my-10 border-y border-border/60 py-8">
-          <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary">New here?</p>
-          <h2 id="how-it-works-heading" className="mt-2 font-mono text-2xl font-bold uppercase tracking-[0.035em]">Playing takes three steps</h2>
-          <ol className="mt-5 grid gap-3 sm:grid-cols-3">
-            {[
-              ["01", "Choose an arena", "Use Quick play or compare the human player and latency counts."],
-              ["02", "Name your player", "Your name is remembered locally. Voice chat remains optional."],
-              ["03", "Enter the game", "Use WASD and mouse. Press Esc for the Quake III menu."],
-            ].map(([step, title, description]) => (
-              <li key={step} className="border border-border/60 bg-card/45 p-4">
-                <span className="font-mono text-xs font-bold text-primary">{step}</span>
-                <h3 className="mt-2 font-mono text-sm font-bold uppercase tracking-[0.05em]">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-        <HomeStats />
-        <ScoreboardPreview />
+
+        <div className="border-x border-b border-border bg-background px-4 py-10 sm:px-8 sm:py-12 lg:px-12">
+          <ServerBrowser />
+        </div>
       </main>
 
       <Footer />
