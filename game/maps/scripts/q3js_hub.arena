@@ -1,0 +1,5 @@
+{
+  map "q3js_hub"
+  longname "Q3JS Transit Hub"
+  type "ffa"
+}

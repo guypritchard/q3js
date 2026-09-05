@@ -354,6 +354,7 @@ typedef struct {
 										// we changed gametype
 
 	qboolean	restarted;				// waiting for a map_restart to fire
+	qboolean	q3jsHub;				// social hub: players move and chat but cannot take damage
 
 	int			numConnectedClients;
 	int			numNonSpectatorClients;	// includes connecting clients

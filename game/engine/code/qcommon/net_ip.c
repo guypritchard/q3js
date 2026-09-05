@@ -648,6 +648,9 @@ Sys_SendPacket
 ==================
 */
 void Sys_SendPacket( int length, const void *data, netadr_t to ) {
+#ifdef Q3JS_BROWSER_SERVER
+	Q3JS_ServerSendPacket( length, data, to );
+#else
 	int				ret = SOCKET_ERROR;
 	struct sockaddr_storage	addr;
 
@@ -700,6 +703,7 @@ void Sys_SendPacket( int length, const void *data, netadr_t to ) {
 
 		Com_Printf( "Sys_SendPacket: %s\n", NET_ErrorString() );
 	}
+#endif
 }
 
 
@@ -1497,6 +1501,10 @@ NET_Config
 ====================
 */
 void NET_Config( qboolean enableNetworking ) {
+#ifdef Q3JS_BROWSER_SERVER
+	NET_GetCvars();
+	networkingEnabled = enableNetworking && net_enabled->integer;
+#else
 	qboolean	modified;
 	qboolean	stop;
 	qboolean	start;
@@ -1569,6 +1577,7 @@ void NET_Config( qboolean enableNetworking ) {
 			NET_SetMulticast6();
 		}
 	}
+#endif
 }
 
 

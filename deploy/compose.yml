@@ -1,0 +1,150 @@
+name: q3js
+
+services:
+  database:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: q3js
+      POSTGRES_USER: q3js
+      POSTGRES_PASSWORD: ${Q3JS_DB_PASSWORD:?Set Q3JS_DB_PASSWORD in deploy/.env}
+    volumes:
+      - ${Q3JS_DEPLOY_ROOT:-/srv/sites/q3js}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U q3js -d q3js"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+
+  master:
+    build:
+      context: ..
+      dockerfile: master/Dockerfile
+    image: q3js-master:local
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      Q3JS_DB_URL: jdbc:postgresql://database:5432/q3js
+      Q3JS_DB_USER: q3js
+      Q3JS_DB_PASSWORD: ${Q3JS_DB_PASSWORD:?Set Q3JS_DB_PASSWORD in deploy/.env}
+      Q3JS_EVENT_CLIENT_SECRET: ${Q3JS_EVENT_CLIENT_SECRET:?Set Q3JS_EVENT_CLIENT_SECRET in deploy/.env}
+      Q3JS_ADMIN_PASSWORD: ${Q3JS_ADMIN_PASSWORD:?Set Q3JS_ADMIN_PASSWORD in deploy/.env}
+      Q3JS_CORS_ORIGINS: https://q3js.amber-fly.org
+      Q3JS_BROWSER_HOST_PUBLIC_URL: wss://q3js.amber-fly.org/api/hosted-games
+      Q3JS_BROWSER_HOST_MAX_GAMES: 8
+      Q3JS_BROWSER_HOST_MAX_PLAYERS: 16
+      Q3JS_BROWSER_HOST_STARTUP_TIMEOUT: ${Q3JS_BROWSER_HOST_STARTUP_TIMEOUT:-10m}
+      Q3JS_BROWSER_HOST_STATUS_TIMEOUT: ${Q3JS_BROWSER_HOST_STATUS_TIMEOUT:-30s}
+      Q3JS_BROWSER_HOST_IDLE_TIMEOUT: ${Q3JS_BROWSER_HOST_IDLE_TIMEOUT:-10m}
+      Q3JS_BROWSER_HOST_MAX_LIFETIME: ${Q3JS_BROWSER_HOST_MAX_LIFETIME:-4h}
+      Q3JS_BROWSER_HOST_STARTS_PER_MINUTE: ${Q3JS_BROWSER_HOST_STARTS_PER_MINUTE:-4}
+    ports:
+      - "127.0.0.1:3081:8080"
+    volumes:
+      - ${Q3JS_DEPLOY_ROOT:-/srv/sites/q3js}/data/master:/state
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /q/health HTTP/1.0\r\n\r\n' >&3 && grep -q '200 OK' <&3"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 768m
+
+  static:
+    build:
+      context: ..
+      dockerfile: static/Dockerfile
+    image: q3js-static:local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3082:8080"
+    volumes:
+      - ${Q3JS_DEPLOY_ROOT:-/srv/sites/q3js}/data/game:/data:ro
+      - ${Q3JS_DEPLOY_ROOT:-/srv/sites/q3js}/data/game/baseq3/q3js-transit-hub-v007.pk3:/custom/baseq3/q3js-transit-hub-v007.pk3:ro
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+      - /var/cache/nginx:size=32m,uid=101,gid=101
+    mem_limit: 128m
+
+  hub-server:
+    build:
+      context: ..
+      dockerfile: game/server/Dockerfile
+    image: q3js-server:local
+    restart: unless-stopped
+    depends_on:
+      master:
+        condition: service_healthy
+    environment:
+      Q3JS_MASTER_URL: http://master:8080
+      Q3JS_EVENT_CLIENT_SECRET: ${Q3JS_EVENT_CLIENT_SECRET:?Set Q3JS_EVENT_CLIENT_SECRET in deploy/.env}
+      Q3JS_PUBLISH_HOST: q3js.amber-fly.org
+      Q3JS_PUBLISH_PORT: 443
+      Q3JS_SECURE: "true"
+      Q3JS_TRUST_PROXY_HOPS: 1
+      Q3JS_SERVER_CONFIG: |
+        seta sv_hostname "Q3JS Transit Hub"
+        seta sv_maxclients "16"
+        seta sv_allowDownload "1"
+        seta sv_dlURL ""
+        seta sv_pure "1"
+        seta bot_enable "0"
+        seta bot_minplayers "0"
+        seta g_gametype "0"
+        seta fraglimit "0"
+        seta timelimit "0"
+        map q3js_hub
+    ports:
+      - "127.0.0.1:3083:27961"
+    volumes:
+      - ${Q3JS_DEPLOY_ROOT:-/srv/sites/q3js}/data/game/baseq3:/data/baseq3:ro
+      - ${Q3JS_DEPLOY_ROOT:-/srv/sites/q3js}/data/hub-state:/state
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:27961/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+
+  website:
+    build:
+      context: ..
+      dockerfile: website/Dockerfile
+      args:
+        NEXT_PUBLIC_Q3JS_MASTER_URL: https://q3js.amber-fly.org
+        NEXT_PUBLIC_Q3JS_SITE_URL: https://q3js.amber-fly.org
+        NEXT_PUBLIC_Q3JS_STATIC_URL: https://q3js.amber-fly.org
+    image: q3js-website:local
+    restart: unless-stopped
+    depends_on:
+      master:
+        condition: service_healthy
+      static:
+        condition: service_healthy
+    environment:
+      Q3JS_MASTER_URL: http://master:8080
+    ports:
+      - "127.0.0.1:3080:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m

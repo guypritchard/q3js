@@ -1,50 +1,24 @@
 import Link from "next/link";
-import { Q3ColoredText } from "@/components/q3-colored-text";
-import { siteConfig } from "@/lib/seo";
+import { navItems } from "@/lib/site-navigation";
 
 export function Footer() {
   return (
     <footer className="border-t border-border/70">
-      <div className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-7 text-sm leading-6 text-muted-foreground md:grid-cols-[1fr_auto] md:gap-4 md:py-6">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-7 text-sm leading-6 text-muted-foreground">
         <div>
           <p className="mb-1 font-mono text-xs uppercase tracking-[0.14em] text-primary">Q3JS // Browser arena</p>
           <p className="max-w-3xl">
             Q3JS is a non-commercial fan project using the officially released demo data and a
             GPL-licensed ioquake3 engine build. Not affiliated with id Software or ZeniMax.
           </p>
-          <p className="mt-2 text-foreground">
-            Designed, built, and maintained by{" "}
-            <a
-              href={siteConfig.author.url}
-              target="_blank"
-              rel="author noreferrer"
-              className="font-semibold text-primary hover:text-foreground"
-            >
-              <Q3ColoredText text={siteConfig.author.coloredName} />
-            </a>
-            .
-          </p>
         </div>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 border-t border-border/60 pt-5 md:flex md:flex-col md:items-end md:gap-0 md:border-0 md:pt-0">
-          <a href={siteConfig.supportUrl} target="_blank" rel="noreferrer" className="hover:text-foreground">
-            Support Q3JS
-          </a>
-          <Link href="/play-quake-3-on-your-phone" className="hover:text-foreground">Play on your phone</Link>
-          <Link href="/quake-3-voice-chat" className="hover:text-foreground">Voice chat</Link>
-          <Link href="/quake-3-player-stats" className="hover:text-foreground">Player stats</Link>
-          <Link href="/custom-quake-3-servers" className="hover:text-foreground">Custom servers</Link>
-          <Link href="/weapons" className="hover:text-foreground">Weapon database</Link>
-          <Link href="/guide" className="hover:text-foreground">Run a server</Link>
-          <a href="https://github.com/lklacar/q3js" target="_blank" rel="noreferrer" className="hover:text-foreground">
-            GitHub source
-          </a>
-          <a href={siteConfig.author.xUrl} target="_blank" rel="author noreferrer" className="hover:text-foreground">
-            X / {siteConfig.author.xHandle}
-          </a>
-          <a href="https://discord.gg/mKvM9su443" target="_blank" rel="noreferrer" className="hover:text-foreground">
-            Discord
-          </a>
-        </div>
+        <nav className="flex flex-wrap gap-x-6 gap-y-2 border-t border-border/60 pt-5 font-mono text-xs font-bold uppercase" aria-label="Footer navigation">
+          {navItems.map((item) => (
+            <Link key={item.href} href={item.href} className="hover:text-foreground">
+              {item.label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </footer>
   );

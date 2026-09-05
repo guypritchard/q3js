@@ -1,7 +1,7 @@
 "use client";
 
 import type { Q3Asset, Q3Client, Q3ClientOptions, Q3ClientProgress } from "@q3js/client";
-import { ArrowClockwise, Play } from "@phosphor-icons/react";
+import { ArrowClockwise, ArrowLeft, Play, X } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameCanvas } from "@/components/game-canvas";
 import { MobileControls } from "@/components/mobile-controls";
@@ -15,8 +15,10 @@ import {
   trackAnalyticsEvent,
   type AnalyticsParameters,
 } from "@/lib/analytics";
-import { getRequesterCountry } from "@/lib/api/generated/sdk.gen";
+import { getRequesterCountry, servers as listServers } from "@/lib/api/generated/sdk.gen";
 import { client } from "@/lib/api/client";
+import { humanPlayerCount, joinServerHref } from "@/lib/join-server";
+import { mapServers, type ListedServer } from "@/lib/master-server";
 import { playerNameOrRandom } from "@/lib/player-name";
 
 const PK3_FILE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*\.pk3$/;
@@ -25,7 +27,23 @@ const CONNECTION_POLL_MS = 1_000;
 const CONNECTION_TIMEOUT_MS = 30_000;
 const DISCONNECT_GRACE_POLLS = 3;
 const HEARTBEAT_INTERVAL_MS = 60_000;
+const PORTAL_REFRESH_MS = 5_000;
+const PORTAL_SLOT_COUNT = 16;
 const ASSET_PERCENT_MILESTONES = [25, 50, 75, 100] as const;
+
+function stockMapIndex(map: string): number {
+  const deathmatch = /^q3dm(\d|1\d)$/.exec(map.toLowerCase());
+  if (deathmatch) return Number.parseInt(deathmatch[1], 10);
+  const tournament = /^q3tourney([1-6])$/.exec(map.toLowerCase());
+  return tournament ? 19 + Number.parseInt(tournament[1], 10) : -1;
+}
+
+function portalMatchScore(server: ListedServer): number {
+  const players = humanPlayerCount(server);
+  const targetPlayers = Math.min(6, Math.max(2, Math.round((server.capacity || 8) * 0.4)));
+  const latency = server.ping > 0 ? server.ping : 1_000;
+  return latency + Math.abs(players - targetPlayers) * 12;
+}
 
 function staticUrl(path: string): string {
   return `${STATIC_BASE_URL}/${path}`;
@@ -67,6 +85,7 @@ interface Session {
   playerName: string;
   countryCode?: string;
   websocketUrl: string;
+  subprotocol?: string | null;
   address: string;
   baseGame: string;
   fsGame?: string;
@@ -89,6 +108,8 @@ async function requesterCountryCode(): Promise<string | undefined> {
 
 export interface SelectedServer {
   id: string;
+  hosted: boolean;
+  gatewayUrl?: string;
   host: string;
   proxyPort: number;
   secure: boolean;
@@ -100,6 +121,8 @@ export interface SelectedServer {
   map: string;
   official: boolean;
   humanPlayers: number;
+  protocol: number;
+  ping: number;
   entryPoint?: string;
   handoffId?: string;
 }
@@ -153,6 +176,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
   const [session, setSession] = useState<Session>();
   const [progress, setProgress] = useState<Q3ClientProgress>();
   const [error, setError] = useState<string>();
+  const [exited, setExited] = useState(false);
   const [gameClient, setGameClient] = useState<Q3Client>();
   const [autoStartSuppressed, setAutoStartSuppressed] = useState(false);
   const gameShellRef = useRef<HTMLElement>(null);
@@ -160,8 +184,10 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
   const telemetryRef = useRef<PlayTelemetrySession | undefined>(undefined);
   const progressRef = useRef<Q3ClientProgress | undefined>(undefined);
   const clientRef = useRef<Q3Client | undefined>(undefined);
+  const clientExitedRef = useRef(false);
   const connectionPollRef = useRef<number | undefined>(undefined);
   const heartbeatRef = useRef<number | undefined>(undefined);
+  const portalAssignmentsRef = useRef<readonly (ListedServer | undefined)[]>([]);
   const {
     isTouchDevice,
     isLandscape,
@@ -302,6 +328,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
   }, [trackPlayEvent]);
 
   const handleClientError = useCallback((clientError: Error) => {
+    if (clientExitedRef.current) return;
     setGameClient(undefined);
     setError(clientError.message);
     const telemetry = telemetryRef.current;
@@ -314,6 +341,18 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
     });
     finishPlaySession("launch_error", { errorCode });
   }, [finishPlaySession, trackPlayEvent]);
+
+  const handleClientExit = useCallback((status: number) => {
+    if (status !== 0) {
+      handleClientError(new Error(`Q3JS exited unexpectedly (status ${status}).`));
+      return;
+    }
+    clientExitedRef.current = true;
+    setGameClient(undefined);
+    setError(undefined);
+    setExited(true);
+    finishPlaySession("game_exit");
+  }, [finishPlaySession, handleClientError]);
 
   const emitHeartbeat = useCallback(() => {
     const telemetry = telemetryRef.current;
@@ -391,6 +430,22 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
     }
   }, []);
 
+  const handleServerHandoff = useCallback((slot: number) => {
+    const destination = portalAssignmentsRef.current[slot];
+    if (!destination || !session) {
+      return;
+    }
+
+    finishPlaySession("portal_handoff");
+    window.location.assign(joinServerHref(
+      destination,
+      session.playerName,
+      "portal_hub",
+      createAnalyticsId(),
+      voiceEnabled,
+    ));
+  }, [finishPlaySession, session, voiceEnabled]);
+
   useEffect(() => {
     const handlePageHide = () => finishPlaySession("page_hide", { beacon: true });
     window.addEventListener("pagehide", handlePageHide);
@@ -430,6 +485,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       server: {
         websocketUrl: session.websocketUrl,
         address: session.address,
+        ...(session.subprotocol === undefined ? {} : { subprotocol: session.subprotocol }),
       },
       game: {
         comBaseGame: session.baseGame,
@@ -452,14 +508,75 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       } : {}),
       onProgress: handleProgress,
       onConsole: (_level, message) => console.info(`[Q3JS] ${message}`),
+      onExit: handleClientExit,
+      onServerHandoff: handleServerHandoff,
       onError: handleClientError,
     };
-  }, [handleClientError, handleProgress, isTouchDevice, session]);
+  }, [handleClientError, handleClientExit, handleProgress, handleServerHandoff, isTouchDevice, session]);
+
+  useEffect(() => {
+    if (!gameClient || !selectedServer || selectedServer.map.toLowerCase() !== "q3js_hub") {
+      portalAssignmentsRef.current = [];
+      return;
+    }
+
+    let cancelled = false;
+    const refreshPortals = async () => {
+      try {
+        const response = await listServers({ client });
+        if (cancelled) return;
+
+        const candidates = mapServers(response.data)
+          .filter((server) => (
+            server.id !== selectedServer.id
+            && server.protocol === selectedServer.protocol
+            && server.baseGame === selectedServer.baseGame
+            && server.comGameName === selectedServer.comGameName
+            && !server.passwordProtected
+            && (server.capacity === 0 || server.players < server.capacity)
+          ))
+          .sort((left, right) => (
+            portalMatchScore(left) - portalMatchScore(right)
+            || (left.ping || 1_000) - (right.ping || 1_000)
+            || humanPlayerCount(right) - humanPlayerCount(left)
+            || left.name.localeCompare(right.name)
+          ))
+          .slice(0, PORTAL_SLOT_COUNT);
+
+        portalAssignmentsRef.current = Array.from(
+          { length: PORTAL_SLOT_COUNT },
+          (_, slot) => candidates[slot],
+        );
+        portalAssignmentsRef.current.forEach((server, slot) => {
+          gameClient.setPortalInfo(slot, {
+            active: Boolean(server),
+            bestMatch: slot === 0 && Boolean(server),
+            map: server ? stockMapIndex(server.map) : -1,
+            ping: server?.ping ?? 0,
+            players: server ? humanPlayerCount(server) : 0,
+            capacity: server?.capacity ?? 0,
+            topScore: server?.users[0]?.score ?? 0,
+          });
+        });
+      } catch (portalError) {
+        console.warn("Unable to refresh Transit Hub portals", portalError);
+      }
+    };
+
+    void refreshPortals();
+    const refreshTimer = window.setInterval(() => void refreshPortals(), PORTAL_REFRESH_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(refreshTimer);
+    };
+  }, [gameClient, selectedServer]);
 
   const start = useCallback(async () => {
     finishPlaySession("restart");
     setGameClient(undefined);
     setError(undefined);
+    setExited(false);
+    clientExitedRef.current = false;
     setProgress(undefined);
     progressRef.current = undefined;
     const baseGame = selectedServer?.baseGame ?? "baseq3";
@@ -482,6 +599,25 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       asset_milestone: "manifest_started",
       elapsed_ms: 0,
     });
+
+    let activeHostedServer: ListedServer | undefined;
+    if (selectedServer?.hosted) {
+      try {
+        const response = await listServers({ client });
+        activeHostedServer = mapServers(response.data).find((server) => (
+          server.hosted && server.id === selectedServer.id
+        ));
+      } catch {
+        setError("Unable to verify that this hosted game is still online. Try again.");
+        finishPlaySession("hosted_game_check_failed", { errorCode: "hosted_game_check_failed" });
+        return;
+      }
+      if (!activeHostedServer) {
+        setError("This hosted game has ended. Return to the server list and choose a live arena.");
+        finishPlaySession("hosted_game_ended", { errorCode: "hosted_game_ended" });
+        return;
+      }
+    }
 
     let countryCode: string | undefined;
     let assets: readonly Q3Asset[];
@@ -516,14 +652,23 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
     setPlayerName(resolvedPlayerName);
 
     if (selectedServer) {
-      const host = selectedServer.host.includes(":") && !selectedServer.host.startsWith("[")
-        ? `[${selectedServer.host}]`
-        : selectedServer.host;
+      const selectedHost = activeHostedServer?.host ?? selectedServer.host;
+      const host = selectedHost.includes(":") && !selectedHost.startsWith("[")
+        ? `[${selectedHost}]`
+        : selectedHost;
       const websocketProtocol = selectedServer.secure ? "wss:" : "ws:";
+      const gatewayUrl = activeHostedServer?.gatewayUrl ?? selectedServer.gatewayUrl;
+      if (selectedServer.hosted && !gatewayUrl) {
+        setError("The hosted game relay address is missing or invalid.");
+        finishPlaySession("invalid_hosted_gateway", { errorCode: "invalid_gateway" });
+        return;
+      }
       setSession({
         playerName: resolvedPlayerName,
         countryCode,
-        websocketUrl: `${websocketProtocol}//${host}:${selectedServer.proxyPort}/ws`,
+        websocketUrl: gatewayUrl
+          ?? `${websocketProtocol}//${host}:${selectedServer.proxyPort}/ws`,
+        ...(selectedServer.hosted ? { subprotocol: null } : {}),
         address: `${host}:${selectedServer.proxyPort}`,
         baseGame,
         ...(fsGame ? { fsGame } : {}),
@@ -569,7 +714,25 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
     setSession(undefined);
     setProgress(undefined);
     setError(undefined);
+    setExited(false);
+    clientExitedRef.current = false;
     setAutoStartSuppressed(true);
+  };
+
+  const exitDestination = selectedServer?.hosted ? "/host" : "/";
+  const returnFromGame = () => {
+    if (selectedServer?.hosted && window.opener && !window.opener.closed) {
+      window.opener.focus();
+      window.close();
+      return;
+    }
+    window.location.assign(exitDestination);
+  };
+  const closeGamePage = () => {
+    window.close();
+    window.setTimeout(() => {
+      if (!window.closed) window.location.assign(exitDestination);
+    }, 100);
   };
 
   if (!session) {
@@ -594,11 +757,14 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
             {selectedServer ? selectedServer.name : "Launch Q3JS"}
           </h1>
           <p className="mt-3 text-sm leading-5 text-muted-foreground">
-            The first launch downloads the required game packages into browser storage. Later launches reuse the local copy.
+            {selectedServer?.hosted
+              ? "Hosted games load the required packages into memory while your game settings remain in browser storage."
+              : "The first launch downloads the required game packages into browser storage. Later launches reuse the local copy."}
           </p>
           {selectedServer && (
             <p className="mt-3 text-xs uppercase text-muted-foreground">
-              {selectedServer.secure ? "wss" : "ws"}://{selectedServer.host}:{selectedServer.proxyPort}/ws
+              {selectedServer.gatewayUrl
+                ?? `${selectedServer.secure ? "wss" : "ws"}://${selectedServer.host}:${selectedServer.proxyPort}/ws`}
             </p>
           )}
 
@@ -645,7 +811,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
       aria-label="Q3JS client"
       className="absolute inset-0 size-full overflow-hidden bg-black"
     >
-      {!waitingForLandscape && (
+      {!waitingForLandscape && !exited && (
         <GameCanvas
           options={options!}
           inputMode={isTouchDevice ? "mobile" : "desktop"}
@@ -685,7 +851,7 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
         </div>
       )}
 
-      {(waitingForLandscape || portraitBlocked) && !error && (
+      {(waitingForLandscape || portraitBlocked) && !error && !exited && (
         <div className="absolute inset-0 z-30 grid place-items-center bg-black p-6 text-center text-white">
           <div className="max-w-sm">
             <p className="text-xs font-black uppercase tracking-[0.32em] text-white/55">
@@ -708,7 +874,30 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
         </div>
       )}
 
-      {error && (
+      {exited && (
+        <div className="absolute inset-0 z-30 grid place-items-center bg-black/90 p-6 text-center">
+          <div className="max-w-lg">
+            <p className="text-base font-semibold text-primary">Game exited</p>
+            <p className="mt-2 text-sm leading-5 text-muted-foreground">
+              {selectedServer?.hosted
+                ? "The arena is still running in the host tab."
+                : "You have left the game."}
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <Button size="sm" onClick={returnFromGame}>
+                <ArrowLeft />
+                {selectedServer?.hosted ? "Return to host" : "Back to servers"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={closeGamePage}>
+                <X />
+                Close this tab
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && !exited && (
         <div className="absolute inset-0 z-30 grid place-items-center bg-black/90 p-6 text-center">
           <div className="max-w-lg">
             <p className="text-base font-semibold text-primary">Unable to start Q3JS</p>

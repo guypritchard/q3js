@@ -56,6 +56,7 @@ static char binaryPath[ MAX_OSPATH ] = { 0 };
 static char installPath[ MAX_OSPATH ] = { 0 };
 
 #ifdef __EMSCRIPTEN__
+#ifndef Q3JS_BROWSER_SERVER
 #define BACKGROUND_FRAME_INTERVAL_MSEC 16
 
 static EM_BOOL Sys_VisibilityChangeCallback( int eventType,
@@ -81,6 +82,7 @@ static EM_BOOL Sys_VisibilityChangeCallback( int eventType,
 
 	return EM_FALSE;
 }
+#endif
 #endif
 
 /*
@@ -357,6 +359,10 @@ Sys_Quit
 */
 void Sys_Quit( void )
 {
+#if defined(__EMSCRIPTEN__) && !defined(DEDICATED)
+	extern void Q3JS_NotifyNormalExit( void );
+	Q3JS_NotifyNormalExit( );
+#endif
 	Sys_Exit( 0 );
 }
 
@@ -917,9 +923,14 @@ int main( int argc, char **argv )
 	signal( SIGINT, Sys_SigHandler );
 
 #ifdef __EMSCRIPTEN__
+#ifdef Q3JS_BROWSER_SERVER
+	/* A positive frame rate uses worker timers instead of requestAnimationFrame. */
+	emscripten_set_main_loop( Com_Frame, 250, 1 );
+#else
 	emscripten_set_visibilitychange_callback( NULL, EM_FALSE,
 			Sys_VisibilityChangeCallback );
 	emscripten_set_main_loop( Com_Frame, 0, 1 );
+#endif
 #else
 	while( 1 )
 	{

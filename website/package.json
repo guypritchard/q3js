@@ -5,8 +5,9 @@
   "scripts": {
     "api:spec": "cd ../master && ./mvnw package -DskipTests",
     "api:generate": "npm run api:spec && openapi-ts",
-    "dev": "next dev",
-    "build": "next build",
+    "prepare:browser-host": "node scripts/prepare-browser-host.mjs",
+    "dev": "pnpm run prepare:browser-host && next dev",
+    "build": "pnpm run prepare:browser-host && next build",
     "start": "next start",
     "lint": "eslint"
   },

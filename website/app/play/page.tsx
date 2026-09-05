@@ -27,7 +27,7 @@ function parameter(parameters: SearchParameters, name: string): string | undefin
 
 function identifier(value: string | undefined): string | undefined {
   const normalized = value?.trim();
-  return normalized && /^[A-Za-z0-9_-]+$/.test(normalized) ? normalized : undefined;
+  return normalized && /^[A-Za-z0-9_-]{1,128}$/.test(normalized) ? normalized : undefined;
 }
 
 function boundedValue(value: string | undefined, fallback: string): string {
@@ -35,10 +35,27 @@ function boundedValue(value: string | undefined, fallback: string): string {
   return normalized || fallback;
 }
 
+function gatewayUrl(value: string | undefined): string | undefined {
+  const normalized = value?.trim();
+  if (!normalized || normalized.length > 2_048) return undefined;
+  try {
+    const parsed = new URL(normalized);
+    return ["ws:", "wss:"].includes(parsed.protocol)
+      && parsed.hostname
+      && !parsed.username
+      && !parsed.password
+      ? parsed.toString()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function selectedServer(parameters: SearchParameters): SelectedServer | undefined {
   const host = parameter(parameters, "host")?.trim();
   const proxyPort = Number.parseInt(parameter(parameters, "proxyPort") ?? "", 10);
-  if (!host || !Number.isInteger(proxyPort) || proxyPort < 1 || proxyPort > 65535) {
+  if (!host || host.length > 255 || /[\u0000-\u0020\u007f]/.test(host)
+      || !Number.isInteger(proxyPort) || proxyPort < 1 || proxyPort > 65535) {
     return undefined;
   }
 
@@ -47,8 +64,18 @@ function selectedServer(parameters: SearchParameters): SelectedServer | undefine
   const comGameName = identifier(parameter(parameters, "comGameName"))
     ?? "Quake3Arena";
   const humanPlayers = Number.parseInt(parameter(parameters, "humanPlayers") ?? "0", 10);
+  const protocol = Number.parseInt(parameter(parameters, "protocol") ?? "71", 10);
+  const ping = Number.parseInt(parameter(parameters, "ping") ?? "0", 10);
+  const exactGatewayUrl = gatewayUrl(parameter(parameters, "gatewayUrl"));
+  const hosted = parameter(parameters, "hosted") === "1";
+  if (hosted && !exactGatewayUrl) {
+    return undefined;
+  }
+  const fallbackId = `${host}:${proxyPort}`;
   return {
-    id: `${host}:${proxyPort}`,
+    id: boundedValue(parameter(parameters, "id"), fallbackId),
+    hosted,
+    gatewayUrl: exactGatewayUrl,
     host,
     proxyPort,
     secure: parameter(parameters, "secure") === "1",
@@ -60,6 +87,8 @@ function selectedServer(parameters: SearchParameters): SelectedServer | undefine
     map: boundedValue(parameter(parameters, "serverMap"), "unknown"),
     official: parameter(parameters, "official") === "1",
     humanPlayers: Number.isFinite(humanPlayers) ? Math.max(0, Math.min(128, humanPlayers)) : 0,
+    protocol: Number.isFinite(protocol) ? Math.max(0, protocol) : 71,
+    ping: Number.isFinite(ping) ? Math.max(0, ping) : 0,
     entryPoint: identifier(parameter(parameters, "entryPoint")),
     handoffId: identifier(parameter(parameters, "handoffId")),
   };

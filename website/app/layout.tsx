@@ -1,20 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Providers } from "@/app/providers";
-import { OnlinePlayersSheet } from "@/components/online-players-sheet";
 import { siteConfig, socialImage } from "@/lib/seo";
 import "./globals.css";
 
 const googleVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
-const analyticsId = (() => {
-  const value = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
-
-  if (!value) {
-    throw new Error("NEXT_PUBLIC_GA_MEASUREMENT_ID is required");
-  }
-
-  return value;
-})();
+const analyticsId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -91,9 +82,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <Providers>
           {children}
-          <OnlinePlayersSheet />
         </Providers>
-        <GoogleAnalytics gaId={analyticsId} />
+        {analyticsId ? <GoogleAnalytics gaId={analyticsId} /> : null}
       </body>
     </html>
   );

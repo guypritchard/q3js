@@ -411,6 +411,7 @@ G_InitGame
 */
 void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	int					i;
+	char				serverinfo[MAX_INFO_STRING];
 
 	G_Printf ("------- Game Initialization -------\n");
 	G_Printf ("gamename: %s\n", GAMEVERSION);
@@ -428,6 +429,8 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	memset( &level, 0, sizeof( level ) );
 	level.time = levelTime;
 	level.startTime = levelTime;
+	trap_GetServerinfo( serverinfo, sizeof( serverinfo ) );
+	level.q3jsHub = !Q_stricmp( Info_ValueForKey( serverinfo, "mapname" ), "q3js_hub" );
 
 	level.snd_fry = G_SoundIndex("sound/player/fry.wav");	// FIXME standing in lava / slime
 

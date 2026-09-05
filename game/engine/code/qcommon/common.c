@@ -3086,7 +3086,10 @@ Com_Frame
 void Com_Frame( void ) {
 
 	int		msec, minMsec;
-	int		timeVal, timeValSV;
+	int		timeVal;
+#ifndef Q3JS_BROWSER_SERVER
+	int		timeValSV;
+#endif
 	static int	lastTime = 0, bias = 0;
  
 	int		timeBeforeFirstEvents;
@@ -3146,6 +3149,11 @@ void Com_Frame( void ) {
 	else
 		minMsec = 1;
 
+#ifdef Q3JS_BROWSER_SERVER
+	/* Pump one rate-limited fragment round without blocking the Worker event loop. */
+	if(com_sv_running->integer)
+		SV_SendQueuedPackets();
+#else
 	do
 	{
 		if(com_sv_running->integer)
@@ -3165,6 +3173,7 @@ void Com_Frame( void ) {
 		else
 			NET_Sleep(timeVal - 1);
 	} while(Com_TimeVal(minMsec));
+#endif
 	
 	IN_Frame();
 
