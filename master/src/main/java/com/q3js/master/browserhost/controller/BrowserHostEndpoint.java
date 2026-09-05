@@ -3,6 +3,7 @@ package com.q3js.master.browserhost.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.q3js.master.browserhost.service.BrowserHostRegistry;
+import com.q3js.master.browserhost.service.BrowserHostUpgradeCheck;
 import io.quarkus.websockets.next.OnBinaryMessage;
 import io.quarkus.websockets.next.OnClose;
 import io.quarkus.websockets.next.OnOpen;
@@ -11,7 +12,7 @@ import io.quarkus.websockets.next.WebSocket;
 import io.quarkus.websockets.next.WebSocketConnection;
 import io.vertx.core.buffer.Buffer;
 
-@WebSocket(path = "/api/hosted-games/host")
+@WebSocket(endpointId = BrowserHostUpgradeCheck.HOST_ENDPOINT, path = "/api/hosted-games/host")
 public class BrowserHostEndpoint {
     private final BrowserHostRegistry registry;
     private final ObjectMapper objectMapper;

@@ -30,7 +30,7 @@
       <img src="https://shieldcn.dev/github/stars/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="GitHub stars" />
     </picture>
   </a>
-  <a href="https://github.com/guypritchard/q3js/commits/feature/host-server-plus-tweaks">
+  <a href="https://github.com/guypritchard/q3js/commits/master">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/last-commit/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
       <img src="https://shieldcn.dev/github/last-commit/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Last commit" />
@@ -42,7 +42,7 @@
       <img src="https://shieldcn.dev/github/contributors/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Contributors" />
     </picture>
   </a>
-  <a href="https://github.com/guypritchard/q3js/blob/feature/host-server-plus-tweaks/LICENSE">
+  <a href="https://github.com/guypritchard/q3js/blob/master/LICENSE">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/license-mixed-d94a36.svg?variant=outline&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
       <img src="https://shieldcn.dev/badge/license-mixed-d94a36.svg?variant=outline&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Mixed repository licenses" />
@@ -168,7 +168,7 @@ server, and generated master-key state.
 Clone the repository and install the workspace dependencies:
 
 ```bash
-git clone --branch feature/host-server-plus-tweaks https://github.com/guypritchard/q3js.git
+git clone --branch master https://github.com/guypritchard/q3js.git
 cd q3js
 pnpm install --frozen-lockfile
 ```
@@ -248,7 +248,7 @@ Each component documents its complete configuration surface. These variables con
 | `Q3JS_BROWSER_HOST_PUBLIC_URL` | Master | Public `ws` or `wss` base URL for browser-hosted player relays |
 | `Q3JS_BROWSER_HOST_MAX_GAMES` | Master | Maximum concurrent browser-hosted games |
 | `Q3JS_BROWSER_HOST_MAX_PLAYERS` | Master | Maximum relay players per browser-hosted game |
-| `Q3JS_BROWSER_HOST_STARTUP_TIMEOUT` | Master | Maximum time an unlisted browser host may occupy a relay slot (default `2m`; production Compose uses `3m`) |
+| `Q3JS_BROWSER_HOST_STARTUP_TIMEOUT` | Master | Maximum time an unlisted browser host may occupy a relay slot (default `10m`) |
 | `Q3JS_DB_URL` / `Q3JS_DB_USER` / `Q3JS_DB_PASSWORD` | Master | PostgreSQL connection settings |
 
 Generate a production event secret with `openssl rand -hex 32` and provide the same value to the master and each official game server. Never use the development fallback in production.

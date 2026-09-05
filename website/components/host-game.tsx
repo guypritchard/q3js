@@ -268,7 +268,7 @@ export function HostGame() {
             <span className="uppercase tracking-wider">{status}</span>
           </div>
           <p className="mt-3 text-xs leading-5 text-muted-foreground">
-            Keep this page open. Closing it or allowing the device to sleep ends the hosted game immediately.
+            Keep this page open. Hosting is temporary: the server may end an inactive game or one that reaches its time limit. Closing this tab ends the game.
           </p>
         </div>
       </section>

@@ -9,12 +9,15 @@ import com.q3js.master.server.service.ServerStatusParser;
 import io.quarkus.websockets.next.WebSocketConnection;
 import io.vertx.core.buffer.Buffer;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
 import io.quarkus.scheduler.Scheduled;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -26,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @ApplicationScoped
 public class BrowserHostRegistry {
+    private static final Logger LOG = Logger.getLogger(BrowserHostRegistry.class);
     private static final int STATUS_ENDPOINT = 1;
     private static final byte[] STATUS_REQUEST = {
         (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff,
@@ -46,30 +50,46 @@ public class BrowserHostRegistry {
     private final int maxGames;
     private final int maxPlayers;
     private final Duration startupTimeout;
+    private final Duration statusTimeout;
+    private final Duration idleTimeout;
+    private final Duration maxLifetime;
+    private final Clock clock;
 
+    @Inject
     public BrowserHostRegistry(
         ServerStatusParser statusParser,
         ObjectMapper objectMapper,
         @ConfigProperty(name = "q3js.master.browser-host.public-url") String publicUrl,
         @ConfigProperty(name = "q3js.master.browser-host.max-games") int maxGames,
         @ConfigProperty(name = "q3js.master.browser-host.max-players") int maxPlayers,
-        @ConfigProperty(name = "q3js.master.browser-host.startup-timeout") Duration startupTimeout
+        @ConfigProperty(name = "q3js.master.browser-host.startup-timeout") Duration startupTimeout,
+        @ConfigProperty(name = "q3js.master.browser-host.status-timeout") Duration statusTimeout,
+        @ConfigProperty(name = "q3js.master.browser-host.idle-timeout") Duration idleTimeout,
+        @ConfigProperty(name = "q3js.master.browser-host.max-lifetime") Duration maxLifetime
     ) {
+        this(statusParser, objectMapper, publicUrl, maxGames, maxPlayers, startupTimeout,
+            statusTimeout, idleTimeout, maxLifetime, Clock.systemUTC());
+    }
+
+    BrowserHostRegistry(ServerStatusParser statusParser, ObjectMapper objectMapper, String publicUrl,
+                        int maxGames, int maxPlayers, Duration startupTimeout, Duration statusTimeout,
+                        Duration idleTimeout, Duration maxLifetime, Clock clock) {
         this.statusParser = statusParser;
         this.objectMapper = objectMapper;
         this.publicUrl = validatePublicUrl(publicUrl);
         this.maxGames = positive(maxGames, "Browser-host game capacity");
         this.maxPlayers = positive(maxPlayers, "Browser-host player capacity");
-        if (startupTimeout.isZero() || startupTimeout.isNegative()) {
-            throw new IllegalArgumentException("Browser-host startup timeout must be positive");
-        }
-        this.startupTimeout = startupTimeout;
+        this.startupTimeout = positive(startupTimeout, "Browser-host startup timeout");
+        this.statusTimeout = positive(statusTimeout, "Browser-host status timeout");
+        this.idleTimeout = positive(idleTimeout, "Browser-host idle timeout");
+        this.maxLifetime = positive(maxLifetime, "Browser-host maximum lifetime");
+        this.clock = clock;
     }
 
     public synchronized String registerHost(WebSocketConnection connection) {
         for (HostedGame game : List.copyOf(games.values())) {
-            if (!game.host.isOpen()) {
-                removeHost(game.host);
+            if (expired(game, clock.instant())) {
+                expire(game);
             }
         }
         if (games.size() >= maxGames) {
@@ -83,7 +103,7 @@ public class BrowserHostRegistry {
         } while (games.containsKey(id));
 
         String gatewayUrl = publicUrl + "/" + id + "/ws";
-        HostedGame game = new HostedGame(id, gatewayUrl, connection);
+        HostedGame game = new HostedGame(id, gatewayUrl, connection, clock.instant());
         games.put(id, game);
         hostConnections.put(connection.id(), id);
         return json(new HostRegistration("registered", id, gatewayUrl));
@@ -99,20 +119,39 @@ public class BrowserHostRegistry {
 
     @Scheduled(every = "${q3js.master.refresh-every}")
     void refreshStatuses() {
-        Instant expiry = Instant.now().minus(startupTimeout);
         for (HostedGame game : games.values()) {
-            if (!game.host.isOpen()) {
-                removeHost(game.host);
-            } else if (game.response == null) {
-                if (game.registeredAt.isBefore(expiry)) {
-                    game.host.closeAndAwait();
-                    removeHost(game.host);
-                }
-            } else {
+            if (expired(game, clock.instant())) {
+                expire(game);
+            } else if (game.response != null) {
                 synchronized (game) {
-                    requestStatus(game);
+                    try {
+                        requestStatus(game);
+                    } catch (RuntimeException failure) {
+                        LOG.debug("Browser host status request failed", failure);
+                        expire(game);
+                    }
                 }
             }
+        }
+    }
+
+    private boolean expired(HostedGame game, Instant now) {
+        synchronized (game) {
+            return !game.host.isOpen()
+                || !now.isBefore(game.registeredAt.plus(maxLifetime))
+                || (game.response == null
+                    ? !now.isBefore(game.registeredAt.plus(startupTimeout))
+                    : !now.isBefore(game.lastStatusAt.plus(statusTimeout))
+                        || (game.players.isEmpty() && !now.isBefore(game.idleSince.plus(idleTimeout))));
+        }
+    }
+
+    private void expire(HostedGame game) {
+        // Remove discoverability and players before closing the host triggers @OnClose.
+        try {
+            removeHost(game.host);
+        } finally {
+            closeConnection(game.host);
         }
     }
 
@@ -145,18 +184,28 @@ public class BrowserHostRegistry {
         }
         synchronized (game) {
             for (WebSocketConnection player : game.players.values()) {
-                if (player.isOpen()) {
-                    player.closeAndAwait();
-                }
                 playerConnections.remove(player.id());
+                closeConnection(player);
             }
             game.players.clear();
+        }
+    }
+
+    private void closeConnection(WebSocketConnection connection) {
+        try {
+            if (connection.isOpen()) connection.closeAndAwait();
+        } catch (RuntimeException failure) {
+            // One broken connection must not prevent remaining slots being released.
+            LOG.debug("Browser relay connection close failed", failure);
         }
     }
 
     public void addPlayer(String gameId, WebSocketConnection player) {
         HostedGame game = listedGame(gameId);
         synchronized (game) {
+            if (games.get(gameId) != game || expired(game, clock.instant())) {
+                throw new IllegalStateException("Hosted game is unavailable");
+            }
             if (game.players.size() >= maxPlayers) {
                 throw new IllegalStateException("Hosted game is full");
             }
@@ -194,6 +243,7 @@ public class BrowserHostRegistry {
         }
         synchronized (game) {
             game.players.remove(location.endpoint());
+            if (game.players.isEmpty()) game.idleSince = clock.instant();
             if (game.host.isOpen()) {
                 game.host.sendBinaryAndAwait(
                     BrowserHostProtocol.frame(BrowserHostProtocol.DATAGRAM, location.endpoint(), DISCONNECT_PACKET)
@@ -207,6 +257,7 @@ public class BrowserHostRegistry {
 
     public List<ServerResponse> servers() {
         return games.values().stream()
+            .filter(game -> !expired(game, clock.instant()))
             .map(game -> game.response)
             .filter(java.util.Objects::nonNull)
             .toList();
@@ -218,6 +269,8 @@ public class BrowserHostRegistry {
         );
         statusParser.parse(new String(payload, StandardCharsets.ISO_8859_1), virtualServer, 0)
             .ifPresent(info -> {
+                if (game.response == null) game.idleSince = clock.instant();
+                game.lastStatusAt = clock.instant();
                 game.response = response(game, info);
                 game.host.sendTextAndAwait(json(new HostListed("listed", game.id)));
             });
@@ -237,6 +290,11 @@ public class BrowserHostRegistry {
             throw new IllegalArgumentException("Browser-host public URL must be an absolute ws or wss URL without credentials, query, or fragment");
         }
         return uri.toString();
+    }
+
+    private static Duration positive(Duration value, String name) {
+        if (value.isZero() || value.isNegative()) throw new IllegalArgumentException(name + " must be positive");
+        return value;
     }
 
     private static int positive(int value, String name) {
@@ -266,12 +324,16 @@ public class BrowserHostRegistry {
         if (game == null) {
             throw new IllegalStateException("Browser host is not registered");
         }
+        if (expired(game, clock.instant())) {
+            expire(game);
+            throw new IllegalStateException("Browser host has expired");
+        }
         return game;
     }
 
     private HostedGame listedGame(String id) {
         HostedGame game = games.get(id);
-        if (game == null || game.response == null || !game.host.isOpen()) {
+        if (game == null || game.response == null || expired(game, clock.instant())) {
             throw new IllegalStateException("Hosted game is unavailable");
         }
         return game;
@@ -299,13 +361,17 @@ public class BrowserHostRegistry {
         final WebSocketConnection host;
         final AtomicInteger nextEndpoint = new AtomicInteger(2);
         final Map<Integer, WebSocketConnection> players = new ConcurrentHashMap<>();
-        final Instant registeredAt = Instant.now();
+        final Instant registeredAt;
+        Instant lastStatusAt;
+        Instant idleSince;
         volatile ServerResponse response;
 
-        HostedGame(String id, String gatewayUrl, WebSocketConnection host) {
+        HostedGame(String id, String gatewayUrl, WebSocketConnection host, Instant now) {
             this.id = id;
             this.gatewayUrl = gatewayUrl;
             this.host = host;
+            this.registeredAt = now;
+            this.idleSince = now;
         }
     }
 
