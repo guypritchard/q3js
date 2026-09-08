@@ -12,6 +12,7 @@ include(identity)
 project(${PROJECT_NAME} VERSION ${PROJECT_VERSION} LANGUAGES C)
 
 option(BUILD_SERVER "Build dedicated server" ON)
+option(BUILD_BROWSER_SERVER "Build browser-hosted dedicated server (Emscripten only)" OFF)
 option(BUILD_CLIENT "Build client" ON)
 option(BUILD_RENDERER_GL1 "Build GL1 renderer" ON)
 option(BUILD_RENDERER_GL2 "Build GL2 renderer" ON)
@@ -95,6 +96,11 @@ set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/code)
 
 include(compilers/all)
 include(platforms/all)
+
+if(BUILD_BROWSER_SERVER AND NOT EMSCRIPTEN)
+    message(FATAL_ERROR "BUILD_BROWSER_SERVER requires the Emscripten toolchain")
+endif()
+
 include(libraries/all)
 
 include(server)

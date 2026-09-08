@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  A multiplayer Quake III Arena experience for the modern web, built on ioquake3 and WebAssembly.
+  An experimental Q3JS fork for modern browsers, built on ioquake3 and WebAssembly.
 </p>
 
 <p align="center">
@@ -24,25 +24,25 @@
       <img src="https://shieldcn.dev/discord/members/mKvM9su443.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Discord members" />
     </picture>
   </a>
-  <a href="https://github.com/lklacar/q3js/stargazers">
+  <a href="https://github.com/guypritchard/q3js/stargazers">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/stars/lklacar/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
-      <img src="https://shieldcn.dev/github/stars/lklacar/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="GitHub stars" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/stars/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
+      <img src="https://shieldcn.dev/github/stars/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="GitHub stars" />
     </picture>
   </a>
-  <a href="https://github.com/lklacar/q3js/commits/develop">
+  <a href="https://github.com/guypritchard/q3js/commits/master">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/last-commit/lklacar/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
-      <img src="https://shieldcn.dev/github/last-commit/lklacar/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Last commit" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/last-commit/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
+      <img src="https://shieldcn.dev/github/last-commit/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Last commit" />
     </picture>
   </a>
-  <a href="https://github.com/lklacar/q3js/graphs/contributors">
+  <a href="https://github.com/guypritchard/q3js/graphs/contributors">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/contributors/lklacar/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
-      <img src="https://shieldcn.dev/github/contributors/lklacar/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Contributors" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/contributors/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
+      <img src="https://shieldcn.dev/github/contributors/guypritchard/q3js.svg?variant=outline&amp;color=d94a36&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Contributors" />
     </picture>
   </a>
-  <a href="https://github.com/lklacar/q3js/blob/develop/LICENSE">
+  <a href="https://github.com/guypritchard/q3js/blob/master/LICENSE">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/license-mixed-d94a36.svg?variant=outline&amp;font=jetbrains-mono&amp;radius=0&amp;mode=dark" />
       <img src="https://shieldcn.dev/badge/license-mixed-d94a36.svg?variant=outline&amp;font=jetbrains-mono&amp;radius=0&amp;mode=light" alt="Mixed repository licenses" />
@@ -51,6 +51,15 @@
 </p>
 
 Q3JS brings the ioquake3 engine to the browser and surrounds it with everything needed for an online game: a framework-independent WebAssembly client, packaged dedicated servers, a WebSocket-to-UDP gateway, live server discovery, player statistics, and a responsive web interface.
+
+This fork builds directly on [the original Q3JS project](https://github.com/lklacar/q3js) and adds some deliberately mad stuff: authoritative games hosted inside a browser tab, a persistent portal hub, richer discovery and onboarding, production deployment tooling, and a pile of engine and relay work that makes the whole thing hold together.
+
+## Fork notice: AI-generated and not for upstream
+
+> [!CAUTION]
+> This is a personal, experimental fork of [the original Q3JS project](https://github.com/lklacar/q3js). The fork-only additions described below were generated primarily by AI coding agents under human direction and verification. They are **not intended to be proposed, contributed, or merged back upstream**. The upstream project and its maintainers are not responsible for these changes, their operation, or their support.
+
+These additions are experimental and unsupported. Do not open upstream pull requests, issues, or support requests for them.
 
 > [!IMPORTANT]
 > Q3JS does not include or download proprietary Quake III Arena game data. You must provide your own legally obtained PK3 files.
@@ -78,10 +87,13 @@ flowchart LR
 | `website/` | Server browser, player profiles, scoreboards, and game launcher | Next.js, React, Tailwind CSS | [Website guide](website/README.md) |
 | `game/client/` | Browser runtime, virtual filesystem, asset loading, persistence, and mobile input | TypeScript, Emscripten, WebAssembly | [Client guide](game/client/README.md) |
 | `game/server/` | Dedicated server package and WebSocket-to-UDP gateway | ioquake3, Node.js, TypeScript | [Server guide](game/server/README.md) |
+| `game/maps/` | Original Transit Hub source generator, compiled BSP package, and map build workflow | q3map2, Node.js | [Map guide](game/maps/README.md) |
 | `master/` | Server registry, event ingestion, profiles, scoreboards, statistics, and GeoIP | Java 17, Quarkus, jOOQ, Flyway | [Master guide](master/README.md) |
 | `static/` | Safe, cacheable PK3 and manifest delivery | nginx, shell | [Static server guide](static/README.md) |
 
 ## Features
+
+### Core Q3JS capabilities
 
 - Native ioquake3 gameplay compiled to WebAssembly with the OpenGL 2 renderer.
 - Browser-to-server play through a WebSocket-to-UDP gateway.
@@ -91,6 +103,19 @@ flowchart LR
 - Country lookup and in-game country metadata.
 - OpenAPI-generated website client and Swagger UI for the master API.
 - Container images for every deployable service.
+
+### AI-generated fork-only additions
+
+The following experimental features were AI-generated for this fork and are intentionally outside the upstream project's scope:
+
+- Ephemeral authoritative servers hosted in a browser Web Worker, with bounded relay-backed discovery and shareable invite links.
+- A damage-free, persistent 16-slot Transit Hub with launch pads and live portals that display arena status and hand players off to listed servers.
+- Exact hosted-game gateway propagation through listings, invitations, launch URLs, and reconnects.
+- Hosted-invite lifecycle checks that reject ended arenas before ioquake3 enters an endless connection loop.
+- Graceful normal exits that avoid false connection-loss errors, release pointer lock, and return players to the host tab or server browser.
+- A redesigned homepage, onboarding flow, server browser, human-versus-bot counts, Quick Play selection, mobile navigation, and scoreboard summaries.
+- Production Docker Compose, Caddy, and Cloudflare Tunnel configuration for the fork deployment at `q3js.amber-fly.org`.
+- Browser-server runtime packaging, relay limits, cleanup behavior, worker pacing, deployment health checks, and supporting tests.
 
 ## Prerequisites
 
@@ -105,10 +130,45 @@ The container builds pin the toolchain versions used by the project and are the 
 
 ## Quick start
 
+### Podman Compose
+
+The complete local stack can run in containers. Copy `.env.example` to `.env`
+and set `Q3JS_DATA_DIR` to the absolute directory containing `baseq3/pak0.pk3`.
+On Windows, use forward slashes in the path. Then run:
+
+```bash
+podman machine start
+podman compose up --build -d
+podman compose ps
+```
+
+Open [http://localhost:3000](http://localhost:3000). The Compose stack builds
+the WebAssembly client and starts the website, master API, PostgreSQL, static
+asset server, dedicated game server, and WebSocket gateway. The local game is
+published as `game.localhost`, which resolves to the host for browsers and to
+the game container from inside the Compose network.
+
+Open [http://localhost:3000/host](http://localhost:3000/host) to start an
+ephemeral browser-hosted arena. The host tab runs the authoritative WebAssembly
+server and must remain open; closing it disconnects players and removes the game
+from discovery.
+
+The Compose stack also lists `Q3JS Transit Hub` on `q3js_hub`. Its 16 doorway
+signs update every five seconds with map, human occupancy, leading score, and
+latency. The best low-latency, moderately populated match is marked in gold.
+Players can chat and use launch pads, but cannot take damage or die. Entering an
+active doorway reconnects the browser to that listed arena.
+
+Use `podman compose logs -f` to follow startup and `podman compose down` to stop
+the stack. Add `--volumes` to `down` only when you also want to delete database,
+server, and generated master-key state.
+
+### Manual development
+
 Clone the repository and install the workspace dependencies:
 
 ```bash
-git clone https://github.com/lklacar/q3js.git
+git clone --branch master https://github.com/guypritchard/q3js.git
 cd q3js
 pnpm install --frozen-lockfile
 ```
@@ -185,6 +245,10 @@ Each component documents its complete configuration surface. These variables con
 | `Q3JS_EVENT_CLIENT_SECRET` | Master/game server | Shared secret for authenticated events and official heartbeats |
 | `Q3JS_PUBLISH_HOST` / `Q3JS_PUBLISH_PORT` | Game server | Browser-reachable gateway address |
 | `Q3JS_SECURE` | Game server | Publish the gateway with `wss` instead of `ws` |
+| `Q3JS_BROWSER_HOST_PUBLIC_URL` | Master | Public `ws` or `wss` base URL for browser-hosted player relays |
+| `Q3JS_BROWSER_HOST_MAX_GAMES` | Master | Maximum concurrent browser-hosted games |
+| `Q3JS_BROWSER_HOST_MAX_PLAYERS` | Master | Maximum relay players per browser-hosted game |
+| `Q3JS_BROWSER_HOST_STARTUP_TIMEOUT` | Master | Maximum time an unlisted browser host may occupy a relay slot (default `10m`) |
 | `Q3JS_DB_URL` / `Q3JS_DB_USER` / `Q3JS_DB_PASSWORD` | Master | PostgreSQL connection settings |
 
 Generate a production event secret with `openssl rand -hex 32` and provide the same value to the master and each official game server. Never use the development fallback in production.

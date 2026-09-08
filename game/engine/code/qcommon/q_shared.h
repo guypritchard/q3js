@@ -1081,6 +1081,7 @@ typedef enum {
 //
 #define	MAX_CLIENTS			64		// absolute limit
 #define MAX_LOCATIONS		64
+#define Q3JS_MAX_PORTALS	16
 
 #define	GENTITYNUM_BITS		10		// don't need to send any more
 #define	MAX_GENTITIES		(1<<GENTITYNUM_BITS)

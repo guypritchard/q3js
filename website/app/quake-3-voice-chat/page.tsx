@@ -136,7 +136,7 @@ export default function VoiceChatFeaturePage() {
       relatedLinks={[
         { href: "/#servers", label: "Live servers" },
         { href: "/quake-3-player-stats", label: "Player stats" },
-        { href: "https://github.com/lklacar/q3js", label: "Q3JS source" },
+        { href: "https://github.com/guypritchard/q3js", label: "Q3JS source" },
       ]}
       structuredData={structuredData}
     />

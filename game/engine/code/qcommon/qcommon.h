@@ -1106,6 +1106,10 @@ void	Sys_SetErrorText( const char *text );
 
 void	Sys_SendPacket( int length, const void *data, netadr_t to );
 
+#ifdef Q3JS_BROWSER_SERVER
+void	Q3JS_ServerSendPacket( int length, const void *data, netadr_t to );
+#endif
+
 qboolean	Sys_StringToAdr( const char *s, netadr_t *a, netadrtype_t family );
 //Does NOT parse port numbers, only base addresses.
 

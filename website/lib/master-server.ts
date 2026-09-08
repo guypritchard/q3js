@@ -9,6 +9,8 @@ export interface ListedPlayer {
 
 export interface ListedServer {
   id: string;
+  gatewayUrl: string;
+  hosted: boolean;
   host: string;
   proxyPort: number;
   targetPort: number;
@@ -85,6 +87,15 @@ function mapServer(server: ServerResponse): ListedServer | undefined {
   }
 
   const fallbackName = `${host}:${proxyPort}`;
+  let gatewayUrl: URL;
+  try {
+    gatewayUrl = new URL(server.gatewayUrl);
+  } catch {
+    return undefined;
+  }
+  if (!["ws:", "wss:"].includes(gatewayUrl.protocol) || gatewayUrl.username || gatewayUrl.password) {
+    return undefined;
+  }
   const rawName = info.sv_hostname?.trim() || fallbackName;
   const advertisedFsGame = gameDirectory(info.fs_game);
   const gameVmName = gameDirectory(info.gamename);
@@ -113,7 +124,9 @@ function mapServer(server: ServerResponse): ListedServer | undefined {
       bot: user.ping === 0,
     }));
   return {
-    id: `${host}:${proxyPort}`,
+    id: server.id,
+    gatewayUrl: gatewayUrl.toString(),
+    hosted: server.hosted,
     host,
     proxyPort,
     targetPort: server.targetPort,

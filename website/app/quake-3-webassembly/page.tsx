@@ -81,7 +81,7 @@ export default function WebAssemblyFeaturePage() {
       title={title}
       intro="Q3JS brings the ioquake3 runtime to the browser instead of imitating it. WebAssembly executes the engine, the canvas renders the arena, and a gateway connects web networking to a dedicated server."
       primaryAction={{ href: "/#servers", label: "Play in browser" }}
-      secondaryAction={{ href: "https://github.com/lklacar/q3js", label: "View source" }}
+      secondaryAction={{ href: "https://github.com/guypritchard/q3js", label: "View source" }}
       visual={<ArchitecturePreview />}
       facts={[
         { label: "Engine", value: "ioquake3" },
@@ -126,7 +126,7 @@ export default function WebAssemblyFeaturePage() {
       relatedLinks={[
         { href: "/#servers", label: "Live servers" },
         { href: "/quake-3-browser-mods", label: "Browser mods" },
-        { href: "https://github.com/lklacar/q3js", label: "Source code" },
+        { href: "https://github.com/guypritchard/q3js", label: "Source code" },
       ]}
       structuredData={structuredData}
     />

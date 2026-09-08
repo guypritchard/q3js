@@ -32,6 +32,7 @@ export function GameCanvas({
     }
 
     let cancelled = false;
+    let exited = false;
     let client: Q3Client | undefined;
     const resize = () => {
       const bounds = canvas.getBoundingClientRect();
@@ -54,7 +55,14 @@ export function GameCanvas({
     document.addEventListener("fullscreenchange", resize);
     resize();
 
-    void createQ3Client({ ...options, canvas })
+    void createQ3Client({
+      ...options,
+      canvas,
+      onExit: (status) => {
+        exited = true;
+        if (!cancelled) options.onExit?.(status);
+      },
+    })
       .then((createdClient) => {
         if (cancelled) {
           void createdClient.dispose();
@@ -78,7 +86,7 @@ export function GameCanvas({
       window.clearInterval(sizeGuard);
       window.removeEventListener("resize", resize);
       document.removeEventListener("fullscreenchange", resize);
-      void client?.dispose();
+      if (!exited) void client?.dispose();
     };
   }, [inputMode, onClientReady, options]);
 
@@ -125,7 +133,18 @@ export function GameCanvas({
       className={className}
       aria-label="Q3JS game"
       tabIndex={0}
-      onClick={(event) => event.currentTarget.focus()}
+      onPointerDown={(event) => {
+        const canvas = event.currentTarget;
+        canvas.focus();
+        if (
+          inputMode === "desktop"
+          && clientReady
+          && document.pointerLockElement !== canvas
+          && typeof canvas.requestPointerLock === "function"
+        ) {
+          void Promise.resolve(canvas.requestPointerLock()).catch(() => undefined);
+        }
+      }}
       onContextMenu={(event) => event.preventDefault()}
     />
   );

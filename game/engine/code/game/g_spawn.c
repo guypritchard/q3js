@@ -152,6 +152,8 @@ void SP_target_kill (gentity_t *ent);
 void SP_target_position (gentity_t *ent);
 void SP_target_location (gentity_t *ent);
 void SP_target_push (gentity_t *ent);
+void SP_target_q3js_portal( gentity_t *ent );
+void SP_misc_q3js_portal( gentity_t *ent );
 
 void SP_light (gentity_t *self);
 void SP_info_null (gentity_t *self);
@@ -228,6 +230,7 @@ spawn_t	spawns[] = {
 	{"target_position", SP_target_position},
 	{"target_location", SP_target_location},
 	{"target_push", SP_target_push},
+	{"target_q3js_portal", SP_target_q3js_portal},
 
 	{"light", SP_light},
 	{"path_corner", SP_path_corner},
@@ -236,6 +239,7 @@ spawn_t	spawns[] = {
 	{"misc_model", SP_misc_model},
 	{"misc_portal_surface", SP_misc_portal_surface},
 	{"misc_portal_camera", SP_misc_portal_camera},
+	{"misc_q3js_portal", SP_misc_q3js_portal},
 
 	{"shooter_rocket", SP_shooter_rocket},
 	{"shooter_grenade", SP_shooter_grenade},

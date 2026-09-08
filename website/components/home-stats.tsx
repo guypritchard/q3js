@@ -19,7 +19,6 @@ function formatNumber(value: number): string {
 
 function HomeStatsContent({ arenaCount, stats }: Readonly<{ arenaCount: number; stats: SiteStatsResponse }>) {
   const topFragger = stats.mostFragsLast24Hours;
-  const totalPlayersOnline = stats.playersOnline + stats.botsOnline;
   return (
     <dl className="mb-10 grid gap-3 sm:grid-cols-3">
       <div className="arena-card border border-border/60 bg-card/55 p-4">
@@ -27,9 +26,11 @@ function HomeStatsContent({ arenaCount, stats }: Readonly<{ arenaCount: number; 
           <Users className="size-4 text-primary" /> Players online
         </dt>
         <dd className="mt-3 font-mono text-2xl font-bold tracking-[0.03em] tabular-nums">
-          {formatNumber(totalPlayersOnline)}
+          {formatNumber(stats.playersOnline)}
         </dd>
-        <p className="mt-2 text-sm text-muted-foreground">Across {countLabel(arenaCount, "live arena")}.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Across {countLabel(arenaCount, "live arena")} · {countLabel(stats.botsOnline, "bot")} active.
+        </p>
       </div>
 
       <div className="arena-card border border-border/60 bg-card/55 p-4">

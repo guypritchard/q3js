@@ -1663,7 +1663,11 @@ void CL_Disconnect_f( void ) {
 	SCR_StopCinematic();
 	Cvar_Set("ui_singlePlayerActive", "0");
 	if ( clc.state != CA_DISCONNECTED && clc.state != CA_CINEMATIC ) {
+#if defined(__EMSCRIPTEN__) && !defined(DEDICATED)
+		Com_Quit_f();
+#else
 		Com_Error (ERR_DISCONNECT, "Disconnected from server");
+#endif
 	}
 }
 

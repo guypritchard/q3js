@@ -22,12 +22,12 @@ export function useMobileGame(targetRef: RefObject<HTMLElement | null>) {
   const [canRequestFullscreen, setCanRequestFullscreen] = useState(false);
 
   useEffect(() => {
-    const pointerQuery = window.matchMedia("(pointer: coarse)");
+    const touchInputQuery = window.matchMedia("(pointer: coarse) and (hover: none)");
     const orientation = screen.orientation;
 
     const updateTouchDevice = () => {
       const forced = new URLSearchParams(window.location.search).get("mobileControls") === "1";
-      setIsTouchDevice(forced || pointerQuery.matches || navigator.maxTouchPoints > 0);
+      setIsTouchDevice(forced || touchInputQuery.matches);
     };
     const updateOrientation = () => {
       const target = targetRef.current;
@@ -50,13 +50,13 @@ export function useMobileGame(targetRef: RefObject<HTMLElement | null>) {
     updateOrientation();
     updateFullscreenSupport();
 
-    pointerQuery.addEventListener("change", updateTouchDevice);
+    touchInputQuery.addEventListener("change", updateTouchDevice);
     window.addEventListener("resize", updateOrientation);
     window.addEventListener("orientationchange", updateOrientation);
     orientation?.addEventListener("change", updateOrientation);
 
     return () => {
-      pointerQuery.removeEventListener("change", updateTouchDevice);
+      touchInputQuery.removeEventListener("change", updateTouchDevice);
       window.removeEventListener("resize", updateOrientation);
       window.removeEventListener("orientationchange", updateOrientation);
       orientation?.removeEventListener("change", updateOrientation);

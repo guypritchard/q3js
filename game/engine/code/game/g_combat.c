@@ -460,7 +460,18 @@ void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int
 	int			contents;
 	int			killer;
 	int			i;
+	int			health;
 	char		*killerName, *obit;
+
+	if ( level.q3jsHub && self->client ) {
+		health = self->client->ps.stats[STAT_MAX_HEALTH];
+		if ( health < 1 ) {
+			health = 100;
+		}
+		self->health = health;
+		self->client->ps.stats[STAT_HEALTH] = health;
+		return;
+	}
 
 	if ( self->client->ps.pm_type == PM_DEAD ) {
 		return;
@@ -835,6 +846,9 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 #endif
 
 	if (!targ->takedamage) {
+		return;
+	}
+	if ( level.q3jsHub && targ->client ) {
 		return;
 	}
 

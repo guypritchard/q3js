@@ -101,6 +101,48 @@ minutes. These values are configured with `q3js.master.refresh-every`,
 `q3js.master.prune-every`, `q3js.master.heartbeat-ttl`, and
 `q3js.master.server-status-timeout`.
 
+## Browser-hosted games
+
+Set `Q3JS_BROWSER_HOST_PUBLIC_URL` to the browser-reachable base URL ending in
+`/api/hosted-games`; HTTPS deployments require `wss`.
+
+The master relays binary Quake packets between the host Web Worker and players.
+The host connects at `/api/hosted-games/host`; its registration message supplies
+an exact gateway URL for players. Only hosts that answer a status query appear
+in `GET /api/servers`.
+
+Hosting is anonymous and intended for temporary games. The following limits are
+per master process; the registry and rate counters are held in memory.
+
+| Environment variable | Default | Purpose |
+| --- | --- | --- |
+| `Q3JS_BROWSER_HOST_MAX_GAMES` | `32` | Concurrent hosts, including startup |
+| `Q3JS_BROWSER_HOST_MAX_PLAYERS` | `16` | Player relay connections per game |
+| `Q3JS_BROWSER_HOST_STARTUP_TIMEOUT` | `10m` | Time to download assets and become listed |
+| `Q3JS_BROWSER_HOST_STATUS_TIMEOUT` | `30s` | Maximum age of a valid status reply |
+| `Q3JS_BROWSER_HOST_IDLE_TIMEOUT` | `10m` | Time without player relay connections after listing or the last player leaves |
+| `Q3JS_BROWSER_HOST_MAX_LIFETIME` | `4h` | Absolute lifetime, including active games |
+| `Q3JS_BROWSER_HOST_STARTS_PER_MINUTE` | `4` | Host upgrade attempts per remote address in a rolling minute |
+
+Both WebSocket endpoints require an `Origin` exactly matching one of the
+comma-separated `Q3JS_CORS_ORIGINS`. Missing origins and wildcards are not allowed.
+This prevents unwanted cross-site browser use; it is not authentication.
+Rate limiting uses the socket peer, ignoring supplied forwarding headers. With
+an unconfigured reverse proxy, its visitors share one limit. The included Caddy
+setup deliberately keeps that conservative behaviour; tune the start limit for
+your deployment. Do not trust arbitrary `X-Forwarded-For` values to bypass it.
+
+Expired games disappear from discovery and reject new players immediately;
+the five-second refresh sweep closes their connections and releases capacity.
+A host must start a new game after expiry. Maximum lifetime also bounds hosts
+that continue to fabricate status replies or keep player sockets open.
+
+Run `./mvnw test` for the unit suite and the Quarkus WebSocket integration test.
+The integration test exercises registration, public discovery, binary forwarding
+in both directions, player departure and host departure using real sockets. It
+simulates engine packets, so a browser/WASM gameplay smoke test is still needed
+when changing the engine or its runtime packaging.
+
 ## Voice chat
 
 The master signs LiveKit room tokens; API credentials remain server-side. Set

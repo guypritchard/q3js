@@ -35,6 +35,10 @@ extern qboolean loadCamera(const char *name);
 extern void startCamera(int time);
 extern qboolean getCameraInfo(int time, vec3_t *origin, vec3_t *angles);
 
+#ifdef __EMSCRIPTEN__
+extern void Q3JS_NotifyServerHandoff( int slot );
+#endif
+
 /*
 ====================
 CL_GetGameState
@@ -52,6 +56,31 @@ CL_GetGlconfig
 void CL_GetGlconfig( glconfig_t *glconfig ) {
 	*glconfig = cls.glconfig;
 }
+
+#ifdef __EMSCRIPTEN__
+static qboolean Q3JS_ParsePortalSlot( const char *value, int *slot ) {
+	int parsed;
+	const char *cursor;
+
+	if ( !value[0] ) {
+		return qfalse;
+	}
+
+	parsed = 0;
+	for ( cursor = value; *cursor; cursor++ ) {
+		if ( *cursor < '0' || *cursor > '9' ) {
+			return qfalse;
+		}
+		parsed = parsed * 10 + ( *cursor - '0' );
+		if ( parsed >= Q3JS_MAX_PORTALS ) {
+			return qfalse;
+		}
+	}
+
+	*slot = parsed;
+	return qtrue;
+}
+#endif
 
 
 /*
@@ -338,6 +367,38 @@ rescan:
 		return qtrue;
 	}
 
+#ifdef __EMSCRIPTEN__
+	if ( !strcmp( cmd, "cp" ) && argc == 2 ) {
+		const char *portalMarker;
+		int slot;
+
+		portalMarker = Cmd_Argv( 1 );
+		if ( !strncmp( portalMarker, "Q3JS_PORTAL_", 12 )
+			&& Q3JS_ParsePortalSlot( portalMarker + 12, &slot ) ) {
+			Q3JS_NotifyServerHandoff( slot );
+			return qfalse;
+		}
+	}
+#endif
+
+#ifdef __EMSCRIPTEN__
+	if ( !strcmp( cmd, "q3js_handoff" ) ) {
+		int slot;
+		const char *slotArgument;
+
+		if ( argc != 2 ) {
+			return qfalse;
+		}
+		slotArgument = Cmd_Argv( 1 );
+		if ( !Q3JS_ParsePortalSlot( slotArgument, &slot ) ) {
+			return qfalse;
+		}
+
+		Q3JS_NotifyServerHandoff( slot );
+		return qfalse;
+	}
+#endif
+
 	// the clientLevelShot command is used during development
 	// to generate 128*128 screenshots from the intermission
 	// point of levels for the menu system to use
@@ -356,8 +417,6 @@ rescan:
 		Cbuf_AddText( "wait ; wait ; wait ; wait ; screenshot levelshot\n" );
 		return qtrue;
 	}
-
-	// we may want to put a "connect to other server" command here
 
 	// cgame can now act on the command
 	return qtrue;

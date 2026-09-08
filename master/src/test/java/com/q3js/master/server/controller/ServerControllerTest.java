@@ -32,7 +32,17 @@ class ServerControllerTest {
             ServerInfo.class
         );
         when(serverService.servers()).thenReturn(List.of(
-            new ServerResponse("game.example.com", 27961, 27960, true, true, info)
+            new ServerResponse(
+                "game.example.com:27961",
+                "wss://game.example.com:27961/ws",
+                false,
+                "game.example.com",
+                27961,
+                27960,
+                true,
+                true,
+                info
+            )
         ));
 
         given()
@@ -40,6 +50,9 @@ class ServerControllerTest {
             .then()
             .statusCode(200)
             .body("size()", is(1))
+            .body("[0].id", is("game.example.com:27961"))
+            .body("[0].gatewayUrl", is("wss://game.example.com:27961/ws"))
+            .body("[0].hosted", is(false))
             .body("[0].host", is("game.example.com"))
             .body("[0].official", is(true))
             .body("[0].info.sv_hostname", is("Q3JS Arena"));

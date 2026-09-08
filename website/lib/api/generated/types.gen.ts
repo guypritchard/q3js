@@ -210,6 +210,9 @@ export type ServerPlayer = {
 };
 
 export type ServerResponse = {
+    id: string;
+    gatewayUrl: string;
+    hosted: boolean;
     host: string;
     proxyPort: number;
     targetPort: number;

@@ -18,6 +18,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -28,14 +29,14 @@ public class VoiceTokenService {
     private final Duration tokenTtl;
 
     public VoiceTokenService(
-        @ConfigProperty(name = "q3js.master.voice.livekit-url") String livekitUrl,
-        @ConfigProperty(name = "q3js.master.voice.api-key") String apiKey,
-        @ConfigProperty(name = "q3js.master.voice.api-secret") String apiSecret,
+        @ConfigProperty(name = "q3js.master.voice.livekit-url") Optional<String> livekitUrl,
+        @ConfigProperty(name = "q3js.master.voice.api-key") Optional<String> apiKey,
+        @ConfigProperty(name = "q3js.master.voice.api-secret") Optional<String> apiSecret,
         @ConfigProperty(name = "q3js.master.voice.token-ttl") Duration tokenTtl
     ) {
-        this.livekitUrl = livekitUrl == null ? "" : livekitUrl.trim();
-        this.apiKey = apiKey == null ? "" : apiKey.trim();
-        this.apiSecret = apiSecret == null ? "" : apiSecret.trim();
+        this.livekitUrl = livekitUrl.map(String::trim).orElse("");
+        this.apiKey = apiKey.map(String::trim).orElse("");
+        this.apiSecret = apiSecret.map(String::trim).orElse("");
         this.tokenTtl = tokenTtl;
     }
 

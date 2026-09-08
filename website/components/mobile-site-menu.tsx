@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { DiscordLogo, GithubLogo, List, XLogo } from "@phosphor-icons/react";
+import { List } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -12,14 +12,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { featureItems, navItems } from "@/lib/site-navigation";
-import { siteConfig } from "@/lib/seo";
-
-const socialLinks = [
-  { label: "GitHub", href: "https://github.com/lklacar/q3js", icon: GithubLogo },
-  { label: "X", href: siteConfig.author.xUrl, icon: XLogo },
-  { label: "Discord", href: "https://discord.gg/mKvM9su443", icon: DiscordLogo },
-] as const;
+import { navItems } from "@/lib/site-navigation";
 
 export function MobileSiteMenu() {
   return (
@@ -28,7 +21,7 @@ export function MobileSiteMenu() {
         <Button
           variant="ghost"
           size="icon-lg"
-          className="-mr-2 lg:hidden"
+          className="-mr-2 md:hidden"
           aria-label="Open navigation"
         >
           <List className="size-5" weight="bold" />
@@ -39,85 +32,23 @@ export function MobileSiteMenu() {
         <SheetHeader>
           <SheetTitle>Q3JS menu</SheetTitle>
           <SheetDescription id="mobile-navigation-description">
-            Play, check rankings, or explore the arena.
+            Play, host, or run your own Quake III server.
           </SheetDescription>
         </SheetHeader>
 
-        <nav aria-label="Mobile navigation" className="flex-1 px-3 py-4">
-          {navItems.slice(0, 1).map((item, index) => (
+        <nav aria-label="Mobile navigation" className="min-h-0 flex-1 overflow-y-auto border-t border-border">
+          {navItems.map((item) => (
             <SheetClose key={item.href} asChild>
               <Link
                 href={item.href}
-                className="flex min-h-12 items-center justify-between border-b border-border/60 px-3 py-3 font-mono text-sm font-bold uppercase tracking-[0.05em] transition-colors hover:bg-muted hover:text-primary"
+                className="block border-b border-border px-5 py-5 transition-colors hover:bg-muted"
               >
-                <span>{item.label}</span>
-                <span className="text-xs font-normal text-muted-foreground" aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
+                <span className="block font-mono text-sm font-bold uppercase tracking-[0.05em]">{item.label}</span>
+                <span className="mt-1 block text-xs text-muted-foreground">{item.description}</span>
               </Link>
             </SheetClose>
           ))}
-
-          <p className="px-3 pb-1 pt-5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
-            Features
-          </p>
-          {featureItems.map((item, index) => (
-            <SheetClose key={item.href} asChild>
-              <Link
-                href={item.href}
-                className="block border-b border-border/60 px-3 py-3 transition-colors hover:bg-muted hover:text-primary"
-              >
-                <span className="flex items-center justify-between font-mono text-sm font-bold uppercase tracking-[0.05em]">
-                  {item.label}
-                  <span className="text-xs font-normal text-muted-foreground" aria-hidden="true">
-                    {String(index + 2).padStart(2, "0")}
-                  </span>
-                </span>
-                <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                  {item.description}
-                </span>
-              </Link>
-            </SheetClose>
-          ))}
-
-          {navItems.slice(1).map((item, index) => (
-            <SheetClose key={item.href} asChild>
-              <Link
-                href={item.href}
-                className="flex min-h-12 items-center justify-between border-b border-border/60 px-3 py-3 font-mono text-sm font-bold uppercase tracking-[0.05em] transition-colors hover:bg-muted hover:text-primary"
-              >
-                <span>{item.label}</span>
-                <span className="text-xs font-normal text-muted-foreground" aria-hidden="true">
-                  {String(index + featureItems.length + 2).padStart(2, "0")}
-                </span>
-              </Link>
-            </SheetClose>
-          ))}
-
-          <a
-            href={siteConfig.supportUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-5 flex min-h-12 items-center justify-center bg-primary px-4 font-mono text-sm font-bold uppercase tracking-[0.05em] text-primary-foreground transition-colors hover:bg-primary/80"
-          >
-            Support Q3JS
-          </a>
         </nav>
-
-        <div className="grid grid-cols-3 border-t border-border">
-          {socialLinks.map(({ href, icon: Icon, label }) => (
-            <a
-              key={label}
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className="flex min-h-14 items-center justify-center gap-2 border-r border-border text-xs text-muted-foreground transition-colors last:border-r-0 hover:bg-muted hover:text-primary"
-            >
-              <Icon className="size-4" weight="fill" aria-hidden="true" />
-              {label}
-            </a>
-          ))}
-        </div>
       </SheetContent>
     </Sheet>
   );

@@ -654,6 +654,7 @@ typedef struct {
 	qhandle_t	charsetPropGlow;
 	qhandle_t	charsetPropB;
 	qhandle_t	whiteShader;
+	qhandle_t	q3jsPortalPanelShader;
 
 #ifdef MISSIONPACK
 	qhandle_t	redCubeModel;

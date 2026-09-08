@@ -1,6 +1,6 @@
 services:
   database:
-    image: postgres:17-alpine
+    image: docker.io/library/postgres:17-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: postgres
@@ -16,5 +16,149 @@ services:
       timeout: 5s
       retries: 10
 
+  master:
+    image: localhost/q3js-master:local
+    build:
+      context: .
+      dockerfile: master/Dockerfile
+    restart: unless-stopped
+    environment:
+      Q3JS_DB_URL: jdbc:postgresql://database:5432/postgres
+      Q3JS_DB_USER: postgres
+      Q3JS_DB_PASSWORD: postgres
+      Q3JS_EVENT_CLIENT_SECRET: ${Q3JS_EVENT_CLIENT_SECRET:-98e9b63a7b1bcd9103cdc951cda26976d06b6076df6ab13da1f20c25c7699167}
+      Q3JS_ADMIN_PASSWORD: ${Q3JS_ADMIN_PASSWORD:-q3js-local-admin}
+      Q3JS_CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "8080:8080"
+    volumes:
+      - q3js-master-state:/state
+    depends_on:
+      database:
+        condition: service_healthy
+
+  static:
+    image: localhost/q3js-static:local
+    build:
+      context: .
+      dockerfile: static/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    volumes:
+      - type: bind
+        source: ${Q3JS_DATA_DIR:-./game/server/data}
+        target: /data
+        read_only: true
+      - type: bind
+        source: ./game/maps/dist/q3js-transit-hub-v007.pk3
+        target: /custom/baseq3/q3js-transit-hub-v007.pk3
+        read_only: true
+    environment:
+      Q3JS_CUSTOM_DATA_DIRECTORY: /custom
+
+  game-server:
+    image: localhost/q3js-server:local
+    build:
+      context: .
+      dockerfile: game/server/Dockerfile
+    command: ["+set", "bot_minplayers", "4"]
+    restart: unless-stopped
+    environment:
+      Q3JS_MASTER_URL: http://master:8080
+      Q3JS_EVENT_CLIENT_SECRET: ${Q3JS_EVENT_CLIENT_SECRET:-98e9b63a7b1bcd9103cdc951cda26976d06b6076df6ab13da1f20c25c7699167}
+      Q3JS_PUBLISH_HOST: game.localhost
+      Q3JS_PUBLISH_PORT: 27961
+      Q3JS_SECURE: "false"
+    ports:
+      - "27960:27960/udp"
+      - "27961:27961"
+    volumes:
+      - type: bind
+        source: ${Q3JS_DATA_DIR:-./game/server/data}/baseq3
+        target: /data/baseq3
+        read_only: true
+      - q3js-server-state:/state
+    depends_on:
+      master:
+        condition: service_healthy
+    networks:
+      default:
+        aliases:
+          - game.localhost
+
+  hub-server:
+    image: localhost/q3js-server:local
+    build:
+      context: .
+      dockerfile: game/server/Dockerfile
+    restart: unless-stopped
+    environment:
+      Q3JS_MASTER_URL: http://master:8080
+      Q3JS_EVENT_CLIENT_SECRET: ${Q3JS_EVENT_CLIENT_SECRET:-98e9b63a7b1bcd9103cdc951cda26976d06b6076df6ab13da1f20c25c7699167}
+      Q3JS_PUBLISH_HOST: hub.localhost
+      Q3JS_PUBLISH_PORT: 27963
+      Q3JS_GATEWAY_PORT: 27963
+      Q3JS_SECURE: "false"
+      Q3JS_SERVER_CONFIG: |
+        seta sv_hostname "Q3JS Transit Hub"
+        seta sv_maxclients "16"
+        seta sv_allowDownload "1"
+        seta sv_dlURL ""
+        seta sv_pure "1"
+        seta bot_enable "0"
+        seta bot_minplayers "0"
+        seta g_gametype "0"
+        seta fraglimit "0"
+        seta timelimit "0"
+        map q3js_hub
+    ports:
+      - "27962:27960/udp"
+      - "27963:27963"
+    volumes:
+      - type: bind
+        source: ${Q3JS_DATA_DIR:-./game/server/data}/baseq3
+        target: /data/baseq3
+        read_only: true
+      - type: bind
+        source: ./game/maps/dist/q3js-transit-hub-v007.pk3
+        target: /state/baseq3/q3js-transit-hub-v007.pk3
+        read_only: true
+      - q3js-hub-state:/state
+    depends_on:
+      master:
+        condition: service_healthy
+    networks:
+      default:
+        aliases:
+          - hub.localhost
+    healthcheck:
+      test:
+        ["CMD", "node", "-e", "fetch('http://127.0.0.1:27963/healthz').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+
+  website:
+    image: localhost/q3js-website:local
+    build:
+      context: .
+      dockerfile: website/Dockerfile
+      args:
+        NEXT_PUBLIC_Q3JS_MASTER_URL: http://localhost:8080
+        NEXT_PUBLIC_Q3JS_SITE_URL: http://localhost:3000
+        NEXT_PUBLIC_Q3JS_STATIC_URL: http://localhost:8081
+        NEXT_PUBLIC_GA_MEASUREMENT_ID: G-LOCALDEV
+    restart: unless-stopped
+    environment:
+      Q3JS_MASTER_URL: http://master:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      master:
+        condition: service_healthy
+      static:
+        condition: service_healthy
+
 volumes:
   q3js-database-data:
+  q3js-master-state:
+  q3js-server-state:
+  q3js-hub-state:

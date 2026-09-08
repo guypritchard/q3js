@@ -19,7 +19,8 @@ RUN pnpm install --frozen-lockfile --filter @q3js/server...
 
 COPY game/engine game/engine
 COPY game/server game/server
-RUN ./game/server/build.sh
+RUN sed -i 's/\r$//' game/server/build.sh \
+    && ./game/server/build.sh
 
 FROM node:24-bookworm-slim AS runtime
 

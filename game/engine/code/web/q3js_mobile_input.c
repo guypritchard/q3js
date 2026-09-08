@@ -21,10 +21,33 @@ EM_JS( void, Q3JS_NotifyTextInputActive, ( int active ), {
 		detail: active !== 0
 	} ) );
 } );
+
+EM_JS( void, Q3JS_NotifyServerHandoff, ( int slot ), {
+	if( typeof Module["onServerHandoff"] === "function" )
+	{
+		Module["onServerHandoff"]( slot );
+	}
+} );
+
+EM_JS( void, Q3JS_NotifyNormalExit, ( void ), {
+	if( typeof Module["onNormalExit"] === "function" )
+	{
+		Module["onNormalExit"]();
+	}
+} );
 #else
 void Q3JS_NotifyTextInputActive( int active )
 {
 	(void)active;
+}
+
+void Q3JS_NotifyServerHandoff( int slot )
+{
+	(void)slot;
+}
+
+void Q3JS_NotifyNormalExit( void )
+{
 }
 #endif
 
@@ -104,6 +127,32 @@ EMSCRIPTEN_KEEPALIVE int Q3JS_IsConnected( void )
 EMSCRIPTEN_KEEPALIVE int Q3JS_IsDisconnected( void )
 {
 	return clc.state == CA_DISCONNECTED ? 1 : 0;
+}
+
+EMSCRIPTEN_KEEPALIVE void Q3JS_SetPortalInfo( int slot, int active, int map,
+	int ping, int players, int capacity, int topScore, int bestMatch )
+{
+	char name[32];
+
+	if( slot < 0 || slot >= Q3JS_MAX_PORTALS )
+	{
+		return;
+	}
+
+	Com_sprintf( name, sizeof( name ), "q3js_portal%i_active", slot );
+	Cvar_SetValue( name, active ? 1 : 0 );
+	Com_sprintf( name, sizeof( name ), "q3js_portal%i_map", slot );
+	Cvar_SetValue( name, map >= -1 && map < 26 ? map : -1 );
+	Com_sprintf( name, sizeof( name ), "q3js_portal%i_ping", slot );
+	Cvar_SetValue( name, ping < 0 ? 0 : ping );
+	Com_sprintf( name, sizeof( name ), "q3js_portal%i_players", slot );
+	Cvar_SetValue( name, players < 0 ? 0 : players );
+	Com_sprintf( name, sizeof( name ), "q3js_portal%i_capacity", slot );
+	Cvar_SetValue( name, capacity < 0 ? 0 : capacity );
+	Com_sprintf( name, sizeof( name ), "q3js_portal%i_score", slot );
+	Cvar_SetValue( name, topScore );
+	Com_sprintf( name, sizeof( name ), "q3js_portal%i_best", slot );
+	Cvar_SetValue( name, bestMatch ? 1 : 0 );
 }
 
 EMSCRIPTEN_KEEPALIVE void Q3JS_Resize( int width, int height )

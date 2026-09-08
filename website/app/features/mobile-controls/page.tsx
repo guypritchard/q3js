@@ -283,7 +283,7 @@ export default function MobileControlsFeaturePage() {
           <nav aria-label="Related links" className="mt-12 flex flex-wrap gap-x-6 gap-y-3 font-mono text-sm">
             <Link href="/#servers" className="text-primary hover:text-foreground">Server list →</Link>
             <Link href="/guide" className="text-muted-foreground hover:text-foreground">Server guide →</Link>
-            <a href="https://github.com/lklacar/q3js" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">Source code ↗</a>
+            <a href="https://github.com/guypritchard/q3js" target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground">Source code ↗</a>
           </nav>
         </article>
       </main>

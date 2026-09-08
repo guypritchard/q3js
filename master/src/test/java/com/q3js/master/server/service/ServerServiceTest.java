@@ -1,9 +1,12 @@
 package com.q3js.master.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.q3js.master.browserhost.service.BrowserHostRegistry;
 import com.q3js.master.server.client.ServerStatusClient;
 import com.q3js.master.server.domain.RegisteredServer;
 import com.q3js.master.server.domain.StoredServer;
+import com.q3js.master.server.dto.ServerInfo;
+import com.q3js.master.server.dto.ServerResponse;
 import com.q3js.master.server.repository.ServerRepository;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ServerServiceTest {
     @Test
@@ -36,6 +41,7 @@ class ServerServiceTest {
             repository,
             new ServerStatusClient(new ServerStatusParser(), Duration.ofSeconds(1)),
             new ObjectMapper(),
+            emptyBrowserHosts(),
             Duration.ofMinutes(2)
         );
 
@@ -75,6 +81,7 @@ class ServerServiceTest {
             repository,
             new ServerStatusClient(new ServerStatusParser(), Duration.ofSeconds(1)),
             new ObjectMapper(),
+            emptyBrowserHosts(),
             Duration.ofMinutes(2)
         );
 
@@ -112,6 +119,7 @@ class ServerServiceTest {
             repository,
             new ServerStatusClient(new ServerStatusParser(), Duration.ofSeconds(1)),
             new ObjectMapper(),
+            emptyBrowserHosts(),
             Duration.ofMinutes(2)
         );
 
@@ -119,5 +127,43 @@ class ServerServiceTest {
             List.of("ffa.example.com", "ctf.example.com"),
             service.servers().stream().map(server -> server.host()).toList()
         );
+    }
+
+    @Test
+    void mergesBrowserHostedGamesAndUsesTheirStableIds() {
+        ServerRepository repository = new ServerRepository(null) {
+            @Override
+            public List<StoredServer> findAll() {
+                return List.of();
+            }
+        };
+        BrowserHostRegistry browserHosts = mock(BrowserHostRegistry.class);
+        ServerInfo info = new ServerInfo(
+            "browser", "Hosted", "q3dm17", 0, 20, 15, 16, 0, "", 0, "", "", 0, 0,
+            "browser", 27960, "", 0, 0, "Quake3Arena", 68, 0, 0, 0, 0, 0, 0, 0, 0,
+            "baseq3", 0, List.of(), 443, 27960
+        );
+        ServerResponse hosted = new ServerResponse(
+            "browser:abc123", "wss://master.example/api/hosted-games/abc123/ws", true,
+            "browser", 443, 27960, true, false, info
+        );
+        when(browserHosts.servers()).thenReturn(List.of(hosted));
+        ServerService service = new ServerService(
+            repository,
+            new ServerStatusClient(new ServerStatusParser(), Duration.ofSeconds(1)),
+            new ObjectMapper(),
+            browserHosts,
+            Duration.ofMinutes(2)
+        );
+
+        assertEquals(List.of(hosted), service.servers());
+        assertTrue(service.isListedServer("browser:abc123"));
+        assertFalse(service.isListedServer("browser:443"));
+    }
+
+    private static BrowserHostRegistry emptyBrowserHosts() {
+        BrowserHostRegistry browserHosts = mock(BrowserHostRegistry.class);
+        when(browserHosts.servers()).thenReturn(List.of());
+        return browserHosts;
     }
 }
