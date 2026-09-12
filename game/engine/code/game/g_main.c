@@ -409,6 +409,8 @@ G_InitGame
 
 ============
 */
+extern void G_RegisterGuyDropItems( void );
+
 void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	int					i;
 	char				serverinfo[MAX_INFO_STRING];
@@ -490,6 +492,8 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 
 	// parse the key/value pairs and spawn gentities
 	G_SpawnEntitiesFromString();
+	/* Drops can be created on any map, so advertise all referenced stock assets. */
+	G_RegisterGuyDropItems();
 
 	// general initialization
 	G_FindTeams();

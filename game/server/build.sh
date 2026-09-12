@@ -44,4 +44,13 @@ node "$SCRIPT_DIR/scripts/package-release.mjs" \
   "$DIST_DIR" \
   "$SCRIPT_DIR/config/q3js-defaults.cfg"
 
+QAGAME_QVM="$BUILD_DIR/$BUILD_TYPE/baseq3/vm/qagame.qvm"
+if [[ ! -f "$QAGAME_QVM" ]]; then
+  echo "Freshly built qagame.qvm was not found at '$QAGAME_QVM'." >&2
+  exit 1
+fi
+QAGAME_QVM="$QAGAME_QVM" \
+Q3JS_GUY_OUTPUT_DIR="$DIST_DIR/game/baseq3" \
+  node "$SCRIPT_DIR/scripts/package-game.mjs"
+
 echo "Combined server package is available in game/server/dist/"

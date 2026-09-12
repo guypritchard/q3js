@@ -27,6 +27,15 @@ Desktop play requests pointer lock when the player presses the game canvas.
 Touch controls are selected for coarse-pointer devices without hover support;
 append `?mobileControls=1` to a play URL to force them during testing.
 
+## Bot Lab
+
+Open `/bot-lab` to design bot identity, appearance references, and skill
+profiles. All validation, imports, and JSON, loose-file, or PK3 exports run in
+the browser; game data is never uploaded or bundled. Install an exported PK3
+in the dedicated and static servers' matching `baseq3` directory, then spawn
+the bot with `addbot <name> <skill>`. Browser-hosted games use the operator's
+published asset manifest and cannot accept a visitor's local package.
+
 ## SEO and analytics
 
 Set `NEXT_PUBLIC_Q3JS_SITE_URL` to the public canonical origin. It is used for

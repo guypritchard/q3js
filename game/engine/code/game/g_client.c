@@ -858,6 +858,13 @@ void ClientUserinfoChanged( int clientNum ) {
 	}
 #endif
 	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
+	if ( ent->r.svFlags & SVF_BOT ) {
+		char guyUserinfo[MAX_INFO_STRING];
+		trap_GetUserinfo( ent->s.number, guyUserinfo, sizeof( guyUserinfo ) );
+		if ( !Q_stricmp( Info_ValueForKey( guyUserinfo, "q3jsGuy" ), "1" ) ) {
+			client->pers.maxHealth = client->ps.stats[STAT_MAX_HEALTH] = 200;
+		}
+	}
 
 	// set model
 	if( g_gametype.integer >= GT_TEAM ) {
@@ -1298,6 +1305,13 @@ void ClientSpawn(gentity_t *ent) {
 	}
 	// clear entity values
 	client->ps.stats[STAT_MAX_HEALTH] = client->pers.maxHealth;
+	if ( ent->r.svFlags & SVF_BOT ) {
+		char guyUserinfo[MAX_INFO_STRING];
+		trap_GetUserinfo( ent->s.number, guyUserinfo, sizeof( guyUserinfo ) );
+		if ( !Q_stricmp( Info_ValueForKey( guyUserinfo, "q3jsGuy" ), "1" ) ) {
+			client->pers.maxHealth = client->ps.stats[STAT_MAX_HEALTH] = 200;
+		}
+	}
 	client->ps.eFlags = flags;
 
 	ent->s.groundEntityNum = ENTITYNUM_NONE;
@@ -1330,6 +1344,13 @@ void ClientSpawn(gentity_t *ent) {
 
 	// health will count down towards max_health
 	ent->health = client->ps.stats[STAT_HEALTH] = client->ps.stats[STAT_MAX_HEALTH] + 25;
+	if ( ent->r.svFlags & SVF_BOT ) {
+		char guyUserinfo[MAX_INFO_STRING];
+		trap_GetUserinfo( ent->s.number, guyUserinfo, sizeof( guyUserinfo ) );
+		if ( !Q_stricmp( Info_ValueForKey( guyUserinfo, "q3jsGuy" ), "1" ) ) {
+			ent->health = client->ps.stats[STAT_HEALTH] = 200;
+		}
+	}
 
 	G_SetOrigin( ent, spawn_origin );
 	VectorCopy( spawn_origin, client->ps.origin );

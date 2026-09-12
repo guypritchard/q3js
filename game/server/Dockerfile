@@ -18,6 +18,7 @@ COPY website/package.json website/package.json
 RUN pnpm install --frozen-lockfile --filter @q3js/server...
 
 COPY game/engine game/engine
+COPY game/q3js-assets game/q3js-assets
 COPY game/server game/server
 RUN sed -i 's/\r$//' game/server/build.sh \
     && ./game/server/build.sh

@@ -24,6 +24,71 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "g_local.h"
 
+#define GUY_MARKER "q3jsGuy"
+
+void G_RegisterGuyDropItems( void ) {
+	static const int powerups[] = { PW_QUAD, PW_BATTLESUIT, PW_HASTE,
+		PW_INVIS, PW_REGEN, PW_FLIGHT };
+	int i;
+	gitem_t *item;
+
+	item = BG_FindItem( "Armor Shard" );
+	if ( item ) RegisterItem( item );
+	for ( i = 0; i < ARRAY_LEN( powerups ); i++ ) {
+		item = BG_FindItemForPowerup( powerups[i] );
+		if ( item ) RegisterItem( item );
+	}
+}
+
+static qboolean G_IsGuyBot( gentity_t *ent ) {
+	char userinfo[MAX_INFO_STRING];
+
+	if ( !ent || !ent->client || !( ent->r.svFlags & SVF_BOT ) ||
+		 ent->s.number < 0 || ent->s.number >= level.maxclients ) {
+		return qfalse;
+	}
+	trap_GetUserinfo( ent->s.number, userinfo, sizeof( userinfo ) );
+	return !Q_stricmp( Info_ValueForKey( userinfo, GUY_MARKER ), "1" );
+}
+
+static int G_GuyHandicap( gentity_t *ent ) {
+	char userinfo[MAX_INFO_STRING];
+	int handicap;
+
+	trap_GetUserinfo( ent->s.number, userinfo, sizeof( userinfo ) );
+	handicap = atoi( Info_ValueForKey( userinfo, "handicap" ) );
+	if ( handicap < 1 || handicap > 100 ) {
+		handicap = 100;
+	}
+	return handicap;
+}
+
+static void G_GuyDamageLoot( gentity_t *targ, gentity_t *attacker, int take, int mod ) {
+	static unsigned int lastRollFrameTag[MAX_CLIENTS];
+	static const int powerups[] = { PW_QUAD, PW_BATTLESUIT, PW_HASTE,
+		PW_INVIS, PW_REGEN, PW_FLIGHT };
+	gitem_t *item;
+	int victimNum;
+	unsigned int frameTag;
+
+	if ( take <= 0 || !targ || !targ->client || !attacker || !attacker->client || attacker == targ ||
+		!G_IsGuyBot( targ ) || OnSameTeam( targ, attacker ) || level.q3jsHub ||
+		mod == MOD_SUICIDE ) {
+		return;
+	}
+	victimNum = targ->s.number;
+	frameTag = (unsigned int)level.time + 1u;
+	if ( victimNum < 0 || victimNum >= MAX_CLIENTS || lastRollFrameTag[victimNum] == frameTag ) return;
+	lastRollFrameTag[victimNum] = frameTag;
+	if ( rand() % 1000 >= 80 || !G_EntitiesFree() ) return;
+	if ( rand() % 100 < 5 ) {
+		item = BG_FindItemForPowerup( powerups[rand() % ARRAY_LEN( powerups )] );
+	} else {
+		item = BG_FindItem( "Armor Shard" );
+	}
+	if ( item ) Drop_Item( targ, item, (float)(rand() % 360) );
+}
+
 static void G_NotifyKillPost( gentity_t *attacker, gentity_t *victim, int meansOfDeath ) {
 	if ( !attacker || !attacker->client || !victim || !victim->client ) {
 		return;
@@ -841,10 +906,12 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	int			asave;
 	int			knockback;
 	int			max;
+	qboolean	guyLootEligible;
 #ifdef MISSIONPACK
 	vec3_t		bouncedir, impactpoint;
 #endif
 
+	guyLootEligible = damage > 0 && targ->health > 0;
 	if (!targ->takedamage) {
 		return;
 	}
@@ -890,6 +957,9 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// unless they are rocket jumping
 	if ( attacker->client && attacker != targ ) {
 		max = attacker->client->ps.stats[STAT_MAX_HEALTH];
+		if ( G_IsGuyBot( attacker ) ) {
+			max = G_GuyHandicap( attacker );
+		}
 #ifdef MISSIONPACK
 		if( bg_itemlist[attacker->client->ps.stats[STAT_PERSISTANT_POWERUP]].giTag == PW_GUARD ) {
 			max /= 2;
@@ -1018,6 +1088,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
 	// save some from armor
 	asave = CheckArmor (targ, take, dflags);
 	take -= asave;
+	G_GuyDamageLoot( targ, attacker, guyLootEligible ? take : 0, mod );
 
 	if ( g_debugDamage.integer ) {
 		G_Printf( "%i: client:%i health:%i damage:%i armor:%i\n", level.time, targ->s.number,

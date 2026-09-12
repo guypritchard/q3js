@@ -92,3 +92,19 @@ In Dokploy, attach the PK3 volume to `/data/baseq3`. The PK3 files must be at
 the root of that volume; no build arguments or download URLs are required.
 Put the full Quake config in a single `Q3JS_SERVER_CONFIG` environment entry;
 commands may be separated with semicolons or literal newlines.
+# GUY game overlay
+
+Run `node scripts/package-game.mjs` after producing the QVM to generate the
+content-addressed `dist/game/baseq3/zzz-q3js-guy-<sha256>.pk3`. The `zzz-`
+prefix ensures the patched QVM wins baseq3 PK3 precedence. By default the packager uses
+`../maps/build/vm/qagame.qvm`; set `QAGAME_QVM` to an alternate freshly built QVM. The
+archive is deterministic and includes the QVM plus the tracked GUY bot definition and
+procedurally generated original player model. Install that PK3 in the server's `baseq3`
+directory alongside the existing q3js package output. It is an overlay only: each operator
+must still provide the licensed Quake III base assets; no stock art, chat, item, or weapon
+data is redistributed here.
+
+Spawn the built-in bot with `addbot GUY 5`. This fork gives marked GUY bots
+200 health and an 8% loot roll on eligible hostile damage: successful rolls
+drop an armor shard, with a 5% chance of substituting a temporary powerup.
+Ordinary definitions exported by Bot Lab do not gain these server-only traits.

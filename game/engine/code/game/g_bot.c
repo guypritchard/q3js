@@ -671,6 +671,10 @@ static qboolean G_AddBot( const char *name, float skill, const char *team, int d
 	Info_SetValueForKey( userinfo, "name", botname );
 	Info_SetValueForKey( userinfo, "rate", "25000" );
 	Info_SetValueForKey( userinfo, "snaps", "20" );
+	/* Only bot definitions can introduce this server-trusted gameplay marker. */
+	if ( !Q_stricmp( Info_ValueForKey( botinfo, "q3jsGuy" ), "1" ) ) {
+		Info_SetValueForKey( userinfo, "q3jsGuy", "1" );
+	}
 	Info_SetValueForKey( userinfo, "skill", va("%.2f", skill) );
 	Info_SetValueForKey( userinfo, "teampref", team );
 	if ( nightmareTarget >= 0 && nightmareTarget < level.maxclients ) {

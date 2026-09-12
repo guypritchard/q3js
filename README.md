@@ -116,6 +116,7 @@ The following experimental features were AI-generated for this fork and are inte
 - A redesigned homepage, onboarding flow, server browser, human-versus-bot counts, Quick Play selection, mobile navigation, and scoreboard summaries.
 - Production Docker Compose, Caddy, and Cloudflare Tunnel configuration for the fork deployment at `q3js.amber-fly.org`.
 - Browser-server runtime packaging, relay limits, cleanup behavior, worker pacing, deployment health checks, and supporting tests.
+- A browser-only [Bot Lab](website/README.md#bot-lab) for designing Quake III bot personalities and exporting validated loose definitions or PK3 packages without uploading game data.
 
 ## Prerequisites
 
