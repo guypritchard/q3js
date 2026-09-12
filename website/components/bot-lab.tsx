@@ -3,6 +3,8 @@
 import { ChangeEvent, useMemo, useState } from "react";
 import { BALANCED_BOT, BOT_ATTRIBUTES, BotDraft, createPk3, generateFiles, GUY_BOT, interpolateProfile, pk3Filename, Skill, validateDraft } from "@/lib/bot-lab";
 import { Q3ColoredText } from "@/components/q3-colored-text";
+import { GuyModelViewer } from "@/components/guy-model-viewer";
+import { supportsGuyPreview } from "@/lib/guy-model";
 
 const GROUPS = ["Combat & perception", "Weapon aim", "Chat", "Movement & behavior", "Resources"] as const;
 const clone = (draft: BotDraft) => structuredClone(draft);
@@ -45,7 +47,12 @@ export function BotLab() {
             <label className="bot-label">Gender<select className="bot-input" value={draft.gender} onChange={(e) => set("gender", e.target.value as BotDraft["gender"])}><option>male</option><option>female</option><option>neuter</option></select></label>
             {(['color1','color2'] as const).map((key) => <label className="bot-label" key={key}>{key}<input className="bot-input" type="number" min="0" max="7" value={draft[key]} onChange={(e) => set(key, Number(e.target.value))} /></label>)}
             <label className="bot-label">Spawn skill<select className="bot-input" value={draft.spawnSkill} onChange={(e) => set("spawnSkill", Number(e.target.value) as BotDraft["spawnSkill"])}>{[1,2,3,4,5].map(x => <option key={x}>{x}</option>)}</select></label>
-          </div>{draft.metadata?.note ? <p className="mt-4 border-l-2 border-primary pl-3 text-sm text-muted-foreground">{draft.metadata.note}</p> : null}
+          </div>
+          <div className="mt-6">
+            <div className="mb-3 flex items-baseline justify-between gap-3"><h3 className="font-mono text-sm font-black uppercase tracking-[.12em]">Live model preview</h3><span className="font-mono text-[10px] uppercase tracking-[.12em] text-muted-foreground">Bundled assets only</span></div>
+            {supportsGuyPreview(draft) ? <GuyModelViewer /> : <div className="guy-viewer-empty" role="status"><strong>Preview not bundled</strong><span>Only the included GUY default body and head can render here. Other appearance references remain valid for export and are not replaced or approximated.</span></div>}
+          </div>
+          {draft.metadata?.note ? <p className="mt-4 border-l-2 border-primary pl-3 text-sm text-muted-foreground">{draft.metadata.note}</p> : null}
         </section>
 
         <section className="border border-border bg-card p-5 sm:p-7"><div className="flex flex-wrap items-end justify-between gap-4"><div><h2 className="font-mono text-xl font-black uppercase">Character attributes 0–48</h2><p className="mt-2 text-sm text-muted-foreground">Edit canonical profiles 1, 4 and 5. Skills 2 and 3 are deterministic interpolation previews.</p></div><label className="bot-label">Canonical profile<select className="bot-input" value={profile} onChange={(e) => setProfile(Number(e.target.value) as Skill)}><option value="1">1 · novice</option><option value="4">4 · strong</option><option value="5">5 · nightmare</option></select></label></div>

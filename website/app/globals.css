@@ -97,6 +97,11 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
+canvas:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -3px;
+}
+
 @layer components {
   .arena-card {
     transition: border-color 150ms ease, background-color 150ms ease;
@@ -140,12 +145,95 @@ input:focus-visible {
     pointer-events: none;
   }
 
+  .guy-viewer {
+    --weapon-accent: var(--primary);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid color-mix(in oklch, var(--primary) 38%, var(--border));
+    background:
+      radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--primary) 13%, transparent) 0, transparent 42%),
+      linear-gradient(145deg, color-mix(in oklch, var(--card) 86%, black), var(--background));
+  }
+
+  .guy-viewer-viewport {
+    position: relative;
+    min-height: 356px;
+  }
+
+  .guy-viewer-canvas {
+    position: relative;
+    display: block;
+    z-index: 10;
+    width: 100%;
+    height: 356px;
+    cursor: grab;
+    touch-action: pan-y;
+  }
+
+  .guy-viewer-canvas:active { cursor: grabbing; }
+
+  .guy-viewer-status {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    padding: 2rem;
+    text-align: center;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted-foreground);
+  }
+
+  .guy-viewer-toolbar {
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .75rem 1rem;
+    border-top: 1px solid color-mix(in oklch, var(--primary) 24%, var(--border));
+    background: color-mix(in srgb, var(--background) 92%, transparent);
+  }
+
+  .guy-viewer-toolbar p {
+    max-width: 70%;
+    font-size: .625rem;
+    line-height: 1.5;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted-foreground);
+  }
+
+  .guy-viewer-toolbar > .bot-button { flex: 0 0 auto; width: auto; white-space: nowrap; background: color-mix(in srgb, var(--background) 88%, transparent); }
+
+  .guy-viewer-help-compact { display: none; }
+
+  .guy-viewer-empty {
+    display: grid;
+    min-height: 180px;
+    place-content: center;
+    gap: .5rem;
+    border: 1px dashed var(--border);
+    background: var(--background);
+    padding: 2rem;
+    text-align: center;
+    color: var(--muted-foreground);
+  }
+
+  .guy-viewer-empty strong { font-family: var(--font-terminal); text-transform: uppercase; color: var(--foreground); }
+  .guy-viewer-empty span { max-width: 34rem; font-size: .875rem; line-height: 1.5; }
+
 }
 
 @media (min-width: 1024px) {
   .weapon-viewer {
     min-height: 500px;
   }
+
+  .guy-viewer-viewport { min-height: 340px; }
+  .guy-viewer-canvas { height: 340px; }
 }
 
 @media (max-width: 639px) {
@@ -156,6 +244,13 @@ input:focus-visible {
   .weapon-viewer {
     min-height: 310px;
   }
+
+  .guy-viewer-viewport { min-height: 340px; }
+  .guy-viewer-canvas { height: 340px; }
+  .guy-viewer-toolbar { min-height: 64px; gap: .75rem; padding: .625rem .75rem; }
+  .guy-viewer-toolbar p { min-width: 0; max-width: none; line-height: 1.35; letter-spacing: .06em; }
+  .guy-viewer-help-wide { display: none; }
+  .guy-viewer-help-compact { display: inline; }
 }
 
 @media (prefers-reduced-motion: reduce) {

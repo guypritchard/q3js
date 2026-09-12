@@ -30,11 +30,20 @@ append `?mobileControls=1` to a play URL to force them during testing.
 ## Bot Lab
 
 Open `/bot-lab` to design bot identity, appearance references, and skill
-profiles. All validation, imports, and JSON, loose-file, or PK3 exports run in
-the browser; game data is never uploaded or bundled. Install an exported PK3
+profiles. Bot Lab renders an interactive preview only for the repository's
+generated GUY model; arbitrary installed model references are never guessed or
+uploaded. All validation, imports, and JSON, loose-file, or PK3 exports run in
+the browser. Install an exported PK3
 in the dedicated and static servers' matching `baseq3` directory, then spawn
 the bot with `addbot <name> <skill>`. Browser-hosted games use the operator's
 published asset manifest and cannot accept a visitor's local package.
+
+The preview copies `lower.md3`, `upper.md3`, `head.md3`, and `guy.tga` from
+`game/q3js-assets/baseq3/models/players/guy/` into
+`website/public/models/players/guy/`. After regenerating GUY, recopy those four
+files; `pnpm --dir website test:bot-lab` verifies that the public copies have
+not drifted. These generated project assets are for preview only and are not
+included in Bot Lab exports.
 
 ## SEO and analytics
 

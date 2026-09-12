@@ -11,7 +11,7 @@ import { inflateRawSync } from 'node:zlib';
 const server = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const game = resolve(server, '..');
 const guyModel = join(game, 'q3js-assets', 'baseq3', 'models', 'players', 'guy');
-const expectedTriangles = [0,2,1,0,3,2,4,5,6,4,6,7,0,1,5,0,5,4,2,3,7,2,7,6,1,2,6,1,6,5,3,0,4,3,4,7];
+const expectedTriangles = Array.from({ length: 6 }, (_, face) => [0,2,1,1,2,3].map(index => face*4+index)).flat();
 const expectedTags = { lower: ['tag_torso'], upper: ['tag_head', 'tag_weapon'], head: [] };
 
 function crc32(data) {
@@ -114,14 +114,22 @@ function validateMd3(md3, part) {
     const stOffset = md3.readInt32LE(offset + 96);
     const vertexOffset = md3.readInt32LE(offset + 100);
     const surfaceEnd = md3.readInt32LE(offset + 104);
-    assert.deepEqual([surfaceFrames, shaders, vertices, triangles], [1, 1, 8, 12]);
-    assert.deepEqual([triangleOffset, shaderOffset, stOffset, vertexOffset], [176, 108, 320, 384]);
+    assert.deepEqual([surfaceFrames, shaders, vertices, triangles], [1, 1, 24, 12]);
+    assert.deepEqual([triangleOffset, shaderOffset, stOffset, vertexOffset], [176, 108, 320, 512]);
     assert.equal(vertexOffset + surfaceFrames * vertices * 8, surfaceEnd);
     assert.ok(offset + surfaceEnd <= md3.length);
     assert.equal(cString(md3, offset + shaderOffset, 64), 'models/players/guy/guy');
     const indices = Array.from({ length: triangles * 3 }, (_, i) => md3.readInt32LE(offset + triangleOffset + i * 4));
     assert.deepEqual(indices, expectedTriangles);
     for (const index of indices) assert.ok(index >= 0 && index < vertices, `${part} triangle index ${index} is in range`);
+    const mappings = new Set();
+    for (let face = 0; face < 6; face++) {
+      const uv = Array.from({ length: 8 }, (_, i) => md3.readFloatLE(offset + stOffset + (face * 8 + i) * 4));
+      mappings.add(uv.map(value => value.toFixed(6)).join(','));
+      const area = (uv[4]-uv[0])*(uv[3]-uv[1])-(uv[5]-uv[1])*(uv[2]-uv[0]);
+      assert.ok(Math.abs(area) > 1e-4, `${part} face ${face} has non-degenerate UVs`);
+    }
+    assert.equal(mappings.size, 6);
     offset += surfaceEnd;
   }
   assert.equal(offset, endOffset, 'surfaces end at the MD3 end offset');
@@ -148,6 +156,8 @@ test('GUY overlay is deterministic, isolated, and structurally valid', async t =
   assert.deepEqual(manifest.entries, [...manifest.entries].sort((a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b))));
   assert.deepEqual(extracted.get('vm/qagame.qvm'), qvmData, 'the requested freshly built QVM is packaged');
   for (const required of ['scripts/guy.bot','botfiles/bots/guy_c.c','models/players/guy/lower.md3','models/players/guy/upper.md3','models/players/guy/head.md3','models/players/guy/animation.cfg','models/players/guy/icon_default.tga']) assert.ok(extracted.has(required), required);
+  const icon = extracted.get('models/players/guy/icon_default.tga');
+  assert.deepEqual([icon.readUInt16LE(12), icon.readUInt16LE(14), icon[16], icon[17]], [128,128,24,0x20]);
   const character = new TextDecoder().decode(extracted.get('botfiles/bots/guy_c.c'));
   assert.match(character, /CHARACTERISTIC_ITEMWEIGHTS "bots\/hunter_i\.c"/);
   assert.match(character, /CHARACTERISTIC_WEAPONWEIGHTS "bots\/hunter_w\.c"/);

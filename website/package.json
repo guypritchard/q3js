@@ -10,7 +10,7 @@
     "build": "pnpm run prepare:browser-host && next build",
     "start": "next start",
     "lint": "eslint",
-    "test:bot-lab": "node --experimental-strip-types --test lib/bot-lab.test.ts"
+    "test:bot-lab": "node --experimental-strip-types --test lib/bot-lab.test.ts lib/guy-model.test.ts"
   },
   "dependencies": {
     "@next/third-parties": "16.2.12",
