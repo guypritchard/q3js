@@ -16,7 +16,7 @@ function download(name: string, data: BlobPart, type = "text/plain") {
 }
 
 export function BotLab() {
-  const [draft, setDraft] = useState<BotDraft>(() => clone(BALANCED_BOT));
+  const [draft, setDraft] = useState<BotDraft>(() => clone(GUY_BOT));
   const [profile, setProfile] = useState<Skill>(4);
   const [notice, setNotice] = useState("");
   const validation = useMemo(() => validateDraft(draft), [draft]);
