@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { BALANCED_BOT, BOT_ATTRIBUTES, createPk3, generateFiles, interpolateProfile, validateDraft } from "./bot-lab.ts";
+import { BALANCED_BOT, BOT_ATTRIBUTES, createPk3, generateFiles, GUY_BOT, interpolateProfile, validateDraft } from "./bot-lab.ts";
 
 const expectedKeys = [
   "name", "gender", "attackSkill", "weaponWeights", "viewFactor", "viewMaxChange", "reactionTime", "aimAccuracy",
@@ -53,6 +53,21 @@ test("schema rejects unsafe paths and traversal", () => {
   assert.equal(validateDraft({ ...structuredClone(BALANCED_BOT), model: 'x";quit' }).ok, false);
   assert.equal(validateDraft({ ...structuredClone(BALANCED_BOT), itemWeights: "botfiles/items.c" }).ok, false);
   assert.equal(validateDraft(structuredClone(BALANCED_BOT)).ok, true);
+});
+
+test("separate-head syntax is valid only as one leading star on headModel", () => {
+  const separate = { ...structuredClone(BALANCED_BOT), headModel: "*visor", headSkin: "blue" };
+  assert.equal(validateDraft(separate).ok, true);
+  assert.match(generateFiles(separate).bot, /^ headmodel "\*visor\/blue"$/m);
+  for (const headModel of ["**visor", "vi*sor", "*"]) assert.equal(validateDraft({ ...separate, headModel }).ok, false, headModel);
+  assert.equal(validateDraft({ ...separate, model: "*sarge" }).ok, false);
+  assert.equal(validateDraft({ ...separate, weaponWeights: "*bots/hunter_w.c" }).ok, false);
+});
+
+test("GUY selects the installed stock sarge/default appearance", () => {
+  assert.equal(GUY_BOT.model, "sarge");
+  assert.equal(GUY_BOT.skin, "default");
+  assert.equal(GUY_BOT.headModel, "");
 });
 
 test("skills 2 and 3 interpolate one and two thirds between 1 and 4", () => {

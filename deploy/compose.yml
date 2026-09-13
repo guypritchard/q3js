@@ -133,6 +133,9 @@ services:
         condition: service_healthy
     environment:
       Q3JS_MASTER_URL: http://master:8080
+      Q3JS_GAME_DATA_ROOT: /game-data
+    volumes:
+      - ${Q3JS_DEPLOY_ROOT:-/srv/sites/q3js}/data/game:/game-data:ro
     ports:
       - "127.0.0.1:3080:3000"
     healthcheck:

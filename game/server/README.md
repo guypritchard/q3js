@@ -98,8 +98,8 @@ Run `node scripts/package-game.mjs` after producing the QVM to generate the
 content-addressed `dist/game/baseq3/zzz-q3js-guy-<sha256>.pk3`. The `zzz-`
 prefix ensures the patched QVM wins baseq3 PK3 precedence. By default the packager uses
 `../maps/build/vm/qagame.qvm`; set `QAGAME_QVM` to an alternate freshly built QVM. The
-archive is deterministic and includes the QVM plus the tracked GUY bot definition and
-procedurally generated original player model. Install that PK3 in the server's `baseq3`
+archive is deterministic and includes the QVM plus the tracked GUY bot definition, which
+uses the stock `sarge/default` player appearance. It bundles no player art. Install that PK3 in the server's `baseq3`
 directory alongside the existing q3js package output. It is an overlay only: each operator
 must still provide the licensed Quake III base assets; no stock art, chat, item, or weapon
 data is redistributed here.

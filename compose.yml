@@ -149,6 +149,12 @@ services:
     restart: unless-stopped
     environment:
       Q3JS_MASTER_URL: http://master:8080
+      Q3JS_GAME_DATA_ROOT: /game-data
+    volumes:
+      - type: bind
+        source: ${Q3JS_DATA_DIR:-./game/server/data}
+        target: /game-data
+        read_only: true
     ports:
       - "3000:3000"
     depends_on:

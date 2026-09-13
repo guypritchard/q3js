@@ -11,9 +11,6 @@ const assets = join(game, 'q3js-assets', 'baseq3');
 const qvm = resolve(process.env.QAGAME_QVM || join(game, 'maps', 'build', 'vm', 'qagame.qvm'));
 const destination = resolve(process.env.Q3JS_GUY_OUTPUT_DIR || join(server, 'dist', 'game', 'baseq3'));
 
-// Generate original binary art from its reviewed source on every package run.
-await import(new URL('../../q3js-assets/generate-guy-model.mjs', import.meta.url));
-
 async function filesUnder(dir) {
   const result = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {

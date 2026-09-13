@@ -3,8 +3,7 @@
 import { ChangeEvent, useMemo, useState } from "react";
 import { BALANCED_BOT, BOT_ATTRIBUTES, BotDraft, createPk3, generateFiles, GUY_BOT, interpolateProfile, pk3Filename, Skill, validateDraft } from "@/lib/bot-lab";
 import { Q3ColoredText } from "@/components/q3-colored-text";
-import { GuyModelViewer } from "@/components/guy-model-viewer";
-import { supportsGuyPreview } from "@/lib/guy-model";
+import { PlayerModelViewer } from "@/components/player-model-viewer";
 
 const GROUPS = ["Combat & perception", "Weapon aim", "Chat", "Movement & behavior", "Resources"] as const;
 const clone = (draft: BotDraft) => structuredClone(draft);
@@ -49,8 +48,8 @@ export function BotLab() {
             <label className="bot-label">Spawn skill<select className="bot-input" value={draft.spawnSkill} onChange={(e) => set("spawnSkill", Number(e.target.value) as BotDraft["spawnSkill"])}>{[1,2,3,4,5].map(x => <option key={x}>{x}</option>)}</select></label>
           </div>
           <div className="mt-6">
-            <div className="mb-3 flex items-baseline justify-between gap-3"><h3 className="font-mono text-sm font-black uppercase tracking-[.12em]">Live model preview</h3><span className="font-mono text-[10px] uppercase tracking-[.12em] text-muted-foreground">Bundled assets only</span></div>
-            {supportsGuyPreview(draft) ? <GuyModelViewer /> : <div className="guy-viewer-empty" role="status"><strong>Preview not bundled</strong><span>Only the included GUY default body and head can render here. Other appearance references remain valid for export and are not replaced or approximated.</span></div>}
+            <div className="mb-3 flex items-baseline justify-between gap-3"><h3 className="font-mono text-sm font-black uppercase tracking-[.12em]">Live model preview</h3><span className="font-mono text-[10px] uppercase tracking-[.12em] text-muted-foreground">Installed server assets</span></div>
+            <PlayerModelViewer model={draft.model} skin={draft.skin} headModel={draft.headModel} headSkin={draft.headSkin} />
           </div>
           {draft.metadata?.note ? <p className="mt-4 border-l-2 border-primary pl-3 text-sm text-muted-foreground">{draft.metadata.note}</p> : null}
         </section>

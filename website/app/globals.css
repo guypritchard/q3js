@@ -145,7 +145,7 @@ canvas:focus-visible {
     pointer-events: none;
   }
 
-  .guy-viewer {
+  .player-viewer {
     --weapon-accent: var(--primary);
     position: relative;
     overflow: hidden;
@@ -155,12 +155,12 @@ canvas:focus-visible {
       linear-gradient(145deg, color-mix(in oklch, var(--card) 86%, black), var(--background));
   }
 
-  .guy-viewer-viewport {
+  .player-viewer-viewport {
     position: relative;
     min-height: 356px;
   }
 
-  .guy-viewer-canvas {
+  .player-viewer-canvas {
     position: relative;
     display: block;
     z-index: 10;
@@ -170,9 +170,9 @@ canvas:focus-visible {
     touch-action: pan-y;
   }
 
-  .guy-viewer-canvas:active { cursor: grabbing; }
+  .player-viewer-canvas:active { cursor: grabbing; }
 
-  .guy-viewer-status {
+  .player-viewer-status {
     position: absolute;
     inset: 0;
     z-index: 20;
@@ -186,7 +186,7 @@ canvas:focus-visible {
     color: var(--muted-foreground);
   }
 
-  .guy-viewer-toolbar {
+  .player-viewer-toolbar {
     min-height: 64px;
     display: flex;
     align-items: center;
@@ -197,7 +197,7 @@ canvas:focus-visible {
     background: color-mix(in srgb, var(--background) 92%, transparent);
   }
 
-  .guy-viewer-toolbar p {
+  .player-viewer-toolbar p {
     max-width: 70%;
     font-size: .625rem;
     line-height: 1.5;
@@ -206,24 +206,7 @@ canvas:focus-visible {
     color: var(--muted-foreground);
   }
 
-  .guy-viewer-toolbar > .bot-button { flex: 0 0 auto; width: auto; white-space: nowrap; background: color-mix(in srgb, var(--background) 88%, transparent); }
-
-  .guy-viewer-help-compact { display: none; }
-
-  .guy-viewer-empty {
-    display: grid;
-    min-height: 180px;
-    place-content: center;
-    gap: .5rem;
-    border: 1px dashed var(--border);
-    background: var(--background);
-    padding: 2rem;
-    text-align: center;
-    color: var(--muted-foreground);
-  }
-
-  .guy-viewer-empty strong { font-family: var(--font-terminal); text-transform: uppercase; color: var(--foreground); }
-  .guy-viewer-empty span { max-width: 34rem; font-size: .875rem; line-height: 1.5; }
+  .player-viewer-toolbar > .bot-button { flex: 0 0 auto; width: auto; white-space: nowrap; background: color-mix(in srgb, var(--background) 88%, transparent); }
 
 }
 
@@ -232,8 +215,8 @@ canvas:focus-visible {
     min-height: 500px;
   }
 
-  .guy-viewer-viewport { min-height: 340px; }
-  .guy-viewer-canvas { height: 340px; }
+  .player-viewer-viewport { min-height: 340px; }
+  .player-viewer-canvas { height: 340px; }
 }
 
 @media (max-width: 639px) {
@@ -245,12 +228,10 @@ canvas:focus-visible {
     min-height: 310px;
   }
 
-  .guy-viewer-viewport { min-height: 340px; }
-  .guy-viewer-canvas { height: 340px; }
-  .guy-viewer-toolbar { min-height: 64px; gap: .75rem; padding: .625rem .75rem; }
-  .guy-viewer-toolbar p { min-width: 0; max-width: none; line-height: 1.35; letter-spacing: .06em; }
-  .guy-viewer-help-wide { display: none; }
-  .guy-viewer-help-compact { display: inline; }
+  .player-viewer-viewport { min-height: 340px; }
+  .player-viewer-canvas { height: 340px; }
+  .player-viewer-toolbar { min-height: 64px; gap: .75rem; padding: .625rem .75rem; }
+  .player-viewer-toolbar p { min-width: 0; max-width: none; line-height: 1.35; letter-spacing: .06em; }
 }
 
 @media (prefers-reduced-motion: reduce) {

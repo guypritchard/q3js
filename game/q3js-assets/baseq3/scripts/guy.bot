@@ -1,7 +1,7 @@
 {
  name "GUY"
  funname "GUY"
- model "guy/default"
+ model "sarge/default"
  aifile "bots/guy_c.c"
  q3jsGuy "1"
 }

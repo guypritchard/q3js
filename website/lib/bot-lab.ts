@@ -98,7 +98,7 @@ export const BALANCED_BOT: BotDraft = {
 };
 
 export const GUY_BOT: BotDraft = {
-  ...structuredClone(BALANCED_BOT), slug: "guy", displayName: "^1G^2U^4Y", gender: "male", model: "guy", skin: "default", spawnSkill: 5,
+  ...structuredClone(BALANCED_BOT), slug: "guy", displayName: "^1G^2U^4Y", gender: "male", model: "sarge", skin: "default", spawnSkill: 5,
   metadata: { note: "On Q3JS servers GUY has built-in 200 health/drop behavior. Standard exports intentionally contain no promise of those server-only traits." },
 };
 
@@ -117,13 +117,14 @@ function qpathBytes(value: string): number {
   return encoder.encode(value).length;
 }
 
-function validateQpath(errors: string[], label: string, value: unknown, required: boolean): value is string {
+function validateQpath(errors: string[], label: string, value: unknown, required: boolean, allowSeparateHead = false): value is string {
   if (typeof value !== "string" || (required && !value)) {
     errors.push(`${label} is required and must be a QPATH.`);
     return false;
   }
   if (!value) return true;
-  if (forbidden.test(value) || !QPATH.test(value) || value.includes("..") || value.startsWith("/") || qpathBytes(value) >= MAX_QPATH) {
+  const qpath = allowSeparateHead && value.startsWith("*") ? value.slice(1) : value;
+  if (!qpath || forbidden.test(value) || !QPATH.test(qpath) || qpath.includes("*") || qpath.includes("..") || qpath.startsWith("/") || qpathBytes(value) >= MAX_QPATH) {
     errors.push(`${label} must be a safe ASCII QPATH shorter than ${MAX_QPATH} bytes.`);
     return false;
   }
@@ -149,7 +150,7 @@ export function validateDraft(input: unknown): { ok: true; value: BotDraft } | {
   if (typeof draft.displayName !== "string" || !draft.displayName || draft.displayName.length > 64 || forbidden.test(draft.displayName)) errors.push("Display name must be 1-64 safe characters (Quake color codes are allowed).");
   const modelOk = validateQpath(errors, "Model", draft.model, true);
   const skinOk = validateQpath(errors, "Skin", draft.skin, true);
-  const headModelOk = validateQpath(errors, "Head model", draft.headModel, false);
+  const headModelOk = validateQpath(errors, "Head model", draft.headModel, false, true);
   const headSkinOk = validateQpath(errors, "Head skin", draft.headSkin, false);
   validateBotResource(errors, "Weapon weights", draft.weaponWeights);
   validateBotResource(errors, "Item weights", draft.itemWeights);
@@ -164,9 +165,13 @@ export function validateDraft(input: unknown): { ok: true; value: BotDraft } | {
     for (const file of [`models/players/${draft.model}/lower.md3`, `models/players/${draft.model}/upper.md3`, `models/players/${draft.model}/head.md3`, `models/players/${draft.model}/lower_${draft.skin}.skin`, `models/players/${draft.model}/upper_${draft.skin}.skin`, `models/players/${draft.model}/head_${draft.skin}.skin`, `models/players/${draft.model}/icon_${draft.skin}.tga`]) validateComposedQpath(errors, "Referenced player asset", file);
   }
   if (headModelOk && headSkinOk && draft.headModel) {
+    const headModel = draft.headModel.startsWith("*") ? draft.headModel.slice(1) : draft.headModel;
     const headSkin = draft.headSkin || "default";
     validateComposedQpath(errors, "Head model/skin reference", `${draft.headModel}/${headSkin}`);
-    for (const file of [`models/players/${draft.headModel}/head.md3`, `models/players/${draft.headModel}/head_${headSkin}.skin`]) validateComposedQpath(errors, "Referenced head asset", file);
+    const headFiles = draft.headModel.startsWith("*")
+      ? [`models/players/heads/${headModel}/${headModel}.md3`, `models/players/heads/${headModel}/${headModel}_${headSkin}.skin`]
+      : [`models/players/${headModel}/head.md3`, `models/players/${headModel}/head_${headSkin}.skin`];
+    for (const file of headFiles) validateComposedQpath(errors, "Referenced head asset", file);
   }
   if (!(["male", "female", "neuter"] as unknown[]).includes(draft.gender)) errors.push("Gender is invalid.");
   if (![1, 2, 3, 4, 5].includes(draft.spawnSkill ?? 0)) errors.push("Spawn skill is invalid.");
