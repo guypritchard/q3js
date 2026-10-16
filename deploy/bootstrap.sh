@@ -7,10 +7,11 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 install -d -m 0755 \
   "$DEPLOY_ROOT/data/game/baseq3" \
   "$DEPLOY_ROOT/data/game/missionpack" \
+  "$DEPLOY_ROOT/data/arena-state" \
   "$DEPLOY_ROOT/data/hub-state" \
   "$DEPLOY_ROOT/data/master" \
   "$DEPLOY_ROOT/data/postgres"
-chown 10001:10001 "$DEPLOY_ROOT/data/hub-state"
+chown 10001:10001 "$DEPLOY_ROOT/data/arena-state" "$DEPLOY_ROOT/data/hub-state"
 chown 10001:10001 "$DEPLOY_ROOT/data/master"
 chown 70:70 "$DEPLOY_ROOT/data/postgres"
 

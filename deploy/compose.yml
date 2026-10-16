@@ -116,6 +116,54 @@ services:
       - no-new-privileges:true
     mem_limit: 512m
 
+  arena-server:
+    build:
+      context: ..
+      dockerfile: game/server/Dockerfile
+    image: q3js-server:local
+    restart: unless-stopped
+    depends_on:
+      master:
+        condition: service_healthy
+    environment:
+      Q3JS_MASTER_URL: http://master:8080
+      Q3JS_EVENT_CLIENT_SECRET: ${Q3JS_EVENT_CLIENT_SECRET:?Set Q3JS_EVENT_CLIENT_SECRET in deploy/.env}
+      Q3JS_PUBLISH_HOST: q3js-ffa.amber-fly.org
+      Q3JS_PUBLISH_PORT: 443
+      Q3JS_SECURE: "true"
+      Q3JS_TRUST_PROXY_HOPS: 1
+      Q3JS_SERVER_CONFIG: |
+        seta sv_hostname "Q3JS Arena Rotation"
+        seta sv_maxclients "12"
+        seta sv_allowDownload "1"
+        seta sv_dlURL ""
+        seta sv_pure "1"
+        seta bot_enable "1"
+        seta bot_minplayers "4"
+        seta g_gametype "0"
+        seta fraglimit "20"
+        seta timelimit "12"
+        set d1 "map q3dm6; set nextmap vstr d2"
+        set d2 "map q3dm7; set nextmap vstr d3"
+        set d3 "map q3dm13; set nextmap vstr d4"
+        set d4 "map q3dm15; set nextmap vstr d5"
+        set d5 "map q3dm17; set nextmap vstr d1"
+        vstr d1
+    ports:
+      - "127.0.0.1:3084:27961"
+    volumes:
+      - ${Q3JS_DEPLOY_ROOT:-/srv/sites/q3js}/data/game/baseq3:/data/baseq3:ro
+      - ${Q3JS_DEPLOY_ROOT:-/srv/sites/q3js}/data/arena-state:/state
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:27961/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+
   website:
     build:
       context: ..

@@ -10,7 +10,7 @@ from pathlib import Path
 ACCOUNT_ID = "91190eae0f8afb93caba9e8e5d56fa61"
 ZONE_ID = "97f864d14cf101652939b341476e10fb"
 TUNNEL_ID = "1d7541dc-7dfd-4a03-8fcf-a68ef3f273d0"
-HOSTNAME = "q3js.amber-fly.org"
+HOSTNAMES = ("q3js.amber-fly.org", "q3js-ffa.amber-fly.org")
 ORIGIN = "http://192.168.7.11:80"
 ENV_FILE = Path("/etc/default/cloudflared-api")
 
@@ -49,25 +49,24 @@ def request(token: str, method: str, path: str, body: object | None = None) -> d
     return result
 
 
-def main() -> None:
-    values = environment()
-    token = values.get("CF_API_TOKEN")
-    if not token:
-        raise RuntimeError(f"CF_API_TOKEN is missing from {ENV_FILE}")
-    if values.get("CF_ACCOUNT_ID", ACCOUNT_ID) != ACCOUNT_ID:
-        raise RuntimeError("Cloudflare account ID does not match this deployment")
-    if values.get("CF_TUNNEL_ID", TUNNEL_ID) != TUNNEL_ID:
-        raise RuntimeError("Cloudflare tunnel ID does not match this deployment")
+def desired_ingress(hostname: str) -> dict:
+    return {
+        "hostname": hostname,
+        "originRequest": {"httpHostHeader": hostname},
+        "service": ORIGIN,
+    }
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-    dns_query = urllib.parse.urlencode({"type": "CNAME", "name": HOSTNAME})
+
+def ensure_dns(token: str, hostname: str, timestamp: str) -> None:
+    dns_query = urllib.parse.urlencode({"type": "CNAME", "name": hostname})
     dns = request(token, "GET", f"zones/{ZONE_ID}/dns_records?{dns_query}")
-    Path(f"/root/cloudflare-dns.bak.q3js-{timestamp}.json").write_text(
+    backup_name = hostname.replace(".", "-")
+    Path(f"/root/cloudflare-dns.bak.{backup_name}-{timestamp}.json").write_text(
         json.dumps(dns, indent=2) + "\n", encoding="utf-8"
     )
     desired_dns = {
         "type": "CNAME",
-        "name": HOSTNAME,
+        "name": hostname,
         "content": f"{TUNNEL_ID}.cfargotunnel.com",
         "proxied": True,
         "ttl": 1,
@@ -78,12 +77,27 @@ def main() -> None:
         record = records[0]
         if record.get("content") != desired_dns["content"] or not record.get("proxied"):
             request(token, "PUT", f"zones/{ZONE_ID}/dns_records/{record['id']}", desired_dns)
-            print(f"Updated DNS for {HOSTNAME}")
+            print(f"Updated DNS for {hostname}")
         else:
-            print(f"DNS already configured for {HOSTNAME}")
+            print(f"DNS already configured for {hostname}")
     else:
         request(token, "POST", f"zones/{ZONE_ID}/dns_records", desired_dns)
-        print(f"Created DNS for {HOSTNAME}")
+        print(f"Created DNS for {hostname}")
+
+
+def main() -> None:
+    values = environment()
+    token = values.get("CF_API_TOKEN")
+    if not token:
+        raise RuntimeError(f"CF_API_TOKEN is missing from {ENV_FILE}")
+    if values.get("CF_ACCOUNT_ID", ACCOUNT_ID) != ACCOUNT_ID:
+        raise RuntimeError("Cloudflare account ID does not match this deployment")
+    if values.get("CF_TUNNEL_ID", TUNNEL_ID) != TUNNEL_ID:
+        raise RuntimeError("Cloudflare tunnel ID does not match this deployment")
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-%f")
+    for hostname in HOSTNAMES:
+        ensure_dns(token, hostname, timestamp)
 
     tunnel_path = f"accounts/{ACCOUNT_ID}/cfd_tunnel/{TUNNEL_ID}/configurations"
     tunnel = request(token, "GET", tunnel_path)
@@ -92,24 +106,27 @@ def main() -> None:
     )
     config = tunnel["result"]["config"]
     ingress = config["ingress"]
-    desired_rule = {
-        "hostname": HOSTNAME,
-        "originRequest": {"httpHostHeader": HOSTNAME},
-        "service": ORIGIN,
-    }
-    existing = next((rule for rule in ingress if rule.get("hostname") == HOSTNAME), None)
-    if existing is None:
-        catch_all = next((index for index, rule in enumerate(ingress) if "hostname" not in rule), len(ingress))
-        ingress.insert(catch_all, desired_rule)
+    changed = False
+    messages: list[str] = []
+    for hostname in HOSTNAMES:
+        desired_rule = desired_ingress(hostname)
+        existing = next((rule for rule in ingress if rule.get("hostname") == hostname), None)
+        if existing is None:
+            catch_all = next((index for index, rule in enumerate(ingress) if "hostname" not in rule), len(ingress))
+            ingress.insert(catch_all, desired_rule)
+            changed = True
+            messages.append(f"Added tunnel ingress for {hostname}")
+        elif existing != desired_rule:
+            existing.clear()
+            existing.update(desired_rule)
+            changed = True
+            messages.append(f"Updated tunnel ingress for {hostname}")
+        else:
+            messages.append(f"Tunnel ingress already configured for {hostname}")
+    if changed:
         request(token, "PUT", tunnel_path, {"config": config})
-        print(f"Added tunnel ingress for {HOSTNAME}")
-    elif existing != desired_rule:
-        existing.clear()
-        existing.update(desired_rule)
-        request(token, "PUT", tunnel_path, {"config": config})
-        print(f"Updated tunnel ingress for {HOSTNAME}")
-    else:
-        print(f"Tunnel ingress already configured for {HOSTNAME}")
+    for message in messages:
+        print(message)
 
 
 if __name__ == "__main__":

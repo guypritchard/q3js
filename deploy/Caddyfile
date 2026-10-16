@@ -34,4 +34,18 @@ http://q3js.amber-fly.org {
 
     log
 }
+
+# The rotating arena has its own hostname so it can publish the standard /ws
+# gateway path without sharing or disrupting the Transit Hub endpoint.
+http://q3js-ffa.amber-fly.org {
+    handle /ws {
+        reverse_proxy 127.0.0.1:3084
+    }
+
+    handle {
+        respond "Not found" 404
+    }
+
+    log
+}
 # <<< q3js <<<
