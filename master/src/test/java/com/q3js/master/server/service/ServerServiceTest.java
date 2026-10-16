@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 class ServerServiceTest {
     @Test
-    void addsPieterAsASecureCommunityServerBeforeRefreshing() {
+    void doesNotSeedExternalServersWhenRefreshing() {
         var repository = new ServerRepository(null) {
             private RegisteredServer inserted;
 
@@ -47,17 +47,18 @@ class ServerServiceTest {
 
         service.refreshServers();
 
-        assertEquals("q3.pieter.com", repository.inserted.host());
-        assertEquals(443, repository.inserted.proxyPort());
-        assertEquals(0, repository.inserted.targetPort());
-        assertTrue(repository.inserted.secure());
-        assertFalse(repository.inserted.official());
+        assertEquals(null, repository.inserted);
     }
 
     @Test
     void listsOfficialServersBeforeCommunityServersRegardlessOfPlayerCount() {
         OffsetDateTime now = OffsetDateTime.now();
         List<StoredServer> storedServers = List.of(
+            new StoredServer(
+                new RegisteredServer("Q3.PIETER.COM.", 443, 0, true, false, now),
+                "{\"sv_hostname\":\"Retired seed\",\"players\":0,\"users\":[]}",
+                now
+            ),
             new StoredServer(
                 new RegisteredServer("community.example.com", 27961, 27960, true, false, now),
                 "{\"sv_hostname\":\"Community\",\"players\":2,\"users\":["

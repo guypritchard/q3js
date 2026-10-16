@@ -24,8 +24,6 @@ import java.util.Optional;
 @ApplicationScoped
 public class ServerService {
     private static final Logger LOG = Logger.getLogger(ServerService.class);
-    private static final String PIETER_HOST = "q3.pieter.com";
-    private static final int DEFAULT_SECURE_PROXY_PORT = 443;
 
     private final ServerRepository repository;
     private final ServerStatusClient statusClient;
@@ -62,6 +60,7 @@ public class ServerService {
     public List<ServerResponse> servers() {
         return java.util.stream.Stream.concat(
             repository.findAll().stream()
+                .filter(stored -> !isRetiredServer(stored.server()))
                 .map(this::response)
                 .flatMap(Optional::stream),
             browserHostRegistry.servers().stream()
@@ -106,10 +105,8 @@ public class ServerService {
         concurrentExecution = Scheduled.ConcurrentExecution.SKIP
     )
     void refreshServers() {
-        addIfMissing(PIETER_HOST, DEFAULT_SECURE_PROXY_PORT, true);
-
         for (StoredServer stored : repository.findAll()) {
-            refresh(stored.server());
+            if (!isRetiredServer(stored.server())) refresh(stored.server());
         }
     }
 
@@ -124,18 +121,9 @@ public class ServerService {
         }
     }
 
-    private void addIfMissing(String host, int proxyPort, boolean secure) {
-        var server = new RegisteredServer(
-            host,
-            proxyPort,
-            0,
-            secure,
-            false,
-            OffsetDateTime.now()
-        );
-        if (repository.insertIfMissing(server)) {
-            LOG.infof("Adding static server %s:%d", host, proxyPort);
-        }
+    private static boolean isRetiredServer(RegisteredServer server) {
+        return "q3.pieter.com".equalsIgnoreCase(server.host())
+            || "q3.pieter.com.".equalsIgnoreCase(server.host());
     }
 
     private void refresh(RegisteredServer server) {

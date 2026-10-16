@@ -82,6 +82,9 @@ function gameLimits(server: ServerResponse): string {
 
 function mapServer(server: ServerResponse): ListedServer | undefined {
   const { host, info, proxyPort } = server;
+  // Older masters still advertise this retired seed. Hide it without restarting
+  // the master and dropping its memory-resident browser-host sessions.
+  if (host?.toLowerCase().replace(/\.$/, "") === "q3.pieter.com") return undefined;
   if (!host || !info || !proxyPort || proxyPort < 1 || proxyPort > 65535) {
     return undefined;
   }
