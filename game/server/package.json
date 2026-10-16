@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "arena:run": "node arena-runner/main.mjs",
     "build": "pnpm run typecheck && node scripts/build-app.mjs",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "test": "pnpm run build && node --test test/*.test.mjs"

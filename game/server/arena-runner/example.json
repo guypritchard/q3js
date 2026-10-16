@@ -1,0 +1,6 @@
+{
+  "pk3s": ["pak0.pk3", "pak1.pk3", "pak2.pk3", "pak3.pk3", "pak4.pk3", "pak5.pk3", "pak6.pk3", "pak7.pk3", "pak8.pk3"],
+  "arenas": [
+    { "id": "classic-ffa", "name": "Classic FFA", "maps": ["q3dm6", "q3dm7", "q3dm17"], "bots": 4, "fraglimit": 20, "timelimit": 12 }
+  ]
+}

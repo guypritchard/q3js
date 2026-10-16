@@ -49,7 +49,7 @@ if(BUILD_BROWSER_SERVER)
         -sSTACK_SIZE=5242880
         -sFORCE_FILESYSTEM=1
         -sWASMFS=0
-        -sENVIRONMENT=worker
+        -sENVIRONMENT=worker,node
         -sEXPORTED_FUNCTIONS=_main,_malloc,_free,_Q3JS_ServerInjectPacket,_Q3JS_ServerCommand,_Q3JS_ServerIsRunning
         -sEXPORTED_RUNTIME_METHODS=FS,HEAPU8,callMain
         -sEXIT_RUNTIME=1
