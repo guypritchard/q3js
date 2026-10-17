@@ -11,6 +11,7 @@ import {
   SignOut,
 } from "@phosphor-icons/react";
 import { Q3ColoredText } from "@/components/q3-colored-text";
+import { AdminArenas } from "@/components/admin-arenas";
 import { Button } from "@/components/ui/button";
 import {
   adminTokenExpiresAt,
@@ -305,6 +306,8 @@ export function AdminPage() {
           <Button type="button" variant="ghost" onClick={logout}><SignOut /> Logout</Button>
         </div>
       </header>
+
+      <AdminArenas token={token} onUnauthorized={logout} />
 
       <section className="mt-6 grid gap-4 sm:grid-cols-3" aria-label="Address summary">
         <div className="border border-border/60 bg-card/45 px-5 py-4">

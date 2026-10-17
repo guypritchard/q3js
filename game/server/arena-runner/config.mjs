@@ -18,7 +18,9 @@ export function validateConfig(input) {
       return value;
     };
     const maxClients = integer('maxClients', 12, 1, 32);
+    if (arena.autostart !== undefined && typeof arena.autostart !== 'boolean') throw new Error('Invalid autostart.');
     return { id: arena.id, name: arena.name, maps: [...arena.maps], maxClients,
+      autostart: arena.autostart ?? true,
       bots: integer('bots', 4, 0, maxClients), fraglimit: integer('fraglimit', 20, 1, 1000),
       timelimit: integer('timelimit', 12, 1, 120) };
   });

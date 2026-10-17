@@ -8,21 +8,21 @@ TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 CANDIDATE=$(mktemp)
 trap 'rm -f "$CANDIDATE"' EXIT
 
-if grep -q '^# >>> q3js >>>$' "$TARGET"; then
+if grep -q '^# >>> q3js >>>' "$TARGET"; then
   awk -v block="$SCRIPT_DIR/Caddyfile" '
-    /^# >>> q3js >>>$/ {
-      while ((getline line < block) > 0) print line
+    /^# >>> q3js >>>\r?$/ {
+      while ((getline line < block) > 0) { sub(/\r$/, "", line); print line }
       close(block)
       replacing = 1
       next
     }
-    /^# <<< q3js <<</ && replacing { replacing = 0; next }
+    /^# <<< q3js <<<\r?$/ && replacing { replacing = 0; next }
     !replacing { print }
   ' "$TARGET" > "$CANDIDATE"
 else
   cp "$TARGET" "$CANDIDATE"
   printf '\n' >> "$CANDIDATE"
-  cat "$SCRIPT_DIR/Caddyfile" >> "$CANDIDATE"
+  sed 's/\r$//' "$SCRIPT_DIR/Caddyfile" >> "$CANDIDATE"
 fi
 caddy validate --config "$CANDIDATE" --adapter caddyfile
 

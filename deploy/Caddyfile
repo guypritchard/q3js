@@ -3,6 +3,11 @@
 http://q3js.amber-fly.org {
     encode zstd gzip
 
+    @arenas path /arenas /arenas/*
+    handle @arenas {
+        reverse_proxy 127.0.0.1:3090
+    }
+
     handle /api/* {
         reverse_proxy 127.0.0.1:3081
     }

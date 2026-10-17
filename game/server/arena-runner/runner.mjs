@@ -2,22 +2,27 @@ import { createServer } from 'node:http';
 import { Worker } from 'node:worker_threads';
 import { WebSocketServer, WebSocket } from 'ws';
 import { validateConfig } from './config.mjs';
+import { authorizeAdmin } from './admin-auth.mjs';
 
 const MAX_PACKET = 16384;
 const MAX_BUFFERED = 1024 * 1024;
 
 export class ArenaRunner {
-  constructor({ config, runtime, wasm, assets = [], startupTimeoutMs = 120000, workerUrl = new URL('./runtime-worker.mjs', import.meta.url), onLog = () => {} }) {
+  constructor({ config, runtime, wasm, assets = [], startupTimeoutMs = 120000, workerUrl = new URL('./runtime-worker.mjs', import.meta.url), onLog = () => {}, masterUrl, fetcher = fetch, isBanned = () => false, clientIp = request => request.socket.remoteAddress ?? '' }) {
     this.config = validateConfig(config);
-    this.options = { runtime, wasm, assets, startupTimeoutMs, workerUrl, onLog };
+    if (masterUrl && !['http:', 'https:'].includes(new URL(masterUrl).protocol)) throw new Error('Invalid master URL.');
+    this.options = { runtime, wasm, assets, startupTimeoutMs, workerUrl, onLog, masterUrl, fetcher, isBanned, clientIp };
     this.arenas = new Map();
     this.stopping = false;
+    this.operations = new Map();
+    this.pendingManagement = 0;
     this.http = createServer((request, response) => {
+      if (request.method === 'POST') { void this.manage(request, response); return; }
       if (request.method !== 'GET' || !['/healthz', '/arenas'].includes(request.url)) {
         response.writeHead(404).end(); return;
       }
       const arenas = this.status();
-      const healthy = arenas.length > 0 && arenas.every(arena => arena.state === 'ready');
+      const healthy = arenas.length > 0 && arenas.every(arena => ['ready', 'stopped'].includes(arena.state));
       response.writeHead(request.url === '/healthz' && !healthy ? 503 : 200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
       response.end(JSON.stringify({ arenas }));
     });
@@ -25,10 +30,14 @@ export class ArenaRunner {
     this.http.on('upgrade', (request, socket, head) => {
       const match = /^\/arenas\/([a-z0-9][a-z0-9_-]{0,31})\/ws$/.exec(request.url ?? '');
       const arena = match ? this.arenas.get(match[1]) : undefined;
-      if (this.stopping || !arena || arena.state !== 'ready' || arena.clients.size >= arena.config.maxClients || arena.nextEndpoint > 0xffffff) {
+      if (this.stopping || !arena || arena.state !== 'ready' || arena.clients.size >= arena.config.maxClients || arena.nextEndpoint >= 0xffffff) {
         socket.end('HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\n\r\n'); return;
       }
-      this.wss.handleUpgrade(request, socket, head, ws => this.connect(arena, ws));
+      let address;
+      try { address = this.options.clientIp(request); }
+      catch { socket.end('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n'); return; }
+      if (this.options.isBanned(address)) { socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'); return; }
+      this.wss.handleUpgrade(request, socket, head, ws => { ws.clientIp = address; this.connect(arena, ws); });
     });
     this.http.requestTimeout = 10000;
     this.http.headersTimeout = 10000;
@@ -37,13 +46,74 @@ export class ArenaRunner {
 
   status() {
     return [...this.arenas.values()].map(arena => ({ id: arena.config.id, name: arena.config.name,
-      state: arena.state, connections: arena.clients.size, gatewayPath: `/arenas/${arena.config.id}/ws` }));
+      state: arena.state, connections: arena.clients.size, gatewayPath: `/arenas/${arena.config.id}/ws`,
+      maps: arena.config.maps, maxClients: arena.config.maxClients,
+      status: arena.state === 'ready' && Date.now() - (arena.statusAt ?? 0) < 15000 ? arena.status : undefined }));
+  }
+
+  disconnectBannedClients() {
+    for (const arena of this.arenas.values()) {
+      for (const client of arena.clients.values()) {
+        if (this.options.isBanned(client.clientIp)) client.terminate();
+      }
+    }
+  }
+
+  async manage(request, response) {
+    const reply = (status, value) => { response.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); response.end(JSON.stringify(value)); };
+    const match = /^\/arenas\/([a-z0-9][a-z0-9_-]{0,31})\/(start|stop|restart)$/.exec(request.url ?? '');
+    if (!match || !this.arenas.has(match[1])) { reply(404, { error: 'Unknown arena action.' }); return; }
+    if (request.headers['transfer-encoding'] || Number(request.headers['content-length'] ?? 0) !== 0) { request.resume(); reply(413, { error: 'Action does not accept a body.' }); return; }
+    if (this.stopping || this.pendingManagement >= 8) { reply(503, { error: 'Runner busy.' }); return; }
+    this.pendingManagement++;
+    try {
+      const auth = await authorizeAdmin(request.headers.authorization, this.options.masterUrl, this.options.fetcher);
+      if (auth !== 200) { reply(auth, { error: auth === 503 ? 'Administrator verification unavailable.' : 'Administrator authentication required.' }); return; }
+      await this.action(match[1], match[2]);
+      reply(200, { arenas: this.status() });
+    } catch { reply(503, { error: 'Arena action failed.' }); }
+    finally { this.pendingManagement--; }
+  }
+
+  action(id, action) {
+    const config = this.config.arenas.find(arena => arena.id === id);
+    if (!config || !['start', 'stop', 'restart'].includes(action)) return Promise.reject(new Error('Unknown arena action.'));
+    const previous = this.operations.get(id) ?? Promise.resolve();
+    const operation = previous.catch(() => {}).then(async () => {
+      if (this.stopping) throw new Error('Runner is shutting down.');
+      let arena = this.arenas.get(id);
+      if (action === 'stop' || action === 'restart') {
+        if (arena) await this.stopArena(arena);
+      }
+      if (action === 'start' || action === 'restart') {
+        arena = this.arenas.get(id);
+        if (!arena || ['stopped', 'failed'].includes(arena.state)) {
+          if (arena) await this.stopArena(arena);
+          this.spawn(config);
+        }
+      }
+    });
+    this.operations.set(id, operation);
+    return operation;
+  }
+
+  async stopArena(arena) {
+    clearTimeout(arena.timer);
+    clearInterval(arena.watchdog);
+    arena.state = 'stopped';
+    arena.status = undefined;
+    for (const ws of arena.clients.values()) ws.terminate();
+    arena.clients.clear();
+    await arena.worker?.terminate();
   }
 
   async start({ host = '127.0.0.1', port = 0 } = {}) {
     if (this.stopping || this.arenas.size) throw new Error('Runner already started or closed.');
     try {
-      for (const config of this.config.arenas) this.spawn(config);
+      for (const config of this.config.arenas) {
+        if (config.autostart) this.spawn(config);
+        else this.arenas.set(config.id, { config, state: 'stopped', clients: new Map() });
+      }
       await new Promise((resolve, reject) => {
         this.http.once('error', reject);
         this.http.listen(port, host, () => { this.http.off('error', reject); resolve(); });
@@ -79,6 +149,7 @@ export class ArenaRunner {
       if (this.stopping || ['failed', 'stopped'].includes(arena.state)) return;
       if (message.type === 'ready') { clearTimeout(arena.timer); arena.lastPulse = Date.now(); arena.state = 'ready'; }
       if (message.type === 'pulse') arena.lastPulse = Date.now();
+      if (message.type === 'status') { arena.status = message.status; arena.statusAt = Date.now(); }
       if (message.type === 'log') this.options.onLog(config.id, String(message.message).slice(0, 2048));
       if (message.type === 'failed') fail();
       if (message.type === 'ack') arena.pending = Math.max(0, arena.pending - 1);
@@ -122,14 +193,10 @@ export class ArenaRunner {
 
   async shutdown() {
     this.stopping = true;
+    await Promise.allSettled([...this.operations.values()]);
     for (const arena of this.arenas.values()) {
-      clearTimeout(arena.timer);
-      clearInterval(arena.watchdog);
-      arena.state = 'stopped';
-      for (const ws of arena.clients.values()) ws.terminate();
-      arena.clients.clear();
+      await this.stopArena(arena);
     }
-    await Promise.all([...this.arenas.values()].map(arena => arena.worker?.terminate()));
     await new Promise(resolve => this.wss.close(() => resolve()));
     if (this.http.listening) await new Promise(resolve => this.http.close(() => resolve()));
   }

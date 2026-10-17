@@ -15,10 +15,11 @@ import {
   trackAnalyticsEvent,
   type AnalyticsParameters,
 } from "@/lib/analytics";
-import { getRequesterCountry, servers as listServers } from "@/lib/api/generated/sdk.gen";
+import { getRequesterCountry } from "@/lib/api/generated/sdk.gen";
 import { client } from "@/lib/api/client";
 import { humanPlayerCount, joinServerHref } from "@/lib/join-server";
-import { mapServers, type ListedServer } from "@/lib/master-server";
+import { type ListedServer } from "@/lib/master-server";
+import { fetchListedServers } from "@/lib/listed-servers";
 import { playerNameOrRandom } from "@/lib/player-name";
 
 const PK3_FILE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*\.pk3$/;
@@ -523,10 +524,10 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
     let cancelled = false;
     const refreshPortals = async () => {
       try {
-        const response = await listServers({ client });
+        const response = await fetchListedServers();
         if (cancelled) return;
 
-        const candidates = mapServers(response.data)
+        const candidates = response
           .filter((server) => (
             server.id !== selectedServer.id
             && server.protocol === selectedServer.protocol
@@ -603,8 +604,8 @@ export function PlayClient({ selectedServer, initialPlayerName, voiceEnabled = f
     let activeHostedServer: ListedServer | undefined;
     if (selectedServer?.hosted) {
       try {
-        const response = await listServers({ client });
-        activeHostedServer = mapServers(response.data).find((server) => (
+      const response = await fetchListedServers();
+      activeHostedServer = response.find((server) => (
           server.hosted && server.id === selectedServer.id
         ));
       } catch {

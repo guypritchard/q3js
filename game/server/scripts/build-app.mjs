@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 await build({
   entryPoints: [
     "src/ban-list.ts",
+    "src/ip-address.ts",
     "src/config.ts",
     "src/main.ts",
     "src/gateway.ts",

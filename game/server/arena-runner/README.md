@@ -1,9 +1,10 @@
-# Named WASM arena runner (local proof of concept)
+# Named WASM arena runner
 
 This independent process runs up to four operator-configured arenas, each in its
 own Node worker with an Emscripten dedicated-server instance. Clients send raw
 binary Quake datagrams to `/arenas/<id>/ws`; endpoint IDs remain internal. There
-is no UDP port, master registration, public management API, or production change.
+is no UDP port or per-arena DNS record. The website merges ready arenas with
+the master list, without changing the master heartbeat contract or restarting it.
 
 ## Build and run
 
@@ -26,6 +27,7 @@ Q3JS_ARENA_CONFIG=<absolute path to example.json or your config>
 Q3JS_ARENA_RUNTIME=<absolute path to ioq3ded.mjs>
 Q3JS_ARENA_ASSETS=<absolute path to installed baseq3 directory>
 Q3JS_ARENA_PORT=3090
+Q3JS_ARENA_MASTER_URL=http://master:8080
 ```
 
 The default bind address is `127.0.0.1`. `Q3JS_ARENA_HOST` can override it for
@@ -37,27 +39,51 @@ for a small host. Node workers provide instance/crash isolation, **not** a secur
 sandbox or hard WASM/RSS memory quota. Run inside a resource-limited container
 before exposing it; client input is untrusted even with trusted PK3 content.
 
-`GET /healthz` returns 200 only when all configured engines are ready; `GET
-/arenas` lists states and relative gateway paths. Stop with SIGTERM/SIGINT; start
-again to restart. Crashes/startup timeouts fail closed; they do not auto-restart.
+`GET /healthz` returns 200 when all configured engines are ready or intentionally
+stopped. `GET /arenas` lists states, stable gateway paths and live Quake status;
+status older than 15 seconds is omitted. An arena with no fresh status is not
+advertised by the website. The stock master `/api/servers` remains unchanged.
+
+`POST /arenas/<id>/start`, `/stop`, and `/restart` accept an administrator bearer
+JWT from the existing admin login. Every request is verified by the master using
+its read-only admin-protected `/api/admin/bans` endpoint; signature, expiry and
+admin-role checks remain centralized. Missing/invalid tokens are rejected;
+verification outages fail closed. No cookie auth or arbitrary command/config API
+is exposed. Only preconfigured IDs can be managed; per-arena actions are serialized.
+The website's `/admin` page provides these controls, confirming disruptive actions.
+Configure `Q3JS_ARENA_MASTER_URL` to enable them; omit it to disable management.
+
+Stop the process with SIGTERM/SIGINT. Crashes/startup timeouts fail closed; they
+do not auto-restart individually (use authenticated Start/Restart).
 A worker heartbeat detects a hung runtime after readiness. Arena home files are
 ephemeral; there is no persistence yet. Sockets use bounded packets, queues,
 connection counts, heartbeat liveness and per-connection input rates. Admission
-is basic, not a substitute for production IP limits/bans or event reporting.
+has per-connection limits. In deployment, set the existing
+`Q3JS_EVENT_CLIENT_SECRET` and `Q3JS_TRUST_PROXY_HOPS=1` so the runner reuses the
+native server's ban synchronization and trusted-proxy address handling. New bans
+disconnect existing sockets. No new shared secret is required. Run
+`pnpm --dir game/server build` before local use with bans enabled, to build the
+shared support modules; the Dockerfile builds them automatically. Player-connection
+and kill-event reporting are not yet implemented for WASM arenas. WASM game
+modules have no libcurl, so do not assume native kill telemetry works here.
 
 ## Integration boundary
 
-A future single Caddy `/arenas/*` route can forward to this runner, preserving
-paths and avoiding per-arena hostnames/DNS changes. Persistent master heartbeats
-currently assume `/ws`, so automatic discovery requires a validated gateway-path
-contract; it is intentionally not changed by this milestone. The browser-host
-relay/master and native Transit Hub remain independent.
+Caddy forwards `/arenas` and `/arenas/*` to the runner on loopback port 3090,
+preserving paths. Browser-host relay/master, native rotation and Transit Hub
+remain independent. `deploy/wasm-arenas.json` defines the production playlist;
+the Compose service is `wasm-arenas` with a read-only filesystem, read-only
+assets/config, a 1536 MiB aggregate memory ceiling and two CPUs. Do not configure
+four simultaneous stock arenas on that budget. An optional per-arena
+`"autostart": false` keeps an arena stopped until an administrator starts it.
+Runtime start/stop state is in memory, not persisted across container recreation;
+the config's autostart setting wins on boot.
 
 Run `pnpm --dir game/server test` for config, fake-worker routing/isolation and
 lifecycle regressions. Fake-worker tests **do not prove WASM execution or real
 gameplay**. A real-engine smoke test must load installed PK3s, receive getstatus
 through the named WebSocket, and observe a map transition. Interactive gameplay
-and map-transition client continuity must be verified before production rollout.
+and map-transition client continuity require a real browser test, not this unit suite.
 
 With a built runtime and installed stock assets, run `node
 game/server/arena-runner/smoke.mjs` using the same runtime/assets environment.
@@ -75,3 +101,10 @@ also initialized in a real Chromium module worker with filesystem/packet hooks
 available. Neither test establishes interactive gameplay, client continuity
 through map changes, or safe public deployment. Existing production containers
 were not recreated or restarted.
+
+On 2026-10-17, the phase-two browser check joined through the public named route,
+rendered live gameplay, moved/fired, and re-entered on `q3dm7 → q3dm6`. The check
+broke a tied score using the normal console `kill` command and acknowledged
+intermission readiness; ordinary Quake sudden-death/readiness rules still apply.
+Real admin JWT verification rejected missing/invalid credentials and accepted
+Stop/Start without restarting the master, native rotation, or Transit Hub.

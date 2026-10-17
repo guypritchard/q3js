@@ -14,6 +14,8 @@ WORKDIR /runner
 RUN npm install --omit=dev --ignore-scripts --no-audit --no-fund ws@8.18.3
 COPY --from=builder /source/game/server/dist/arena-runtime ./runtime
 COPY game/server/arena-runner ./arena-runner
+COPY game/server/src/ban-list.ts game/server/src/ip-address.ts ./support/
+RUN npx --yes esbuild@0.25.12 support/ban-list.ts support/ip-address.ts --bundle --platform=node --format=esm --outdir=dist/app --out-extension:.js=.mjs
 USER node
 ENV Q3JS_ARENA_RUNTIME=/runner/runtime/ioq3ded.mjs
 CMD ["node", "arena-runner/main.mjs"]

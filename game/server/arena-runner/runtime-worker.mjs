@@ -3,6 +3,9 @@ import { readFile, realpath } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { arenaConfig } from './config.mjs';
+import { parseStatus } from './status.mjs';
+
+const STATUS_ENDPOINT = 0xffffff;
 
 let runtime;
 let ready = false;
@@ -25,17 +28,22 @@ function command(value) {
   } finally { runtime._free(pointer); }
 }
 
-parentPort.on('message', message => {
-  if (!ready || message.type !== 'packet') return;
-  const bytes = message.packet;
-  if (!(bytes instanceof Uint8Array) || bytes.length < 1 || bytes.length > 16384 || !Number.isInteger(message.endpoint) || message.endpoint < 1 || message.endpoint > 0xffffff) return;
+function inject(endpoint, bytes) {
   const pointer = runtime._malloc(bytes.length);
   if (!pointer) throw new Error('WASM allocation failed.');
   try {
     runtime.HEAPU8.set(bytes, pointer);
-    runtime._Q3JS_ServerInjectPacket(message.endpoint, pointer, bytes.length);
+    runtime._Q3JS_ServerInjectPacket(endpoint, pointer, bytes.length);
+  } finally { runtime._free(pointer); }
+}
+
+parentPort.on('message', message => {
+  if (!ready || message.type !== 'packet') return;
+  const bytes = message.packet;
+  if (!(bytes instanceof Uint8Array) || bytes.length < 1 || bytes.length > 16384 || !Number.isInteger(message.endpoint) || message.endpoint < 1 || message.endpoint >= STATUS_ENDPOINT) return;
+  try {
+    inject(message.endpoint, bytes);
   } finally {
-    runtime._free(pointer);
     post({ type: 'ack' });
   }
 });
@@ -51,6 +59,11 @@ try {
     onAbort: reason => { throw new Error(`Engine aborted: ${String(reason).slice(0, 512)}`); },
     onServerPacket: (endpoint, packet) => {
       if (!ready || packet.byteLength > 16384) return;
+      if (endpoint === STATUS_ENDPOINT) {
+        const status = parseStatus(packet);
+        if (status) post({ type: 'status', status });
+        return;
+      }
       post({ type: 'packet', endpoint, packet: Uint8Array.from(packet) });
     },
   });
@@ -82,6 +95,8 @@ try {
   }, 50);
   timer.unref();
   setInterval(() => { if (ready) post({ type: 'pulse' }); }, 1000).unref();
+  const statusPacket = Uint8Array.from([255, 255, 255, 255, ...new TextEncoder().encode('getstatus arena-status\n')]);
+  setInterval(() => { if (ready) inject(STATUS_ENDPOINT, statusPacket); }, 2000).unref();
 } catch (error) {
   post({ type: 'failed', message: error instanceof Error ? error.message : String(error) });
   process.exitCode = 1;

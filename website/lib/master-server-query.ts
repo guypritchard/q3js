@@ -1,16 +1,15 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
   getStatsOptions,
-  serversOptions,
   statusOptions,
 } from "@/lib/api/generated/@tanstack/react-query.gen";
 import { client } from "@/lib/api/client";
-import { mapServers } from "@/lib/master-server";
+import { fetchListedServers } from "@/lib/listed-servers";
 
 export function masterServerQueryOptions() {
   return queryOptions({
-    ...serversOptions({ client }),
-    select: mapServers,
+    queryKey: ["listed-servers"],
+    queryFn: ({ signal }) => fetchListedServers(signal),
     refetchInterval: 5_000,
   });
 }

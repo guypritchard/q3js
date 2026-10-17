@@ -63,3 +63,32 @@ docker compose --env-file deploy/.env -f deploy/compose.yml ps arena-server mast
 Do not run a stack-wide `up` for an arena-only change: recreating `master`
 disconnects its memory-resident browser-host sessions, and recreating
 `hub-server` interrupts connected Hub players.
+
+## Named WASM arenas
+
+`wasm-arenas` runs operator-configured WASM servers behind one same-origin route:
+`wss://q3js.amber-fly.org/arenas/<id>/ws`. No per-arena hostname or tunnel change
+is needed. `deploy/wasm-arenas.json` defines the allowed IDs and playlists. The
+initial `classic-ffa` arena has stock maps `q3dm6`, `q3dm7`, `q3dm17`, 12 slots,
+minimum four participants (bots fill vacancies), fraglimit 20 and timelimit 12.
+
+Build and recreate only this service and the website, then install the Caddy
+route. Never recreate master, hub-server or the native arena for this change:
+
+```sh
+docker compose --env-file deploy/.env -f deploy/compose.yml build wasm-arenas
+docker compose --env-file deploy/.env -f deploy/compose.yml build website
+docker compose --env-file deploy/.env -f deploy/compose.yml up -d --no-deps wasm-arenas website
+sh deploy/install-caddy.sh
+```
+
+Ready WASM arenas with fresh engine status appear in the website picker and Hub
+portal candidates; the raw master `/api/servers` response is intentionally not
+changed. `/admin` uses the existing signed admin JWT for Start/Stop/Restart;
+the runner verifies it against the running master's protected read-only endpoint.
+Stopping/restarting an arena disconnects only that arena's players. Home state
+and lifecycle state are ephemeral; configured autostart controls subsequent boots.
+Assets/config are read-only, with an aggregate 1536 MiB/two-CPU container budget;
+add simultaneous arenas only after measuring memory. Existing IP bans apply via
+the shared secret and trusted proxy setting. Native player/kill telemetry is not
+yet implemented in the WASM runner.

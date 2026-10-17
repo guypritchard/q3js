@@ -58,3 +58,28 @@ test("Caddy and Cloudflare provision a distinct arena gateway", async () => {
   assert.match(cloudflare, /catch_all = next/);
   assert.match(cloudflare, /ingress\.insert\(catch_all, desired_rule\)/);
 });
+
+test("named WASM arenas share one bounded router without a new hostname", async () => {
+  const [compose, caddy, configText, installer] = await Promise.all([
+    readFile(path.join(repository, "deploy/compose.yml"), "utf8"),
+    readFile(path.join(repository, "deploy/Caddyfile"), "utf8"),
+    readFile(path.join(repository, "deploy/wasm-arenas.json"), "utf8"),
+    readFile(path.join(repository, "deploy/install-caddy.sh"), "utf8"),
+  ]);
+  const service = serviceBlock(compose, "wasm-arenas");
+  assert.match(service, /127\.0\.0\.1:3090:3090/);
+  assert.match(service, /Q3JS_ARENA_MASTER_URL: http:\/\/master:8080/);
+  assert.match(service, /Q3JS_EVENT_CLIENT_SECRET:/);
+  assert.match(service, /Q3JS_TRUST_PROXY_HOPS: 1/);
+  assert.match(service, /read_only: true/);
+  assert.match(service, /mem_limit: 1536m/);
+  assert.match(service, /cpus: 2/);
+  assert.match(caddy, /@arenas path \/arenas \/arenas\/\*/);
+  assert.match(caddy, /handle @arenas \{\s+reverse_proxy 127\.0\.0\.1:3090/);
+  const config = JSON.parse(configText);
+  assert.equal(config.arenas[0].id, "classic-ffa");
+  assert.ok(config.pk3s.includes("zz-q3netpack.pk3"));
+  // Match markers with CRLF too, avoiding a duplicate appended site block.
+  assert.ok(installer.includes('/^# >>> q3js >>>\\r?$/'));
+  assert.ok(installer.includes('sub(/\\r$/, "", line)'));
+});

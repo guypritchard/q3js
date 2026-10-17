@@ -164,6 +164,41 @@ services:
       - no-new-privileges:true
     mem_limit: 512m
 
+  wasm-arenas:
+    build:
+      context: ..
+      dockerfile: game/server/arena-runner/Dockerfile
+    image: q3js-wasm-arenas:local
+    restart: unless-stopped
+    depends_on:
+      master:
+        condition: service_healthy
+    environment:
+      Q3JS_ARENA_HOST: 0.0.0.0
+      Q3JS_ARENA_PORT: 3090
+      Q3JS_ARENA_CONFIG: /config/arenas.json
+      Q3JS_ARENA_ASSETS: /assets
+      Q3JS_ARENA_MASTER_URL: http://master:8080
+      Q3JS_EVENT_CLIENT_SECRET: ${Q3JS_EVENT_CLIENT_SECRET:?Set Q3JS_EVENT_CLIENT_SECRET in deploy/.env}
+      Q3JS_TRUST_PROXY_HOPS: 1
+    ports:
+      - "127.0.0.1:3090:3090"
+    volumes:
+      - ${Q3JS_DEPLOY_ROOT:-/srv/sites/q3js}/data/game/baseq3:/assets:ro
+      - ./wasm-arenas.json:/config/arenas.json:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3090/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    mem_limit: 1536m
+    cpus: 2
+    pids_limit: 128
+
   website:
     build:
       context: ..
