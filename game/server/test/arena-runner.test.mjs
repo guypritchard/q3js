@@ -10,6 +10,7 @@ import { ArenaRunner } from '../arena-runner/runner.mjs';
 import { validateConfig, arenaConfig, resolveAssets } from '../arena-runner/config.mjs';
 import { parseStatus } from '../arena-runner/status.mjs';
 import { authorizeAdmin } from '../arena-runner/admin-auth.mjs';
+import { clientIpAddress } from '../dist/app/ip-address.mjs';
 
 const arena = { id: 'classic', name: 'Classic FFA', maps: ['q3dm6', 'q3dm7'], bots: 0 };
 async function until(predicate, timeout = 3000) {
@@ -165,4 +166,22 @@ test('WASM admission respects bans and drops newly banned sockets', async t => {
   banned = true;
   runner.disconnectBannedClients();
   await closed;
+});
+
+test('compiled shared proxy helper is exported and used by WASM admission', async t => {
+  assert.equal(typeof clientIpAddress, 'function');
+  assert.equal(clientIpAddress({ socket: { remoteAddress: '127.0.0.1' }, headers: {} }, 0), '127.0.0.1');
+  assert.throws(() => clientIpAddress({ socket: { remoteAddress: '127.0.0.1' }, headers: {} }, 1));
+  const runner = new ArenaRunner({ ...options({ arenas: [arena] }), clientIp: request => clientIpAddress(request, 1), isBanned: ip => ip === '198.51.100.2' });
+  t.after(() => runner.close());
+  const address = await runner.start();
+  await until(() => runner.status()[0].state === 'ready');
+  const url = `ws://127.0.0.1:${address.port}/arenas/classic/ws`;
+  const missingProxy = new WebSocket(url);
+  assert.match((await once(missingProxy, 'error'))[0].message, /400/);
+  const blocked = new WebSocket(url, { headers: { 'X-Forwarded-For': '198.51.100.2' } });
+  assert.match((await once(blocked, 'error'))[0].message, /403/);
+  const allowed = new WebSocket(url, { headers: { 'X-Forwarded-For': '198.51.100.1' } });
+  await once(allowed, 'open');
+  allowed.terminate();
 });

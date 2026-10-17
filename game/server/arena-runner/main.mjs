@@ -26,6 +26,7 @@ async function main() {
     if (!masterUrl) throw new Error('Ban synchronization requires a master URL.');
     const { BanList } = await import('../dist/app/ban-list.mjs');
     const { clientIpAddress } = await import('../dist/app/ip-address.mjs');
+    if (typeof clientIpAddress !== 'function') throw new Error('Shared proxy helper is unavailable. Rebuild server support modules.');
     bans = new BanList({ masterBaseUrl: masterUrl, clientSecret: secret, intervalMs: 10000, timeoutMs: 5000 });
     clientIp = request => clientIpAddress(request, trustedProxyHops);
     await bans.start();

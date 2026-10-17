@@ -1,9 +1,9 @@
 import { createSocket } from "node:dgram";
-import { createServer, type IncomingMessage, type Server as HttpServer } from "node:http";
-import { isIP, type AddressInfo } from "node:net";
+import { createServer, type Server as HttpServer } from "node:http";
+import { type AddressInfo } from "node:net";
 import { WebSocket, WebSocketServer } from "ws";
 import { decompressHuffman } from "./huffman.js";
-import { normalizeIpAddress } from "./ip-address.js";
+import { clientIpAddress } from "./ip-address.js";
 
 export interface PlayerConnection {
   clientIp: string;
@@ -31,27 +31,6 @@ const CONNECT_HEADER = Buffer.from("\xff\xff\xff\xffconnect ", "latin1");
 const CONNECT_RESPONSE = Buffer.from("\xff\xff\xff\xffconnectResponse", "latin1");
 const MAX_INFO_STRING_BYTES = 1024;
 const PRIVATE_USERINFO_KEYS = new Set(["clientip", "ip", "password", "rconpassword"]);
-
-function clientIpAddress(request: IncomingMessage, trustedProxyHops: number): string {
-  const peerAddress = request.socket.remoteAddress;
-  if (!peerAddress) {
-    throw new Error("WebSocket peer address is unavailable.");
-  }
-  if (trustedProxyHops === 0) {
-    return normalizeIpAddress(peerAddress);
-  }
-
-  const forwardedHeader = request.headers["x-forwarded-for"];
-  const forwarded = (Array.isArray(forwardedHeader) ? forwardedHeader.join(",") : forwardedHeader)
-    ?.split(",")
-    .map((address) => normalizeIpAddress(address.trim()));
-  const clientIndex = (forwarded?.length ?? 0) - trustedProxyHops;
-  const address = forwarded?.[clientIndex];
-  if (!address || isIP(address) === 0) {
-    throw new Error("A trusted proxy did not provide a valid X-Forwarded-For chain.");
-  }
-  return address;
-}
 
 /** Read and sanitize userinfo from an ioquake3 connect packet without changing it. */
 export function readConnectUserinfo(
